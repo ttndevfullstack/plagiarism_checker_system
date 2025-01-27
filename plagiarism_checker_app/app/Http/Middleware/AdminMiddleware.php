@@ -16,9 +16,8 @@ class AdminMiddleware
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
-     * @return mixed
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): mixed
     {
         $this->user = auth()->user();
 
@@ -32,9 +31,8 @@ class AdminMiddleware
     /**
      * Redirect to the login page of the current panel.
      *
-     * @return \Illuminate\Http\RedirectResponse
      */
-    private function redirectToUserLoginRoute()
+    private function redirectToUserLoginRoute(): \Illuminate\Http\RedirectResponse
     {
         $userLoginRoute = config('plagiarism-checker.panels.user.routes.login');
 

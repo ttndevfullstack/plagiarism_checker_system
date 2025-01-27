@@ -1,13 +1,37 @@
 {
-    "private": true,
-    "type": "module",
-    "scripts": {
-        "dev": "vite",
-        "build": "vite build"
-    },
-    "devDependencies": {
-        "axios": "^1.6.4",
-        "laravel-vite-plugin": "^1.0.0",
-        "vite": "^5.0.0"
-    }
+  "name": "plagiarism_checker_system",
+  "author": "ttndev",
+  "homepage": "https://plagiarism-checker.dev",
+  "license": "MIT",
+  "description": "The plagiarism checker system for the university.",
+  "keywords": [
+    "plagiarism",
+    "checker",
+    "university",
+    "teacher",
+    "student"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/koel/koel"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "axios": "^1.6.4",
+    "husky": "^8.0.0",
+    "laravel-vite-plugin": "^1.0.0",
+    "vite": "^5.0.0"
+  },
+  "lint-staged": {
+    "**/*.php": [
+      "composer cs"
+    ]
+  },
+  "private": true,
+  "type": "module",
+  "packageManager": "yarn@1.22.19"
 }

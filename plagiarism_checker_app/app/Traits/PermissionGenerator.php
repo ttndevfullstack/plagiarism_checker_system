@@ -38,13 +38,10 @@ trait PermissionGenerator
     }
 
     /**
-     * Seed the permissions based on module and resource, and return a collection of permissions.
+     * Seed the permissions based on module and resource, and return the current instance.
      *
      * @param string $module
      * @param string $resource
-     * @param array $newPermissions
-     * @param bool $includeBase
-     * @return Collection
      */
     protected function seedResourcePermissions(string $module, string $resource): self
     {
@@ -60,7 +57,7 @@ trait PermissionGenerator
         return $this;
     }
 
-    protected function usingSpecificationPermissions(array $permissions)
+    protected function usingSpecificationPermissions(array $permissions): self
     {
         $this->permissionNames = array_unique(array_merge($this->basePermissionNames, $permissions));
 
@@ -127,11 +124,12 @@ trait PermissionGenerator
         foreach ($this->permissionNames as $action) {
             $permissionName = generate_permission_name($this->module, $this->resource, $action);
 
-            if (Permission::where('name', $permissionName)->doesntExist()) {
+            if (! Permission::where('name', $permissionName)->doesntExist()) {
                 $permission = Permission::create([
                     'resource' => $this->resource,
-                    'name' => $permissionName
+                    'name' => $permissionName,
                 ]);
+
                 $this->permissions->push($permission);
             }
         }

@@ -16,11 +16,11 @@ class User extends Authenticatable implements HasName
     use Notifiable;
     use HasRoles;
 
-    const ADMIN_ROLE = 'admin';
+    public const ADMIN_ROLE = 'admin';
 
-    const TEACHER_ROLE = 'teacher';
+    public const TEACHER_ROLE = 'teacher';
 
-    const STUDENT_ROLE = 'student';
+    public const STUDENT_ROLE = 'student';
 
     protected $guarded = ['id'];
 
@@ -38,11 +38,11 @@ class User extends Authenticatable implements HasName
         'updated_at' => 'datetime',
     ];
 
-    protected static function boot()
+    protected static function boot(): void
     {
         parent::boot();
 
-        static::updating(function (User $user) {
+        static::updating(function (User $user): void {
             $this->updateFullNameAttribute();
             $this->updateProfileTimestamp();
         });
@@ -82,17 +82,21 @@ class User extends Authenticatable implements HasName
         return $this->hasRole(self::STUDENT_ROLE);
     }
 
-    public function updateFullNameAttribute()
+    public function updateFullNameAttribute(): void
     {
-        if ($this->isDirty(['first_name', 'last_name'])) {
-            $this->full_name = "{$this->first_name} {$this->last_name}";
+        if (! $this->isDirty(['first_name', 'last_name'])) {
+            return;
         }
+        
+        $this->full_name = "{$this->first_name} {$this->last_name}";
     }
 
-    public function updateProfileTimestamp()
+    public function updateProfileTimestamp(): void
     {
-        if ($this->isDirty(['name', 'email', 'full_name'])) {
-            $this->profile_updated_at = now();
+        if (! $this->isDirty(['name', 'email', 'full_name'])) {
+            return;
         }
+        
+        $this->profile_updated_at = now();
     }
 }

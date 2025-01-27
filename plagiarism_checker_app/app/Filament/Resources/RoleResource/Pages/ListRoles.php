@@ -10,6 +10,9 @@ class ListRoles extends ListRecords
 {
     protected static string $resource = RoleResource::class;
 
+    /**
+     * @return \Traversable<int, \Filament\Resources\Pages\Actions\Action> 
+     */
     protected function getHeaderActions(): array
     {
         return [

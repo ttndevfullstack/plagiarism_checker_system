@@ -11,6 +11,9 @@ class ViewUser extends ViewRecord
 {
     protected static string $resource = UserResource::class;
 
+    /**
+     * @return \Traversable<int, \Filament\Resources\Pages\Actions\Action> 
+     */
     protected function getHeaderActions(): array
     {
         return [

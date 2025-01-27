@@ -1,0 +1,19 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run Composer CS check for plagiarism_checker_app (if it has a composer.json)
+if [ -f "plagiarism_checker_app/composer.json" ]; then
+  echo "Running Composer CS for plagiarism_checker_app..."
+  cd plagiarism_checker_app
+  composer cs
+  if [ $? -ne 0 ]; then
+    echo "Code style issues detected in plagiarism_checker_app. Trying to auto-fix..."
+    composer cs:fix
+    composer cs
+    if [ $? -ne 0 ]; then
+      echo "Code style issues remain in plagiarism_checker_app. Please fix them manually."
+      exit 1
+    fi
+  fi
+  cd ..
+fi

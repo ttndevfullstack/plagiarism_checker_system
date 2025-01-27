@@ -12,21 +12,21 @@ return new class extends Migration
     public function up(): void
     {
         if (Schema::hasTable('users')) {
-            if (Schema::hasColumn('users', 'name')) {
-                Schema::table('users', function (Blueprint $table) {
-                    $table->renameColumn('name', 'full_name');
-                });
-            }
+            return;
         }
 
-        if (Schema::hasTable('users')) {
-            Schema::table('users', function (Blueprint $table) {
-                $table->string('first_name', 50)->after('full_name');
-                $table->string('last_name', 50)->after('first_name');
-                $table->timestamp('last_login')->nullable()->after('email_verified_at');
-                $table->timestamp('profile_updated')->nullable()->after('last_login');
+        if (Schema::hasColumn('users', 'name')) {
+            Schema::table('users', static function (Blueprint $table): void {
+                $table->renameColumn('name', 'full_name');
             });
         }
+
+        Schema::table('users', static function (Blueprint $table): void {
+            $table->string('first_name', 50)->after('full_name');
+            $table->string('last_name', 50)->after('first_name');
+            $table->timestamp('last_login')->nullable()->after('email_verified_at');
+            $table->timestamp('profile_updated')->nullable()->after('last_login');
+        });
     }
 
     /**
@@ -35,17 +35,17 @@ return new class extends Migration
     public function down(): void
     {
         if (Schema::hasTable('users')) {
-            if (Schema::hasColumn('users', 'full_name')) {
-                Schema::table('users', function (Blueprint $table) {
-                    $table->renameColumn('full_name', 'name');
-                });
-            }
+            return;
         }
 
-        if (Schema::hasTable('users')) {
-            Schema::table('users', function (Blueprint $table) {
-                $table->dropColumn(['first_name', 'last_name', 'last_login_timestamp', 'profile_updated']);
+        if (Schema::hasColumn('users', 'full_name')) {
+            Schema::table('users', static function (Blueprint $table): void {
+                $table->renameColumn('full_name', 'name');
             });
         }
+
+        Schema::table('users', static function (Blueprint $table): void {
+            $table->dropColumn(['first_name', 'last_name', 'last_login_timestamp', 'profile_updated']);
+        });
     }
 };

@@ -4,9 +4,8 @@
  * Convert data to lowercase dynamically.
  *
  * @param mixed $data
- * @return mixed
  */
-function dynamic_lowercase($data)
+function dynamic_lowercase($data): mixed
 {
     if (is_string($data)) {
         return mb_strtolower($data);
@@ -20,6 +19,7 @@ function dynamic_lowercase($data)
         foreach ($data as $key => $value) {
             $data->{$key} = dynamicLowercase($value);
         }
+
         return $data;
     }
 
@@ -32,7 +32,6 @@ function dynamic_lowercase($data)
  * @param string $module
  * @param string $resource
  * @param string $action
- * @return string
  */
 function generate_permission_name(string $module, string $resource, string $action): string
 {

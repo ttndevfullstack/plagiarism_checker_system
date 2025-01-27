@@ -61,7 +61,7 @@ class UserResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('roles.name')
                     ->searchable()
-                    ->formatStateUsing(fn($state) => ucfirst($state)),
+                    ->formatStateUsing(static fn ($state) => ucfirst($state)),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -70,8 +70,8 @@ class UserResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('role')
                     ->label('Role')
-                    ->options(fn() => Role::all()->pluck('name', 'id')->toArray())
-                    ->relationship('roles', 'name')
+                    ->options(static fn () => Role::all()->pluck('name', 'id')->toArray())
+                    ->relationship('roles', 'name'),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -81,7 +81,7 @@ class UserResource extends Resource
                     ->label('Assign Role')
                     ->icon('heroicon-o-key')
                     ->color(Color::Green)
-                    ->action(function (User $user, array $data): void {
+                    ->action(static function (User $user, array $data): void {
                         try {
                             $roleNames = Role::whereIn('id', $data['roles'])->get()->pluck('name')->toArray();
                             $user->syncRoles($roleNames);
@@ -105,8 +105,8 @@ class UserResource extends Resource
                             ->options(Role::all()->pluck('name', 'id')->toArray())
                             ->columns(2)
                             ->reactive()
-                            ->default(fn(User $user) => [$user->roles->first()->id])
-                            ->afterStateUpdated(fn($state, callable $set) => !empty($state) && $set('roles', [array_values($state)[1]]))
+                            ->default(static fn (User $user) => [$user->roles->first()->id])
+                            ->afterStateUpdated(static fn ($state, callable $set) => !empty($state) && $set('roles', [array_values($state)[1]])),
                     ])
                     ->requiresConfirmation(),
             ])
@@ -115,13 +115,9 @@ class UserResource extends Resource
             ]);
     }
 
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
-
+    /**
+     * @return array<string, \Filament\Resources\Pages\Page> 
+     */
     public static function getPages(): array
     {
         return [
