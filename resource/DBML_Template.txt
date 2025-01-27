@@ -1,0 +1,144 @@
+Table user {
+  user_id int [pk]
+  username string [unique]
+  password_hash string
+  email string [unique]
+  full_name string
+  role_id int
+  last_login_timestamp datetime
+  profile_updated datetime
+  created_at datetime
+  updated_at datetime
+}
+
+Table role {
+  role_id int [pk]
+  role_name string [unique]
+  permissions json
+}
+
+Table user_report {
+  report_id int [pk]
+  user_id int [ref: > user.user_id]
+  document_id int [ref: > document.document_id]
+  submission_timestamp datetime
+  status string
+  plagiarism_percentage float
+  report_type string
+}
+
+Table plagiarism_check {
+  check_id int [pk]
+  report_id int [ref: > user_report.report_id]
+  check_type string
+  plagiarism_percentage float
+  checked_timestamp datetime
+}
+
+Table document {
+  document_id int [pk]
+  user_id int [ref: > user.user_id]
+  title string
+  file_path string
+  upload_timestamp datetime
+  last_modified datetime
+  document_type string
+}
+
+Table plagiarism_report {
+  report_id int [pk]
+  user_id int [ref: > user.user_id]
+  report_date datetime
+  total_plagiarism_percentage float
+  class_id int [ref: > class.class_id]
+  lecturer_id int [ref: > lecturer.lecturer_id]
+  subject_id int [ref: > subject.subject_id]
+}
+
+Table class {
+  class_id int [pk]
+  class_name string
+  lecturer_id int [ref: > lecturer.lecturer_id]
+}
+
+Table lecturer {
+  lecturer_id int [pk]
+  full_name string
+  email string
+}
+
+Table subject {
+  subject_id int [pk]
+  subject_name string
+  subject_code string
+}
+
+Table feedback {
+  feedback_id int [pk]
+  user_id int [ref: > user.user_id]
+  feedback_text string
+  submitted_at datetime
+}
+
+Table complaint {
+  complaint_id int [pk]
+  user_id int [ref: > user.user_id]
+  complaint_text string
+  submitted_at datetime
+  resolved boolean
+}
+
+Table notification {
+  notification_id int [pk]
+  user_id int [ref: > user.user_id]
+  message string
+  read_status boolean
+  created_at datetime
+  scheduled_at datetime
+  event_type string
+}
+
+Table notification_settings {
+  user_id int [ref: > user.user_id]
+  email_notifications boolean
+  push_notifications boolean
+  sms_notifications boolean
+  daily_digest boolean
+}
+
+Table permission {
+  permission_id int [pk]
+  permission_name string
+}
+
+Table role_permission {
+  role_id int [ref: > role.role_id]
+  permission_id int [ref: > permission.permission_id]
+}
+
+Table access_request {
+  request_id int [pk]
+  user_id int [ref: > user.user_id]
+  requested_permission_id int [ref: > permission.permission_id]
+  request_date datetime
+  status string
+}
+
+Table report_statistics {
+  statistic_id int [pk]
+  class_id int [ref: > class.class_id]
+  lecturer_id int [ref: > lecturer.lecturer_id]
+  subject_id int [ref: > subject.subject_id]
+  total_reports int
+  total_plagiarism_count int
+  average_plagiarism_percentage float
+  report_date datetime
+}
+
+Table export_data {
+  export_id int [pk]
+  user_id int [ref: > user.user_id]
+  export_type string
+  export_date datetime
+  report_id int [ref: > plagiarism_report.report_id]
+}
