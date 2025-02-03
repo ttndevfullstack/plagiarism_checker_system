@@ -36,13 +36,14 @@ Table plagiarism_check {
 }
 
 Table document {
-  document_id int [pk]
-  user_id int [ref: > user.user_id]
-  title string
-  file_path string
-  upload_timestamp datetime
-  last_modified datetime
-  document_type string
+  document_id bigint [pk]
+  title varchar(255)
+  content text
+  embedding vector(1536)
+  subject_id bigint [ref: > subjects.subject_id]
+  created_by bigint [ref: > users.user_id]
+  created_at timestamp
+  updated_at timestamp
 }
 
 Table plagiarism_report {

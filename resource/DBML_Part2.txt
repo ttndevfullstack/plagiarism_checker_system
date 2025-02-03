@@ -1,0 +1,56 @@
+Table users {
+  user_id bigint [pk]
+  username varchar(255) [unique]
+  email varchar(255) [unique]
+  password_hash text
+  role enum('admin', 'teacher', 'student')
+  created_at timestamp
+}
+
+Table subjects {
+  subject_id bigint [pk]
+  name varchar(255) [unique]
+}
+
+Table classes {
+  class_id bigint [pk]
+  name varchar(255) [unique]
+  teacher_id bigint [ref: > users.user_id]
+  subject_id bigint [ref: > subjects.subject_id]
+}
+
+Table documents {
+  document_id bigint [pk]
+  title varchar(255)
+  content text
+  embedding vector(1536)
+  subject_id bigint [ref: > subjects.subject_id]
+  created_by bigint [ref: > users.user_id]
+  created_at timestamp
+}
+
+Table submissions {
+  submission_id bigint [pk]
+  student_id bigint [ref: > users.user_id]
+  class_id bigint [ref: > classes.class_id]
+  title varchar(255)
+  content text
+  embedding vector(1536)
+  submitted_at timestamp
+}
+
+Table plagiarism_reports {
+  report_id bigint [pk]
+  submission_id bigint [ref: > submissions.submission_id]
+  document_id bigint [ref: > documents.document_id]
+  plagiarism_percentage decimal(5,2)
+  similarity_details jsonb
+  created_at timestamp
+}
+
+Table audit_logs {
+  log_id bigint [pk]
+  user_id bigint [ref: > users.user_id]
+  action text
+  timestamp timestamp
+}

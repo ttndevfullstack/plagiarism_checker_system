@@ -1,10 +1,10 @@
 Table users {
   id bigint [pk]
-  name string [unique]
-  password string
-  email string [unique]
   first_name string
   last_name string
+  full_name string
+  email string [unique]
+  password string
   last_login_timestamp datetime
   profile_updated datetime
   created_at datetime
