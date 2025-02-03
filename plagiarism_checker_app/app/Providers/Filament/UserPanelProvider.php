@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\EditProfile;
 use App\Http\Middleware\EnsureFilamentPanelAccess;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -28,9 +29,8 @@ class UserPanelProvider extends PanelProvider
             ->path(config('plagiarism-checker.panels.user.path'))
             ->favicon(asset('assets/images/logo-icon.svg'))
             ->brandLogo(asset('assets/images/logo-icon.svg'))
-            ->brandLogoHeight('5rem')
             ->login()
-            ->profile()
+            ->profile(EditProfile::class)
             ->registration()
             ->passwordReset()
             ->colors([

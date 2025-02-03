@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Components\Tables\RoleSelector;
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
@@ -28,7 +29,10 @@ class UserResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
+                Forms\Components\TextInput::make('first_name')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('last_name')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('email')
@@ -38,16 +42,15 @@ class UserResource extends Resource
                 Forms\Components\Select::make('role')
                     ->label('Role')
                     ->required()
-                    ->options(Role::all()->pluck('name', 'name')->toArray())
-                    ->default(User::STUDENT_ROLE),
+                    ->options(Role::all()->pluck('name', 'name')->toArray()),
                 Forms\Components\TextInput::make('password')
                     ->password()
-                    ->required()
-                    ->confirmed(),
-                Forms\Components\TextInput::make('password_confirmation')
+                    ->confirmed()
+                    ->required(static fn ($record) => is_null($record)),
+                    Forms\Components\TextInput::make('password_confirmation')
                     ->password()
-                    ->required()
-                    ->label('Confirm Password'),
+                    ->label('Confirm Password')
+                    ->required(static fn ($record) => is_null($record)),
             ]);
     }
 
@@ -55,7 +58,9 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                Tables\Columns\TextColumn::make('first_name')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('last_name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
@@ -68,14 +73,12 @@ class UserResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('role')
-                    ->label('Role')
-                    ->options(static fn () => Role::all()->pluck('name', 'id')->toArray())
-                    ->relationship('roles', 'name'),
+                RoleSelector::show(),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()->color(Color::Blue),
+                Tables\Actions\DeleteAction::make(),
 
                 Action::make('Assign Role')
                     ->label('Assign Role')

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Services\UserService;
+use Filament\Forms\Get;
 use Filament\Forms\Components\Component;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
@@ -22,8 +24,14 @@ class EditProfile extends BaseEditProfile
                         $this->getTextFormComponent('first_name', __('First Name'), true),
                         $this->getTextFormComponent('last_name', __('Last Name')),
                         $this->getEmailFormComponent(),
-                        $this->getPasswordFormComponent(),
-                        $this->getPasswordConfirmationFormComponent(),
+                        $this->getPasswordFormComponent()
+                            ->make('current_password')
+                            ->label(__('Current password')),
+                        $this->getPasswordFormComponent()
+                            ->make('new_password')
+                            ->label(__('New password')),
+                        $this->getPasswordConfirmationFormComponent()
+                            ->visible(static fn (Get $get): bool => filled($get('new_password'))),
                     ])
                     ->operation('edit')
                     ->model($this->getUser())
@@ -45,12 +53,40 @@ class EditProfile extends BaseEditProfile
     protected function getAvatarFormComponent(): Component
     {
         return FileUpload::make('avatar')
-            ->label(__('Profile Picture'))
-            ->directory('avatars')
+            ->label('')
             ->image()
-            ->imagePreviewHeight(100)
-            ->imageResizeMode('cover')
-            ->imageResizeTargetWidth(300)
-            ->imageResizeTargetHeight(300);
+            ->avatar()
+            ->columns(2)
+            ->openable()
+            ->alignCenter()
+            ->imageEditor()
+            ->downloadable()
+            ->storeFiles(false)
+            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif'])
+            ->default(static fn () => asset('storage/' . auth()->user()->avatar));
+    }
+
+    /**
+     * @return array<string, mixed>
+     * */
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        if (isset($data['avatar'])) {
+            $avatarFile = $data['avatar'];
+
+            $avatarPath = app(UserService::class)->updateUser(
+                user: auth()->user(),
+                firstName: $data['first_name'],
+                lastName: $data['last_name'],
+                email: $data['email'],
+                password: $data['new_password'],
+                isAdmin: $data['is_admin'] ?? null,
+                avatar: $avatarFile
+            )->avatar;
+
+            $data['avatar'] = $avatarPath;
+        }
+
+        return $data;
     }
 }

@@ -30,7 +30,6 @@ class AdminPanelProvider extends PanelProvider
             ->path(config('plagiarism-checker.panels.admin.path'))
             ->favicon(asset('assets/images/logo-icon.svg'))
             ->brandLogo(asset('assets/images/logo-icon.svg'))
-            // ->brandLogoHeight('5rem')
             ->login()
             ->profile(EditProfile::class)
             ->passwordReset()

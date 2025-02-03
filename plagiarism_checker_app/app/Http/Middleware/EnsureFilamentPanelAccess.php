@@ -14,6 +14,8 @@ class EnsureFilamentPanelAccess
 
     private ?User $user;
     
+    private bool $isLoggedIn = false;
+
     private bool $isAdminPanel = false;
 
     /**
@@ -24,18 +26,20 @@ class EnsureFilamentPanelAccess
      */
     public function handle(Request $request, Closure $next): mixed
     {
+        $user = auth()->user();
         $panel = Filament::getCurrentPanel();
 
         if (! $panel) {
             abort(404, 'Panel not found.');
         }
 
-        $this->user = auth()->user();
-        $this->context = $panel->getId();
+        $this->user = $user;
+        $this->isLoggedIn = (bool) $user;
+        $this->context = $panel->getId() ?? config('plagiarism-checker.panels.user.id');
         $this->isAdminPanel = $this->context === config('plagiarism-checker.panels.admin.id');
 
         if (! $this->hasPanelAccess()) {
-            return $this->redirectToLogin();
+            return $this->redirectTo();
         }
 
         return $next($request);
@@ -45,13 +49,15 @@ class EnsureFilamentPanelAccess
      * Redirect to the login page of the current panel.
      *
      */
-    private function redirectToLogin(): \Illuminate\Http\RedirectResponse
+    private function redirectTo(): \Illuminate\Http\RedirectResponse
     {
         $panel = $this->user->isAdmin()
             ? config('plagiarism-checker.panels.admin.id')
             : config('plagiarism-checker.panels.user.id');
 
-        return redirect(route(config("plagiarism-checker.panels.$panel.routes.login")));
+        $route = $this->isLoggedIn ? 'dashboard' : 'login';
+
+        return redirect(route(config("plagiarism-checker.panels.$panel.routes.$route")));
     }
 
     /**
@@ -61,6 +67,10 @@ class EnsureFilamentPanelAccess
      */
     private function hasPanelAccess(): bool
     {
-        return !$this->isAdminPanel || $this->user->isAdmin();
+        if ($this->isAdminPanel && $this->user->isAdmin()) {
+            return true;
+        }
+        
+        return !$this->isAdminPanel && !$this->user->isAdmin();
     }
 }

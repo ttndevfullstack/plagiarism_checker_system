@@ -4,25 +4,26 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
-    /**
-     * Run the migrations.
-     */
+return new class extends Migration {
     public function up(): void
     {
+        if (!Schema::hasTable('users') || !Schema::hasColumn('users', 'address')) {
+            return;
+        }
+
         Schema::table('users', static function (Blueprint $table): void {
-            $table->string('is_admin')->default(false)->after('email_verified_at');
+            $table->string('avatar')->nullable()->after('address');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
+        if (!Schema::hasTable('users') || !Schema::hasColumn('users', 'avatar')) {
+            return;
+        }
+
         Schema::table('users', static function (Blueprint $table): void {
-            $table->dropColumn('is_admin');
+            $table->dropColumn('avatar');
         });
     }
 };

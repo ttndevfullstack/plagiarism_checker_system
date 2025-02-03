@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User;
+
 /**
  * Convert data to lowercase dynamically.
  *
@@ -36,4 +38,19 @@ function dynamic_lowercase($data): mixed
 function generate_permission_name(string $module, string $resource, string $action): string
 {
     return dynamic_lowercase("{$module}:{$resource}:{$action}");
+}
+
+function user_avatar_dir(): ?string
+{
+    return config('plagiarism-checker.user_avatar_dir');
+}
+
+function user_avatar_file(): ?string
+{
+    return sprintf('avatar_%s_%s.webp', sha1(Str::uuid()), sha1(time()));
+}
+
+function user_avatar_path(User $user): ?string
+{
+    return $user->avatar ? url('public/storage/' . $user->avatar) : null;
 }

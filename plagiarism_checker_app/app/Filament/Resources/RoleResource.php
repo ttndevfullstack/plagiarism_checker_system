@@ -71,7 +71,8 @@ class RoleResource extends Resource
                     ->query(static fn (Builder $query) => $query->where('name', 'admin')),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()->color(Color::Blue),
+                Tables\Actions\DeleteAction::make(),
 
                 Action::make('Assign Permissions')
                     ->label('Assign Permissions')

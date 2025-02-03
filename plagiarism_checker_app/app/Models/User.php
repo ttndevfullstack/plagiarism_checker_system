@@ -11,10 +11,10 @@ use Filament\Models\Contracts\HasName;
 
 class User extends Authenticatable implements HasName
 {
-    use HasApiTokens;
-    use HasFactory;
-    use Notifiable;
     use HasRoles;
+    use HasFactory;
+    use HasApiTokens;
+    use Notifiable;
 
     public const ADMIN_ROLE = 'admin';
 
@@ -26,14 +26,15 @@ class User extends Authenticatable implements HasName
 
     protected $hidden = ['password', 'remember_token'];
 
-    protected $fillable = ['name', 'email', 'password'];
+    protected $fillable = ['first_name', 'last_name', 'full_name', 'email', 'dob', 'phone', 'address', 'avatar', 'password'];
 
     protected $casts = [
         'password' => 'hashed',
         'is_admin' => 'boolean',
+        'dob' => 'date',
         'email_verified_at' => 'datetime',
-        'last_login_timestamp' => 'datetime',
-        'profile_updated' => 'datetime',
+        'last_login_at' => 'datetime',
+        'profile_updated_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -42,9 +43,9 @@ class User extends Authenticatable implements HasName
     {
         parent::boot();
 
-        static::updating(function (User $user): void {
-            $this->updateFullNameAttribute();
-            $this->updateProfileTimestamp();
+        static::updating(static function (User $user): void {
+            $user->updateFullNameAttribute();
+            $user->updateProfileTimestampAttribute();
         });
     }
 
@@ -59,7 +60,30 @@ class User extends Authenticatable implements HasName
     # ==============================================================================
     public function getFilamentName(): string
     {
+        return $this->last_name;
+    }
+
+    public function getFullNameAttribute(): string
+    {
         return "{$this->first_name} {$this->last_name}";
+    }
+
+    public function updateFullNameAttribute(): void
+    {
+        if (! $this->isDirty(['first_name', 'last_name'])) {
+            return;
+        }
+
+        $this->full_name = "{$this->first_name} {$this->last_name}";
+    }
+
+    public function updateProfileTimestampAttribute(): void
+    {
+        if (! $this->isDirty(['name', 'email', 'full_name'])) {
+            return;
+        }
+
+        $this->profile_updated = now();
     }
 
 
@@ -80,23 +104,5 @@ class User extends Authenticatable implements HasName
     public function isStudent(): bool
     {
         return $this->hasRole(self::STUDENT_ROLE);
-    }
-
-    public function updateFullNameAttribute(): void
-    {
-        if (! $this->isDirty(['first_name', 'last_name'])) {
-            return;
-        }
-        
-        $this->full_name = "{$this->first_name} {$this->last_name}";
-    }
-
-    public function updateProfileTimestamp(): void
-    {
-        if (! $this->isDirty(['name', 'email', 'full_name'])) {
-            return;
-        }
-        
-        $this->profile_updated_at = now();
     }
 }

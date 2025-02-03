@@ -19,4 +19,13 @@ class EditUser extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        return array_filter($data, static fn ($field) => !is_null($field));
+    }
 }
