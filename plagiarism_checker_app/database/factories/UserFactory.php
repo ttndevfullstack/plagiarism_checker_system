@@ -25,7 +25,7 @@ class UserFactory extends Factory
             'last_name' => $lastName,
             'full_name' => "{$firstName} {$lastName}",
             'email' => $this->faker->unique()->safeEmail(),
-            'password' => Hash::make('password'),
+            'password' => Hash::make(config('plagiarism-checker.admin_accounts.password')),
             'dob' => $this->faker->date(),
             'phone' => $this->faker->optional()->phoneNumber(),
             'address' => $this->faker->optional()->address(),

@@ -21,7 +21,7 @@ class AdminMiddleware
     {
         $this->user = auth()->user();
 
-        if (!$this->user->isAdmin()) {
+        if (! $this->user->isAdmin()) {
             $this->redirectToUserLoginRoute();
         }
 

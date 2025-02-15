@@ -4,7 +4,12 @@
 # Run Composer CS check for plagiarism_checker_app (if it has a composer.json)
 if [ -f "plagiarism_checker_app/composer.json" ]; then
   echo "Running Composer CS for plagiarism_checker_app..."
-  cd plagiarism_checker_app
+  
+  # Check if the current directory is not plagiarism_checker_app, then cd into it
+  if [ "${PWD##*/}" != "plagiarism_checker_app" ]; then
+    cd plagiarism_checker_app || exit 1
+  fi
+
   composer cs
   if [ $? -ne 0 ]; then
     echo "Code style issues detected in plagiarism_checker_app. Trying to auto-fix..."

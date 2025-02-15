@@ -71,7 +71,10 @@ trait PermissionGenerator
         return $this;
     }
 
-    protected function execute(): self
+    /**
+     * @return Collection<Permission>
+     */
+    protected function execute(): Collection
     {
         if (empty($this->roleNames)) {
             $this->includeAllRole();
@@ -89,7 +92,7 @@ trait PermissionGenerator
             $this->assignPermissionsToRoles();
         }
 
-        return $this;
+        return $this->permissions;
     }
 
     private function initialize(string $module, string $resource): void

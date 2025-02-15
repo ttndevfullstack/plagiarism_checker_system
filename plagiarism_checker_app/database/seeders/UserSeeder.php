@@ -3,14 +3,23 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Traits\SeedValidator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
+    use SeedValidator; 
+
     public function run(): void
     {
-        $admin = User::create([
+        if ($this->isSeeded(User::class)) {
+            return;
+        }
+
+        $admin = User::firstOrCreate([
+            'email' => config('plagiarism-checker.admin_accounts.email'),
+        ], [
             'first_name' => 'I am',
             'last_name' => 'Admin',
             'full_name' => 'I am Admin',
@@ -24,6 +33,16 @@ class UserSeeder extends Seeder
 
         $admin->assignRole(User::ADMIN_ROLE);
 
-        User::factory()->count(100)->create();
+        $users = User::factory()->count(100)->create();
+        $teachers = $users->take(10);
+        $students = $users->skip(10)->take(90);
+
+        foreach ($teachers as $teacher) {
+            $teacher->assignRole(User::TEACHER_ROLE);
+        }
+
+        foreach ($students as $student) {
+            $student->assignRole(User::STUDENT_ROLE);
+        }
     }
 }

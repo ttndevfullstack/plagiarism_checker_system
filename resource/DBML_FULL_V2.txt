@@ -1,0 +1,140 @@
+Table users {
+  id bigint [pk]
+  email string [unique]
+  password string
+  first_name string
+  last_name string
+  full_name string
+  dob date
+  phone varchar(20)
+  address text
+  last_login_timestamp datetime
+  profile_updated datetime
+  created_at datetime
+  updated_at datetime
+}
+
+Table students {
+  id bigint [pk]
+  user_id bigint [ref: > users.id]
+  enrollment_date date
+}
+
+Table teachers {
+  id bigint [pk]
+  department varchar(100)
+  joined_date date
+}
+
+Table roles {
+  id bigint [pk]
+  name varchar(255) [unique]
+  description text
+  guard_name varchar(255)
+  created_at datetime
+  updated_at datetime
+}
+
+Table permissions {
+  id bigint [pk]
+  resource varchar(255)
+  name varchar(255) [unique]
+  guard_name varchar(255)
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table role_has_permissions {
+  role_id bigint [ref: > roles.id]
+  permission_id bigint [ref: > permissions.id]
+}
+
+Table model_has_permissions {
+  model_id bigint [ref: > users.id]
+  model_type varchar(255)
+  permission_id bigint [ref: > permissions.id]
+}
+
+Table model_has_roles {
+  model_id bigint [ref: > users.id]
+  model_type varchar(255)
+  role_id bigint [ref: > roles.id]
+}
+
+Table personal_access_tokens {
+  id bigint [pk]
+  tokenable_type varchar(255)
+  tokenable_id bigint
+  name varchar(255)
+  token varchar(64)
+  abilities text
+  last_used_at timestamp
+  expires_at timestamp
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table personal_password_reset {
+  email varchar(255) [pk]
+  token varchar(255)
+  created_at timestamp
+}
+
+Table migrations {
+  id int [pk]
+  migration varchar(255)
+  batch int
+}
+
+Table failed_jobs {
+  id bigint [pk]
+  uuid varchar(255)
+  connection text
+  queue text
+  payload longtext
+  exception longtext
+  failed_at timestamp
+}
+
+Table subjects {
+  subject_id bigint [pk]
+  name varchar(255) [unique]
+}
+
+Table documents {
+  document_id bigint [pk]
+  title varchar(255)
+  content text
+  embedding vector(1536)
+  subject_id bigint [ref: > subjects.subject_id]
+  created_by bigint [ref: > users.id]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table classes {
+  class_id bigint [pk]
+  name varchar(255) [unique]
+  teacher_id bigint [ref: > teachers.id]
+  subject_id bigint [ref: > subjects.subject_id]
+  room_number varchar(20)
+}
+
+Table enrollments {
+  id bigint [pk]
+  student_id bigint [ref: > students.id]
+  class_id bigint [ref: > classes.class_id]
+  enrollment_date date
+  grade varchar(5)
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table assignments {
+  id bigint [pk]
+  class_id bigint [ref: > classes.class_id]
+  teacher_id bigint [ref: > teachers.id]
+  assignment_date date
+  created_at timestamp
+  updated_at timestamp
+}

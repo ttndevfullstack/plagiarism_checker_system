@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\EditProfile;
+use App\Filament\Pages\Register;
 use App\Http\Middleware\EnsureFilamentPanelAccess;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -31,7 +32,7 @@ class UserPanelProvider extends PanelProvider
             ->brandLogo(asset('assets/images/logo-icon.svg'))
             ->login()
             ->profile(EditProfile::class)
-            ->registration()
+            ->registration(Register::class)
             ->passwordReset()
             ->colors([
                 'primary' => Color::Blue,

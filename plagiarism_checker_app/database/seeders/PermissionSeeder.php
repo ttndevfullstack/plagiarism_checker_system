@@ -9,15 +9,17 @@ class PermissionSeeder extends Seeder
 {
     use PermissionGenerator;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
 
         $this->call([
             UserAccountPermissionSeeder::class,
             UserRolePermissionSeeder::class,
+            StudentPermissionSeeder::class,
+            TeacherPermissionSeeder::class,
+            ClassRoomPermissionSeeder::class,
+            AssignmentPermissionSeeder::class,
+            EnrollmentPermissionSeeder::class,
         ]);
     }
 }

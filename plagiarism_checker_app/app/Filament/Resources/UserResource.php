@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Components\Actions\BaseActionGroup;
+use App\Filament\Components\Filters\BaseFilterGroup;
 use App\Filament\Components\Tables\RoleSelector;
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
@@ -47,7 +49,7 @@ class UserResource extends Resource
                     ->password()
                     ->confirmed()
                     ->required(static fn ($record) => is_null($record)),
-                    Forms\Components\TextInput::make('password_confirmation')
+                Forms\Components\TextInput::make('password_confirmation')
                     ->password()
                     ->label('Confirm Password')
                     ->required(static fn ($record) => is_null($record)),
@@ -66,19 +68,19 @@ class UserResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('roles.name')
                     ->searchable()
+                    ->default(__('Not registered'))
                     ->formatStateUsing(static fn ($state) => ucfirst($state)),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 RoleSelector::show(),
+                ...BaseFilterGroup::show(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make()->color(Color::Blue),
-                Tables\Actions\DeleteAction::make(),
+                ...BaseActionGroup::show(),
 
                 Action::make('Assign Role')
                     ->label('Assign Role')
@@ -86,7 +88,7 @@ class UserResource extends Resource
                     ->color(Color::Green)
                     ->action(static function (User $user, array $data): void {
                         try {
-                            $roleNames = Role::whereIn('id', $data['roles'])->get()->pluck('name')->toArray();
+                            $roleNames = Role::whereIn('id', $data['role_ids'])->get()->pluck('name')->toArray();
                             $user->syncRoles($roleNames);
 
                             Notification::make()
@@ -103,13 +105,13 @@ class UserResource extends Resource
                         }
                     })
                     ->form([
-                        Forms\Components\CheckboxList::make('role_id')
+                        Forms\Components\CheckboxList::make('role_ids')
                             ->label('Roles')
                             ->options(Role::all()->pluck('name', 'id')->toArray())
                             ->columns(2)
                             ->reactive()
-                            ->default(static fn (User $user) => [$user->roles->first()->id])
-                            ->afterStateUpdated(static fn ($state, callable $set) => !empty($state) && $set('roles', [array_values($state)[1]])),
+                            ->default(static fn (User $user) => $user->roles->isNotEmpty() ? [$user->roles->first()->id] : [])
+                            ->afterStateUpdated(static fn ($state, callable $set) => !empty($state) && $set('role_ids', [array_pop($state)])),
                     ])
                     ->requiresConfirmation(),
             ])

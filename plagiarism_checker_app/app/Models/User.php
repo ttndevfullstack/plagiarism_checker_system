@@ -5,9 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Laravel\Sanctum\HasApiTokens;
-use Spatie\Permission\Traits\HasRoles;
 use Filament\Models\Contracts\HasName;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements HasName
 {
@@ -34,7 +35,7 @@ class User extends Authenticatable implements HasName
         'dob' => 'date',
         'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
-        'profile_updated_at' => 'datetime',
+        'profile_updated_at' => 'datetime', 
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -43,15 +44,30 @@ class User extends Authenticatable implements HasName
     {
         parent::boot();
 
+        static::creating(static function (User $user): void {
+            $user->updateFullNameAttribute();
+        });
+
         static::updating(static function (User $user): void {
             $user->updateFullNameAttribute();
             $user->updateProfileTimestampAttribute();
         });
     }
 
+
+
     # ==============================================================================
     # Relationships
     # ==============================================================================
+    public function student(): HasOne
+    {
+        return $this->hasOne(Student::class);
+    }
+
+    public function teacher(): HasOne
+    {
+        return $this->hasOne(Teacher::class);
+    }
 
 
 
@@ -79,11 +95,11 @@ class User extends Authenticatable implements HasName
 
     public function updateProfileTimestampAttribute(): void
     {
-        if (! $this->isDirty(['name', 'email', 'full_name'])) {
+        if (! $this->isDirty(['first_name', 'last_name', 'full_name', 'email', 'dob', 'phone', 'address', 'avatar'])) {
             return;
         }
 
-        $this->profile_updated = now();
+        $this->profile_updated_at = now();
     }
 
 
@@ -93,7 +109,7 @@ class User extends Authenticatable implements HasName
     # ==============================================================================
     public function isAdmin(): bool
     {
-        return $this->is_admin || $this->hasRole(self::ADMIN_ROLE);
+        return $this->hasRole(self::ADMIN_ROLE);
     }
 
     public function isTeacher(): bool
