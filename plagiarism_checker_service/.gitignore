@@ -1,0 +1,55 @@
+# Python bytecode files
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+env/
+
+# Flask and Python cache
+instance/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+
+# Log files
+*.log
+logs/
+debug.log
+
+# Environment variables
+.env
+*.env
+config.json
+secrets.json
+
+# Database files
+*.sqlite3
+*.db
+
+# Compiled files
+*.so
+*.dll
+*.dylib
+
+# Editor and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Pip dependency resolution files
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Jupyter Notebook checkpoints (if using Jupyter)
+.ipynb_
+
+# App
+*storage
+*config.py
+.qodo
+volumes

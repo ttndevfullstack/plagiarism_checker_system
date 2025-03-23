@@ -18,7 +18,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "prepare": "husky install"
+    "prepare": "GIT_DIR=../../.git husky install"
   },
   "devDependencies": {
     "axios": "^1.6.4",

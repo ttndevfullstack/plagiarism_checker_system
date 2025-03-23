@@ -1,0 +1,7 @@
+Flask
+openai
+pymilvus
+PyPDF2
+python-docx
+uuid
+sentence_transformers
