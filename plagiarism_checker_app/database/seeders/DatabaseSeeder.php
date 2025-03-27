@@ -14,9 +14,11 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             TeacherSeeder::class,
             StudentSeeder::class,
+            SubjectSeeder::class,
             ClassRoomSeeder::class,
             AssignmentSeeder::class,
             EnrollmentSeeder::class,
+            DocumentSeeder::class,
         ]);
     }
 }

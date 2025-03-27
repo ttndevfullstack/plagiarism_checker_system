@@ -3,6 +3,7 @@
 namespace App\Filament\User\Resources;
 
 use App\Filament\Components\Forms\Selectors\TeacherSelector;
+use App\Filament\Components\Forms\Selectors\SubjectSelector;
 use App\Filament\User\Resources\ClassRoomResource\Pages;
 use App\Models\ClassRoom;
 use Filament\Forms;
@@ -34,7 +35,20 @@ class ClassRoomResource extends Resource
                     ->required()
                     ->maxLength(255),
 
+                SubjectSelector::show(),
+
                 TeacherSelector::show(),
+
+                Forms\Components\DatePicker::make('start_date')
+                    ->required()
+                    ->native(false)
+                    ->closeOnDateSelection(),
+
+                Forms\Components\DatePicker::make('end_date')
+                    ->required()
+                    ->native(false)
+                    ->closeOnDateSelection()
+                    ->after('start_date'),
             ]);
     }
 
@@ -49,6 +63,12 @@ class ClassRoomResource extends Resource
 
                 Tables\Columns\TextColumn::make('name')
                     ->label('Class Name')
+                    ->sortable()
+                    ->searchable()
+                    ->formatStateUsing(static fn ($state) => ucfirst($state)),
+                
+                Tables\Columns\TextColumn::make('subject.name')
+                    ->label('Subject Name')
                     ->sortable()
                     ->searchable()
                     ->formatStateUsing(static fn ($state) => ucfirst($state)),

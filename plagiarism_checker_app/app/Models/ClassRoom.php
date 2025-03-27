@@ -15,9 +15,22 @@ class ClassRoom extends Model
     protected $table = 'classes';
 
     protected $fillable = [
-        'name',
+        'subject_id',
         'teacher_id',
+        'name',
         'room_number',
+        'start_date',
+        'end_date',
+    ];
+
+    protected $casts = [
+        'room_number' => 'integer',
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'end_date' => 'date',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     protected static function boot(): void
@@ -57,6 +70,16 @@ class ClassRoom extends Model
     public function assignments(): HasMany
     {
         return $this->hasMany(Assignment::class, 'class_id');
+    }
+
+    public function subject(): BelongsTo
+    {
+        return $this->belongsTo(Subject::class, 'subject_id');
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(Document::class, 'class_id');
     }
 
 

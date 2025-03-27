@@ -20,6 +20,8 @@ class RoleResource extends Resource
 {
     protected static ?string $model = Role::class;
 
+    protected static ?int $navigationSort = 2;
+
     protected static ?string $navigationGroup = 'Access Management';
 
     protected static ?string $navigationIcon = 'heroicon-c-shield-check';

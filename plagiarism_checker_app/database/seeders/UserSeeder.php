@@ -13,10 +13,27 @@ class UserSeeder extends Seeder
 
     public function run(): void
     {
-        if ($this->isSeeded(User::class)) {
+        if ($this->isSkipSeed(User::class)) {
             return;
         }
+        
+        $this->createAdmin();
 
+        $users = User::factory()->count(50)->create();
+        $teachers = $users->take(10);
+        $students = $users->skip(10)->take(40);
+
+        foreach ($teachers as $teacher) {
+            $teacher->assignRole(User::TEACHER_ROLE);
+        }
+
+        foreach ($students as $student) {
+            $student->assignRole(User::STUDENT_ROLE);
+        }
+    }
+
+    private function createAdmin(): void
+    {
         $admin = User::firstOrCreate([
             'email' => config('plagiarism-checker.admin_accounts.email'),
         ], [
@@ -32,17 +49,5 @@ class UserSeeder extends Seeder
         ]);
 
         $admin->assignRole(User::ADMIN_ROLE);
-
-        $users = User::factory()->count(100)->create();
-        $teachers = $users->take(10);
-        $students = $users->skip(10)->take(90);
-
-        foreach ($teachers as $teacher) {
-            $teacher->assignRole(User::TEACHER_ROLE);
-        }
-
-        foreach ($students as $student) {
-            $student->assignRole(User::STUDENT_ROLE);
-        }
     }
 }

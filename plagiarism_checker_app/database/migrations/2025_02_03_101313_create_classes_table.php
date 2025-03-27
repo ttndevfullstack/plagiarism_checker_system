@@ -14,13 +14,14 @@ return new class extends Migration
 
         Schema::create('classes', static function (Blueprint $table): void {
             $table->id();
-            $table->string('name', 255)->unique();
-            $table->foreignId('teacher_id')->constrained('teachers')->cascadeOnDelete();
+            $table->foreignId('subject_id')->constrained('subjects')->onDelete('cascade');
+            $table->foreignId('teacher_id')->constrained('teachers')->onDelete('cascade');
+            $table->string('name', 100);
             $table->string('room_number', 20);
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
             $table->timestamps();
             $table->softDeletes();
-
-            $table->index('teacher_id');
         });
     }
 

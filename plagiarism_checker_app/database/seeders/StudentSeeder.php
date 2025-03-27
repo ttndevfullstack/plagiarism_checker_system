@@ -13,7 +13,7 @@ class StudentSeeder extends Seeder
 
     public function run(): void
     {
-        if ($this->isSeeded(Student::class)) {
+        if ($this->isSkipSeed(Student::class)) {
             return;
         }
 

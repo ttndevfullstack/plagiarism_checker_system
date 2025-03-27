@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Components\Forms\Selectors\StudentSelector;
 use App\Filament\Components\Forms\Selectors\TeacherSelector;
+use App\Filament\Components\Forms\Selectors\SubjectSelector;
 use App\Filament\Resources\ClassRoomResource\Pages;
 use App\Models\ClassRoom;
 use App\Models\Enrollment;
@@ -19,6 +20,8 @@ use Filament\Tables\Table;
 class ClassRoomResource extends Resource
 {
     protected static ?string $model = ClassRoom::class;
+
+    protected static ?int $navigationSort = 4;
 
     protected static ?string $navigationGroup = 'Class Management';
 
@@ -39,7 +42,20 @@ class ClassRoomResource extends Resource
                     ->required()
                     ->maxLength(255),
 
+                SubjectSelector::show(),
+
                 TeacherSelector::show(),
+
+                Forms\Components\DatePicker::make('start_date')
+                    ->required()
+                    ->native(false)
+                    ->closeOnDateSelection(),
+
+                Forms\Components\DatePicker::make('end_date')
+                    ->required()
+                    ->native(false)
+                    ->closeOnDateSelection()
+                    ->after('start_date'),
             ]);
     }
 
@@ -58,6 +74,12 @@ class ClassRoomResource extends Resource
                     ->searchable()
                     ->formatStateUsing(static fn ($state) => ucfirst($state)),
 
+                Tables\Columns\TextColumn::make('subject.name')
+                    ->label('Subject Name')
+                    ->sortable()
+                    ->searchable()
+                    ->formatStateUsing(static fn ($state) => ucfirst($state)),
+
                 Tables\Columns\TextColumn::make('teacher.user.fullname')
                     ->label('Teacher Name')
                     ->sortable(),
@@ -71,6 +93,33 @@ class ClassRoomResource extends Resource
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     ...\App\Filament\Components\Actions\BaseActionGroup::show(),
+
+                    Tables\Actions\Action::make('action_assign_subject')
+                        ->color(Color::Green)
+                        ->label(__('Assign Subject'))
+                        ->icon('heroicon-s-clipboard-document-check')
+                        ->modalButton(__('Assign'))
+                        ->form([
+                            SubjectSelector::show()
+                                ->default(static fn ($record) => $record->subject_id),
+                        ])
+                        ->action(static function (array $data, ClassRoom $record): void {
+                            try {
+                                $record->subject_id = $data['subject_id'];
+                                $record->save();
+
+                                Notification::make()
+                                    ->title(__('Assigned successfully'))
+                                    ->success()
+                                    ->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()
+                                    ->title(__('Assigned failure'))
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->successNotificationTitle(__('Classes assigned successfully!')),
 
                     Tables\Actions\Action::make('action_assign_teacher')
                         ->color(Color::Green)
@@ -100,7 +149,7 @@ class ClassRoomResource extends Resource
                         })
                         ->successNotificationTitle(__('Classes assigned successfully!')),
 
-                    Tables\Actions\Action::make('action_assign_students')
+                        Tables\Actions\Action::make('action_assign_students')
                         ->color(Color::Green)
                         ->label(__('Assign Students'))
                         ->icon('heroicon-s-clipboard-document-check')
