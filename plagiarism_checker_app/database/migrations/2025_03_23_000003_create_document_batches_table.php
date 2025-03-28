@@ -8,18 +8,18 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('subjects', function (Blueprint $table) {
+        Schema::create('document_batches', function (Blueprint $table) {
             $table->id();
-            $table->string('code', 10)->unique();
+            $table->foreignId('document_id')->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('media_id')->nullable();
             $table->string('name', 100);
-            $table->text('description')->nullable();
+            $table->json('metadata')->nullable();
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('subjects');
+        Schema::dropIfExists('document_batches');
     }
 };

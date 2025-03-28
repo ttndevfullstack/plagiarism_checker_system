@@ -9,6 +9,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 
 class SubjectResource extends Resource
 {
@@ -28,7 +29,20 @@ class SubjectResource extends Resource
             ->schema([
                 Forms\Components\TextInput::make('name')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->reactive()
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        if ($state) {
+                            $code = collect(explode(' ', $state))
+                                ->map(fn ($word) => Str::upper(Str::substr($word, 0, 1)))
+                                ->join('');
+                            $set('code', $code);
+                        }
+                    }),
+                    
+                Forms\Components\TextInput::make('code')
+                    ->maxLength(10)
+                    ->unique(ignoreRecord: true),
                     
                 Forms\Components\Textarea::make('description')
                     ->maxLength(1000)
@@ -40,6 +54,10 @@ class SubjectResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('code')
+                    ->searchable()
+                    ->sortable(),
+                    
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),

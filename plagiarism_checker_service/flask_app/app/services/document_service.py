@@ -18,7 +18,7 @@ class DocumentService:
         self.text_service = ProcessTextService()
         self.embedding_service = EmbeddingModelFactory.get_model(embedding_model)
 
-    def upload_document(self, file: FileStorage) -> bool:
+    def upload_document(self, file: FileStorage, metadata: dict = None) -> bool:
         print("👉 Starting upload documents")
 
         file_path = self.file_handler.save_file(file)
@@ -29,16 +29,25 @@ class DocumentService:
         if isinstance(embedding, np.ndarray):
             embedding = embedding.tolist()
 
-        insert_count = self.insert_to_db(embedding, processed_text)
+        subject_code = metadata.get('subject_code') if metadata else None
+        
+        insert_count = self.insert_to_db(
+            embedding, 
+            processed_text,
+            subject_code=subject_code,
+        )
 
         print("✅ Uploaded documents successfully")
         return insert_count > 0
-        
 
-    def insert_to_db(self, embedding, source_text, url=None) -> int:
+    def insert_to_db(self, embedding, source_text, subject_code=None, category=None, metadata=None) -> int:
         """Insert embeddings into Milvus"""
         try:
-            data = [[source_text], [url], [embedding]]
+            data = [
+                [source_text],
+                [subject_code],
+                [embedding]
+            ]
             insert_result = self.collection.insert(data)
 
             print(f"   ✅ Inserted {len(insert_result.primary_keys)} document(s) into database successfully")

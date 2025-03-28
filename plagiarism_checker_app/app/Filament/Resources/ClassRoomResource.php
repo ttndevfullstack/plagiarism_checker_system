@@ -95,9 +95,11 @@ class ClassRoomResource extends Resource
                     ...\App\Filament\Components\Actions\BaseActionGroup::show(),
 
                     Tables\Actions\Action::make('action_assign_subject')
+                        ->icon('heroicon-s-book-open')
                         ->color(Color::Green)
                         ->label(__('Assign Subject'))
-                        ->icon('heroicon-s-clipboard-document-check')
+                        ->modalIcon('heroicon-o-book-open')
+                        ->modalHeading('Assign Subjects')
                         ->modalButton(__('Assign'))
                         ->form([
                             SubjectSelector::show()
@@ -122,9 +124,11 @@ class ClassRoomResource extends Resource
                         ->successNotificationTitle(__('Classes assigned successfully!')),
 
                     Tables\Actions\Action::make('action_assign_teacher')
+                        ->icon('heroicon-s-academic-cap')
                         ->color(Color::Green)
                         ->label(__('Assign Teacher'))
-                        ->icon('heroicon-s-clipboard-document-check')
+                        ->modalIcon('heroicon-o-academic-cap')
+                        ->modalHeading('Assign Teachers')
                         ->modalButton(__('Assign'))
                         ->form([
                             TeacherSelector::show()
@@ -149,10 +153,12 @@ class ClassRoomResource extends Resource
                         })
                         ->successNotificationTitle(__('Classes assigned successfully!')),
 
-                        Tables\Actions\Action::make('action_assign_students')
+                    Tables\Actions\Action::make('action_assign_students')
+                        ->icon('heroicon-s-users')
                         ->color(Color::Green)
                         ->label(__('Assign Students'))
-                        ->icon('heroicon-s-clipboard-document-check')
+                        ->modalIcon('heroicon-o-users')
+                        ->modalHeading('Assign Students')
                         ->modalButton(__('Assign'))
                         ->form([
                             StudentSelector::show()
