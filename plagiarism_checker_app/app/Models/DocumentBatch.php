@@ -2,29 +2,58 @@
 
 namespace App\Models;
 
+use App\Enums\DocumentStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Awcodes\Curator\Models\Media;
 
 class DocumentBatch extends Model
 {
     protected $fillable = [
-        'document_id',
         'media_id',
+        'media_path_id',
+        'status',
         'metadata'
     ];
 
     protected $casts = [
         'metadata' => 'array',
+        'status' => DocumentStatus::class,
     ];
-
-    public function document(): BelongsTo
-    {
-        return $this->belongsTo(Document::class);
-    }
 
     public function media(): BelongsTo
     {
-        return $this->belongsTo(Media::class);
+        return $this->belongsTo(Media::class, 'media_id');
+    }
+    
+    public function mediaPath(): BelongsTo
+    {
+        return $this->belongsTo(Media::class, 'media_path_id');
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(Document::class, 'batch_id');
+    }
+
+    public function isPending(): bool
+    {
+        return $this->status === DocumentStatus::PENDING;
+    }
+
+    public function isProcessing(): bool
+    {
+        return $this->status === DocumentStatus::PROCESSING;
+    }
+
+    public function isCompleted(): bool
+    {
+        return $this->status === DocumentStatus::COMPLETED;
+    }
+    
+    public function isFailed(): bool
+    {
+        return $this->status === DocumentStatus::FAILED;
     }
 }

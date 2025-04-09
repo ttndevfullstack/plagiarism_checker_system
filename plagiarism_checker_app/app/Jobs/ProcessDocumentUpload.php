@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Enums\DocumentStatus;
 use App\Models\Document;
-use App\Models\DocumentStatus;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -26,38 +26,49 @@ class ProcessDocumentUpload implements ShouldQueue
     public function handle()
     {
         $this->document->update(['status' => DocumentStatus::PROCESSING]);
-        
+
         $media = $this->document->media;
-        $file = Storage::disk($media->disk)->path($media->path);
+        $filePath = Storage::disk($media->disk)->path($media->path);
         
-        if (in_array($media->ext, ['zip', 'rar'])) {
-            $this->processArchive($file);
-        } else {
-            $this->processSingleFile($file);
+        if (!file_exists($filePath) || !is_readable($filePath)) {
+            $this->document->update(['status' => DocumentStatus::FAILED]);
+            echo "File not exits at this path: $filePath";
+            return;
         }
+
+        $this->processFile($filePath);
     }
 
-    private function processSingleFile($file)
+    private function processFile(string $filePath): void
     {
-        $response = Http::attach(
-            'file', 
-            file_get_contents($file), 
-            $this->document->original_name
-        )->post(env('FLASK_APP_URL') . '/data/upload', [
-            'metadata' => $this->document->metadata
+        $request = Http::withHeaders([
+            'Accept' => 'application/json'
         ]);
+
+        // Attach file with correct filename parameter
+        $request->attach(
+            'files', 
+            fopen($filePath, 'r'),
+            $this->document->original_name,
+            ['Content-Type' => mime_content_type($filePath)]
+        );
+
+        $response = $request->post(
+            rtrim(env('FLASK_APP_URL', 'http://localhost:5000'), '/') . '/v1/api/data/upload',
+            [
+                'document_id' => $this->document->id,
+                'subject_code' => $this->document->subject?->code ?? '',
+                'metadata' => json_encode($this->document->metadata ?? [])
+            ]
+        );
+        echo $response;
 
         $this->updateDocumentStatus($response->successful());
     }
 
-    private function processArchive($file)
-    {
-        // Process archive file
-    }
-
     private function updateDocumentStatus($successful)
     {
-        $status = $successful ? DocumentStatus::PROCESSED : DocumentStatus::FAILED;
+        $status = $successful ? DocumentStatus::COMPLETED : DocumentStatus::FAILED;
         $this->document->update(['status' => $status]);
     }
 }

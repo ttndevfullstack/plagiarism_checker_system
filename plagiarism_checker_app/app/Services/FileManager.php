@@ -203,6 +203,18 @@ class FileManager
     }
 
     /**
+     * Create a new directory.
+     *
+     * @param string $directory
+     */
+    public function createDirectoryIfNotExist(string $directory): bool
+    {
+        if ($this->exists($directory)) { return true; }
+
+        return Storage::disk($this->disk)->makeDirectory($directory);
+    }
+
+    /**
      * Delete a directory.
      *
      * @param string $directory

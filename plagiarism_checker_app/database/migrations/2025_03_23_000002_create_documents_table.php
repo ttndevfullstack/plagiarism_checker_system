@@ -11,15 +11,14 @@ return new class extends Migration
     {
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('class_id')->constrained('classes')->onDelete('cascade')->nullable();
+            $table->foreignId('class_id')->nullable()->constrained('classes')->onDelete('cascade');
             $table->foreignId('subject_id')->constrained('subjects')->onDelete('cascade');
             $table->foreignId('uploaded_by')->constrained('users')->onDelete('cascade');
             $table->unsignedBigInteger('media_id')->nullable();
+            $table->unsignedBigInteger('batch_id')->nullable();
+            $table->string('status')->default(DocumentStatus::PENDING->value);
             $table->string('original_name')->nullable();
             $table->text('description')->nullable();
-            $table->string('status')->default(DocumentStatus::PENDING->value);
-            $table->integer('progress')->default(0);
-            $table->unsignedBigInteger('file_size')->default(0);
             $table->json('metadata')->nullable();
             $table->timestamps();
             $table->softDeletes();

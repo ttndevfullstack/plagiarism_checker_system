@@ -62,8 +62,8 @@ class DocumentResource extends Resource
                     ->formatStateUsing(fn($state) => number_format($state / 1024 / 1024, 2) . ' MB'),
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn(DocumentStatus $state): string => $state->color())
-                    ->formatStateUsing(fn(DocumentStatus $state): string => $state->label()),
+                    ->color(fn(DocumentStatus $state): string => $state->getColor())
+                    ->formatStateUsing(fn(DocumentStatus $state): string => $state->getLabel()),
                 // ProgressColum::make('progress'),
                 TextColumn::make('created_at')->dateTime(),
             ])

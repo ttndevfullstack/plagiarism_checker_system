@@ -3,14 +3,12 @@
 namespace App\Filament\Resources;
 
 use App\Enums\DocumentStatus;
-use App\Models\Document;
-use App\Filament\Resources\DocumentBatchResource\Pages;
+    use App\Filament\Resources\DocumentBatchResource\Pages;
 use App\Models\DocumentBatch;
 use Filament\Forms;
 use Filament\Tables;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ProgressColumn;
 use Awcodes\Curator\Components\Forms\CuratorPicker;
 use Awcodes\Curator\Components\Tables\CuratorColumn;
 
@@ -33,14 +31,17 @@ class DocumentBatchResource extends Resource
                 CuratorPicker::make('media_id')
                     ->label('Document')
                     ->acceptedFileTypes([
-                        'application/zip',
-                        'application/x-rar-compressed',
-                        'application/vnd.rar',
-                        'application/x-rar',    
+                        'application/zip',                   // Standard ZIP files
+                        'application/x-zip-compressed',      // Windows compressed ZIP files
+                        'multipart/x-zip',                   // Older ZIP format
+                        'application/x-rar-compressed',      // RAR files
+                        'application/vnd.rar',               // Another RAR MIME type
+                        'application/x-rar',                 // RAR format
                     ])
                     ->maxSize(30720000)
                     ->required(),
-                CuratorPicker::make('path_file')
+
+                CuratorPicker::make('media_path_id')
                     ->label('Path File (Excel)')
                     ->acceptedFileTypes([
                         'application/vnd.ms-excel', // For .xls
@@ -55,15 +56,31 @@ class DocumentBatchResource extends Resource
     {
         return $table
             ->columns([
-                CuratorColumn::make('name')
+                CuratorColumn::make('media')
+                    ->label('Archive File')
                     ->size(40),
-                CuratorColumn::make('metadata')
+                    
+                CuratorColumn::make('mediaPath')
+                    ->label('Excel File')
                     ->size(40),
-                CuratorColumn::make('media.size')
-                    ->size(40),
-                CuratorColumn::make('media.ext')
-                    ->size(40),
-                TextColumn::make('created_at')->dateTime(),
+                    
+                TextColumn::make('media.size')
+                    ->label('Archive Size')
+                    ->formatStateUsing(fn ($state) => number_format($state / 1024 / 1024, 2) . ' MB'),
+                    
+                TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (DocumentStatus $state): string => $state->getColor())
+                    ->formatStateUsing(fn (DocumentStatus $state): string => $state->getLabel()),
+                    
+                TextColumn::make('documents_count')
+                    ->label('Total Files')
+                    ->counts('documents'),
+                    
+                TextColumn::make('created_at')
+                    ->label('Upload Date')
+                    ->dateTime()
+                    ->sortable(),
             ])
             ->defaultSort('created_at', 'desc');
     }

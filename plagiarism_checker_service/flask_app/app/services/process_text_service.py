@@ -7,7 +7,8 @@ class ProcessTextService:
         text = re.sub(r'[_-]{3,}', ' ', text) # Remove long sequences of underscores or dashes
         text = re.sub(r'\s+', ' ', text)  # Remove extra spaces
         text = re.sub(r'[^\w\s]', '', text)  # Remove special characters
-        
+        #remove stop works
+
         print("   ✅ Preprocessed file successfully")
         return text.lower().strip()
 

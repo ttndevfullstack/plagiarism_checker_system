@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Awcodes\Curator\Models\Media;
 
 /**
  * Convert data to lowercase dynamically.
@@ -53,4 +54,19 @@ function user_avatar_file(): ?string
 function user_avatar_path(User $user): ?string
 {
     return $user->avatar ? url('public/storage/' . $user->avatar) : null;
+}
+
+function media_path(string $mediaPath): string
+{
+    return asset("storage/$mediaPath");
+}
+
+function media_path_by_id(int|string $mediaId): ?string
+{
+    $media = Media::find($mediaId);
+    if (!$media) {
+        return null;
+    }
+
+    return asset('storage/' . Media::find($mediaId)->path);
 }
