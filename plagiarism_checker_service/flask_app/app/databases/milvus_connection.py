@@ -1,63 +1,33 @@
-from pymilvus import connections, db, MilvusClient, utility, Collection, CollectionSchema, FieldSchema, DataType
+from pymilvus import db, MilvusClient, Collection, CollectionSchema, FieldSchema, DataType
+from pymilvus.exceptions import MilvusException
 from flask_app.config import Config
-
+from flask_app.app.helpers import Helper
+import logging
 
 class MilvusConnection:
-    _instance = None
-    _initialized = False
+    _client = None
+    
+    @staticmethod
+    def get_client() -> MilvusClient:
+        """ Get MilvusClient from singleton instance """
+        if MilvusConnection._client is None:
+            try:
+                protocol = "https" if Helper.isProduction() else "http"
+                MilvusConnection._client = MilvusClient(
+                    uri=f"{protocol}://{Config.MILVUS_DB_HOST}:{Config.MILVUS_DB_PORT}",
+                    user=Config.MILVUS_DB_USERNAME,
+                    password=Config.MILVUS_DB_PASSWORD,
+                    db_name=Config.MILVUS_DB_NAME,
+                    token=f"{Config.MILVUS_DB_USERNAME}:{Config.MILVUS_DB_PASSWORD}",
+                )
+            except MilvusException as e:
+                logging.error(f"Failed to connect to Milvus: {e}")
+                raise ConnectionError("Could not establish connection to Milvus.") from e
+            except Exception as e:
+                logging.exception("Unexpected error while connecting to Milvus")
+                raise
 
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super(MilvusConnection, cls).__new__(cls)
-        if not cls._initialized:
-            cls._instance._initialize_connection()
-            cls._initialized = True
-        return cls._instance
-
-    def _initialize_connection(self):
-        """Initialize the Milvus connection."""
-        try:
-            MILVUS_ALIAS = Config.MILVUS_ALIAS
-            MILVUS_DB_HOST = Config.MILVUS_DB_HOST
-            MILVUS_DB_PORT = Config.MILVUS_DB_PORT
-
-            # Check if connection exists and disconnect if it does
-            if connections.has_connection(MILVUS_ALIAS):
-                connections.disconnect(MILVUS_ALIAS)
-
-            # Create new connection
-            connections.connect(
-                alias=MILVUS_ALIAS, 
-                host=MILVUS_DB_HOST, 
-                port=MILVUS_DB_PORT
-            )
-            print("✅ Connected to Milvus database.")
-
-            # Create database if needed
-            self.create_database()
-
-            # Initialize MilvusClient
-            self.client = MilvusClient(
-                uri=f'http://{MILVUS_DB_HOST}:{MILVUS_DB_PORT}',
-                token="", # Add token if needed
-                db_name=Config.MILVUS_DB_NAME
-            )
-            
-            # Create collection after client is initialized
-            self.create_collection()
-
-        except Exception as e:
-            print(f"❌ Failed to initialize Milvus connection: {str(e)}")
-            raise
-
-    def get_connection(self):
-        """Return the Milvus connection."""
-        return self.client
-
-    def close_connection(self):
-        """Close the Milvus connection."""
-        connections.disconnect(Config.MILVUS_ALIAS)
-        print("✅ Disconnected from Milvus database.")
+        return MilvusConnection._client
 
     def create_database(self):
         """Create a database if it doesn't exist."""

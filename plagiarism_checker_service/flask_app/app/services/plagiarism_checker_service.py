@@ -10,7 +10,6 @@ from flask_app.app.factories.embedding_model_factory import EmbeddingModelFactor
 
 class PlagiarismCheckerService:
     def __init__(self, embedding_model: str):
-        self.milvus_database = current_app.milvus_connection.get_connection()
         self.collection = Collection(Config.DOCUMENT_COLLECTION_NAME)
         self.collection.load()
         self.file_handler = FileHandler()

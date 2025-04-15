@@ -1,5 +1,5 @@
 from pymilvus import MilvusClient, DataType
-from flask_app.app.databases.milvus_connection add_documents_schema MilvusConnection
+from flask_app.app.databases.milvus_connection import MilvusConnection
 
 class DocumentMigration:
     def __init__(self):
