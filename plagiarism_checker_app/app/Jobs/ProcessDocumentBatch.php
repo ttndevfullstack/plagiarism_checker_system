@@ -3,36 +3,22 @@
 namespace App\Jobs;
 
 use App\Enums\DocumentStatus;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use App\Models\DocumentBatch;
 
-class ProcessDocumentBatch implements ShouldQueue
+class ProcessDocumentBatch
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    protected $documentBatch;
-
-    public function __construct(DocumentBatch $documentBatch)
+    public static function dispatch(DocumentBatch $documentBatch)
     {
-        $this->documentBatch = $documentBatch;
-    }
-
-    public function handle()
-    {
-        $this->documentBatch->update(['status' => DocumentStatus::PROCESSING]);
+        $documentBatch->update(['status' => DocumentStatus::PROCESSING]);
 
         try {
-            foreach ($this->documentBatch->documents as $document) {
+            foreach ($documentBatch->documents as $document) {
                 ProcessDocumentUpload::dispatch($document);
             }
 
-            $this->documentBatch->update(['status' => DocumentStatus::COMPLETED]);
+            $documentBatch->update(['status' => DocumentStatus::COMPLETED]);
         } catch (\Throwable $th) {
-            $this->documentBatch->update(['status' => DocumentStatus::FAILED]);
+            $documentBatch->update(['status' => DocumentStatus::FAILED]);
             throw $th;
         }
     }
