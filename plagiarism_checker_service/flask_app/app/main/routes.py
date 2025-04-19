@@ -17,12 +17,22 @@ def pong():
 
 @bp_v1.route("/migrate")
 def migrate():
-    success = Migration.run()
+    success = Migration.up()
 
     if success:
       return jsonify({"success": True, "message": "Migrate data is successfully"})
     else:
       return jsonify({"success": False, "message": "Migrate data is failed"})
+
+
+@bp_v1.route("/rollback")
+def rollback():
+    success = Migration.down()
+
+    if success:
+      return jsonify({"success": True, "message": "Rollback data is successfully"})
+    else:
+      return jsonify({"success": False, "message": "Rollback data is failed"})
 
 
 @bp_v1.route("/show-db")
@@ -32,59 +42,6 @@ def show():
     )
     return jsonify(res)
 
-
-@bp_v1.route("/data/upload/test")
-def test_upload_data():
-    document_service = DocumentService(Config.MINILM_EMBEDDING_MODEL)
-    result = document_service.upload_document("Kubernetes services, support, and tools are widely available")
-    return jsonify({"success": True, "data": result})
-
-
-@bp_v1.route("/data/check/test", methods=["POST"])
-def test_search_data():
-    try:
-        data = request.get_json()
-        if not data or 'text' not in data:
-            return jsonify({
-                "success": False,
-                "error": "No text provided in request body",
-                "data": {
-                    "matches": [],
-                    "total": 0
-                }
-            }), 400
-
-        document_service = DocumentService(Config.MINILM_EMBEDDING_MODEL)
-        search_results = document_service.search_documents(data['text'])
-        
-        if search_results is False:
-            return jsonify({
-                "success": False,
-                "error": "Failed to search documents",
-                "data": {
-                    "matches": [],
-                    "total": 0
-                }
-            }), 500
-            
-        return jsonify({
-            "success": True,
-            "data": {
-                "matches": search_results,
-                "total": len(search_results)
-            }
-        })
-        
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e),
-            "data": {
-                "matches": [],
-                "total": 0
-            }
-        }), 500
-    
 
 @bp_v1.route("/data/upload", methods=["POST"])
 def upload_data():
@@ -97,6 +54,7 @@ def upload_data():
 
     try:
         metadata = request.form.to_dict()
+        
         document_service = DocumentService(Config.MINILM_EMBEDDING_MODEL)
         success = document_service.upload_document(file, metadata)
         
@@ -117,7 +75,14 @@ def check_document_plagiarism():
 
     try:
         plagiarism_checker = PlagiarismCheckerService(Config.MINILM_EMBEDDING_MODEL)
-        result = plagiarism_checker.check_plagiarism(request.files["files"])
-        return result
+        results = plagiarism_checker.check_plagiarism(request.files["files"])
+    
+        return jsonify({
+            "success": True,
+            "data": {
+                "matches": results,
+                "total": len(results)
+            }
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500

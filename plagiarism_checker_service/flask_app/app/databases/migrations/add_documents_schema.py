@@ -7,12 +7,12 @@ class DocumentMigration:
 
     def create_schemas(self):
         schema = MilvusClient.create_schema(
-            auto_id=True,
+            auto_id=False,  # Change to False to use custom document_id
             enable_dynamic_field=True,
         )
         
         # Add fields to schema
-        schema.add_field(field_name="document_id", datatype=DataType.INT64, is_primary=True)
+        schema.add_field(field_name="document_id", datatype=DataType.INT64, is_primary=True, auto_id=False)
         schema.add_field(field_name="subject_code", datatype=DataType.VARCHAR, max_length=100)
         schema.add_field(field_name="embedding", datatype=DataType.FLOAT_VECTOR, dim=384)
         

@@ -1,6 +1,4 @@
-import os
 import numpy as np
-import uuid
 from werkzeug.datastructures import FileStorage
 
 from flask_app.app.services.file_handler import FileHandler
@@ -19,11 +17,7 @@ class DocumentService:
 
     def upload_document(self, file: FileStorage = None, metadata: dict = None) -> bool:
         try:
-            # file_path = self.file_handler.save_file(file)
-            file_path = os.path.join(
-                'flask_app/storage/uploads/files',
-                'f4875614-b168-4235-9aec-d0fa47558db8.pdf'
-            )
+            file_path = self.file_handler.save_file(file)
             text = self.file_handler.extract_text_from_file(file_path)
             processed_text = self.text_service.preprocess_text(text)
             embedding = self.embedding_service.convert_text_to_embedding(processed_text)
@@ -31,13 +25,11 @@ class DocumentService:
             if isinstance(embedding, np.ndarray):
                 embedding = embedding.tolist()
 
-            document_id = np.int64(uuid.uuid4().int & 0x7FFFFFFFFFFFFFFF)  # Ensure positive int64
-            subject_code = "CNTT"
-            # document_id = metadata.get('document_id') if metadata else None
-            # subject_code = metadata.get('subject_code') if metadata else None
+            document_id = metadata.get('document_id') if metadata else None
+            subject_code = metadata.get('subject_code') if metadata else None
 
             document = {
-                "document_id": document_id,
+                "document_id": int(document_id),
                 "subject_code": subject_code,
                 "embedding": embedding,
             }
@@ -45,11 +37,16 @@ class DocumentService:
             is_valid = self.validate_document_data(document)
             if not is_valid:
                 print("❌ Document is not valid")
+                return False
 
-            insert_count = self.db_handler.upsert_document(document)
-            print("✅ Uploaded documents successfully")
+            try:
+                insert_count = self.db_handler.upsert_document(document)
+                print("✅ Uploaded documents successfully")
+                return True if insert_count > 0 else False
+            except Exception as db_error:
+                print(f"❌ Database error: {str(db_error)}")
+                return False
 
-            return insert_count > 0
         except Exception as e:
             print(f"❌ Error uploading document: {str(e)}")
             return False

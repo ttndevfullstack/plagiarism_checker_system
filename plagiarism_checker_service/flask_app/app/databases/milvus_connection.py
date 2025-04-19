@@ -41,31 +41,3 @@ class MilvusConnection:
 
         # Use the database
         db.using_database(Config.MILVUS_DB_NAME, using=Config.MILVUS_ALIAS)
-
-    def create_collection(self):
-        """Create collection if it doesn't exist"""
-        try:
-            collection_name = Config.DOCUMENT_COLLECTION_NAME
-            if not self.client.has_collection(collection_name):
-                fields = [
-                    FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
-                    FieldSchema(name="document_id", dtype=DataType.INT64),
-                    FieldSchema(name="subject_code", dtype=DataType.VARCHAR, max_length=100),
-                    FieldSchema(name="text", dtype=DataType.VARCHAR, max_length=65535),
-                    FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=384)
-                ]
-                schema = CollectionSchema(fields=fields, description="Document collection")
-                collection = Collection(name=collection_name, schema=schema, using=Config.MILVUS_ALIAS)
-                
-                index_params = {
-                    "metric_type":"L2",
-                    "index_type":"IVF_FLAT",
-                    "params":{"nlist":1024}
-                }
-                collection.create_index(field_name="embedding", index_params=index_params)
-                print(f"✅ Created collection {collection_name}")
-            else:
-                print(f"✅ Collection {collection_name} already exists")
-        except Exception as e:
-            print(f"❌ Error creating collection: {str(e)}")
-            raise
