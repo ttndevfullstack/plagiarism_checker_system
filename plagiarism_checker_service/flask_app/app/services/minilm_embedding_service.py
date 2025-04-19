@@ -9,11 +9,11 @@ class MiniLMEmbeddingService(Embeddingable, Textable):
 
     def convert_text_to_embedding(self, text: str):
         """Generate embeddings using MiniLM Model"""
-        embedding = self.model.encode(text)
+        print("   👉 Convert text to embedding")
         
-        print("   ✅ Converted text to embedding successfully")
+        embedding = self.model.encode(text)
         return embedding
     
     def convert_embedding_to_text(self, text):
         """Generate text using MiniLM Model"""
-        print("   ✅ Converted embedding to text successfully")
+        print("   👉 Convert embedding to text")

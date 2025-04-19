@@ -17,6 +17,8 @@ class DocumentService:
 
     def upload_document(self, file: FileStorage = None, metadata: dict = None) -> bool:
         try:
+            print("🎯 Upload documents to database")
+
             file_path = self.file_handler.save_file(file)
             text = self.file_handler.extract_text_from_file(file_path)
             processed_text = self.text_service.preprocess_text(text)
@@ -41,7 +43,7 @@ class DocumentService:
 
             try:
                 insert_count = self.db_handler.upsert_document(document)
-                print("✅ Uploaded documents successfully")
+                print("🎯 Uploaded documents successfully")
                 return True if insert_count > 0 else False
             except Exception as db_error:
                 print(f"❌ Database error: {str(db_error)}")

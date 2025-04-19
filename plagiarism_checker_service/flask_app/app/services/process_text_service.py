@@ -4,12 +4,13 @@ from difflib import SequenceMatcher
 class ProcessTextService:
     def preprocess_text(self, text):
         """Remove special characters, extra spaces, and standardize text"""
+        print("   ✅ Preprocess file")
+
         text = re.sub(r'[_-]{3,}', ' ', text) # Remove long sequences of underscores or dashes
         text = re.sub(r'\s+', ' ', text)  # Remove extra spaces
         text = re.sub(r'[^\w\s]', '', text)  # Remove special characters
         #remove stop works
 
-        print("   ✅ Preprocessed file successfully")
         return text.lower().strip()
 
     def highlight_text(self, source, target, similarity):
