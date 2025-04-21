@@ -12,7 +12,7 @@ def create_app():
     os.makedirs(Config.FILE_STORAGE_DIR, exist_ok=True)
 
     # Register blueprints
-    from .routes import bp_v1
-    app.register_blueprint(bp_v1)
+    from .routes_v1 import app
+    app.register_blueprint(app)
 
     return app

@@ -1,0 +1,192 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:stable-alpine
+    container_name: nginx
+    ports:
+      - "${NGINX_HOST_PORT:-8000}:80"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - ../plagiarism_checker_app:/var/www/laravel
+    depends_on:
+      - plagiarism-app
+      # plagiarism-app:
+      #   condition: service_healthy
+      # plagiarism-service:
+      #   condition: service_healthy
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+
+  plagiarism-app:
+    build:
+      context: ../plagiarism_checker_app
+      dockerfile: Dockerfile
+    container_name: plagiarism-app
+    volumes:
+      - ../plagiarism_checker_app:/var/www/laravel
+    environment:
+      - APP_ENV=${APP_ENV:-development}
+      - DB_HOST=mysql
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+    depends_on:
+      - mysql
+      # mysql:
+      #   condition: service_healthy
+      # redis:
+      #   condition: service_healthy
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+
+  # plagiarism-service:
+  #   build:
+  #     context: ../plagiarism_checker_service
+  #     dockerfile: Dockerfile
+  #   container_name: plagiarism-service
+  #   volumes:
+  #     - ../plagiarism_checker_service:/app
+  #   environment:
+  #     - FLASK_APP=flask_app.app.main
+  #     - FLASK_ENV=${FLASK_ENV:-development}
+  #     - MILVUS_ALIAS=plagiarism_checker_db
+  #     - MILVUS_DB_NAME=plagiarism_checker
+  #     - MILVUS_DB_HOST=milvus-standalone
+  #     - MILVUS_DB_PORT=19530
+  #     - MILVUS_DB_USERNAME=${MILVUS_USERNAME:-root}
+  #     - MILVUS_DB_PASSWORD=${MILVUS_PASSWORD:-password}
+  #   depends_on:
+  #     milvus-standalone:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-password}
+      MYSQL_DATABASE: plagiarism_checker
+      MYSQL_USER: ${DB_USER:-appuser}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "${MYSQL_HOST_PORT:-3306}:3306"
+    # healthcheck:
+    #   test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${DB_USER:-appuser}", "-p${DB_PASSWORD:-password}"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: ${DB_USER:-appuser}
+      PMA_PASSWORD: ${DB_PASSWORD:-password}
+    ports:
+      - "${PHPMYADMIN_HOST_PORT:-8080}:80"
+    depends_on:
+      - mysql
+      # mysql:
+      #   condition: service_healthy
+
+  # redis:
+  #   image: redis:alpine
+  #   container_name: redis
+  #   ports:
+  #     - "${REDIS_HOST_PORT:-6379}:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  milvus-etcd:
+    container_name: milvus-etcd
+    image: quay.io/coreos/etcd:v3.5.18
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - etcd_data:/etcd
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  milvus-minio:
+    container_name: milvus-minio
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio_data:/minio_data
+    command: minio server /minio_data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  milvus-standalone:
+    container_name: milvus-standalone
+    image: milvusdb/milvus:v2.5.6
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      ETCD_ENDPOINTS: milvus-etcd:2379
+      MINIO_ADDRESS: milvus-minio:9000
+      MILVUS_ENABLE_AUTH: ${MILVUS_ENABLE_AUTH:-true}
+      MILVUS_USER: ${MILVUS_USERNAME:-root}
+      MILVUS_PASSWORD: ${MILVUS_PASSWORD:-password}
+    volumes:
+      - milvus_data:/var/lib/milvus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+    ports:
+      - "${MILVUS_PORT:-19530}:19530"
+      - "${MILVUS_METRICS_PORT:-9091}:9091"
+    depends_on:
+      milvus-etcd:
+        condition: service_healthy
+      milvus-minio:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
+  # redis_data:
+  etcd_data:
+  minio_data:
+  milvus_data:
+
+networks:
+  plagiarism_network:
+    driver: bridge
+    name: plagiarism_network

@@ -7,15 +7,15 @@ from flask_app.app.databases.milvus_connection import MilvusConnection
 from flask_app.app.services.plagiarism_checker_service import PlagiarismCheckerService
 
 # Create a Blueprint for main routes
-bp_v1 = Blueprint("main", __name__, url_prefix="/v1/api")
+app = Blueprint("main", __name__, url_prefix="/v1/api")
 
 
-@bp_v1.route("/ping")
+@app.route("/ping")
 def pong():
     return "pong"
 
 
-@bp_v1.route("/migrate")
+@app.route("/migrate")
 def migrate():
     success = Migration.up()
 
@@ -25,7 +25,7 @@ def migrate():
       return jsonify({"success": False, "message": "Migrate data is failed"})
 
 
-@bp_v1.route("/rollback")
+@app.route("/rollback")
 def rollback():
     success = Migration.down()
 
@@ -35,7 +35,7 @@ def rollback():
       return jsonify({"success": False, "message": "Rollback data is failed"})
 
 
-@bp_v1.route("/show-db")
+@app.route("/show-db")
 def show():
     res = MilvusConnection.get_client().describe_collection(
         collection_name="documents"
@@ -43,7 +43,7 @@ def show():
     return jsonify(res)
 
 
-@bp_v1.route("/data/upload", methods=["POST"])
+@app.route("/data/upload", methods=["POST"])
 def upload_data():
     file = request.files.get('files')
     if not file:
@@ -68,7 +68,7 @@ def upload_data():
         return jsonify({"success": False, "error": f"Internal Server Error: {str(e)}"}), 500
 
 
-@bp_v1.route("/plagiarism-checker", methods=["POST"])
+@app.route("/plagiarism-checker", methods=["POST"])
 def check_document_plagiarism():
     if "files" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
