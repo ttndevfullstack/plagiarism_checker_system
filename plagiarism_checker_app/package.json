@@ -1,10 +1,11 @@
 {
-  "name": "plagiarism_checker_system",
+  "name": "proofly",
   "author": "ttndev",
-  "homepage": "https://plagiarism-checker.dev",
+  "homepage": "http://localhost:8000",
   "license": "MIT",
   "description": "The plagiarism checker system for the university.",
   "keywords": [
+    "proofly",
     "plagiarism",
     "checker",
     "university",
@@ -13,7 +14,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/koel/koel"
+    "url": "https://github.com/ttndevfullstack/plagiarism_checker_system"
   },
   "scripts": {
     "dev": "vite",

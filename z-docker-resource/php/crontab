@@ -1,0 +1,11 @@
+#     ,------ MINUTE
+#    / ,----- HOUR
+#   / / ,---- DAY OF MONTH
+#  / / / ,--- MONTH
+# / / / / ,-- DAY OF WEEK
+#/ / / / /
+* * * * * php /var/www/html/AdminPage/public/index.php queue_worker ocr >> /var/log/cron_queue.log
+
+# every  days
+0 0 * * * php /var/www/html/AdminPage/public/index.php notifications delete_expired >> /var/log/cron_notification.log
+#

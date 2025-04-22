@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<ruleset name="plagiarism_checker_system">
+<ruleset name="proofly">
   <config name="installed_paths" value="../../slevomat/coding-standard" />
 
   <file>./app</file>

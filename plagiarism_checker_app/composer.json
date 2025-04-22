@@ -1,9 +1,10 @@
 {
-  "name": "ttndev/plagiarism_checker_system",
+  "name": "ttndev/proofly",
   "author": "ttndev",
   "type": "project",
   "description": "The plagiarism checker system for the university.",
   "keywords": [
+    "proofly",
     "plagiarism",
     "checker",
     "university",
