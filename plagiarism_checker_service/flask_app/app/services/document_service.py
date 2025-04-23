@@ -29,10 +29,12 @@ class DocumentService:
 
             document_id = metadata.get('document_id') if metadata else None
             subject_code = metadata.get('subject_code') if metadata else None
+            original_name = metadata.get('original_name') if metadata else None
 
             document = {
                 "document_id": int(document_id),
                 "subject_code": subject_code,
+                "original_name": original_name,
                 "embedding": embedding,
             }
 

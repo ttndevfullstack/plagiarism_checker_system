@@ -16,7 +16,7 @@ class ProcessDocumentUpload implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $document;
+    protected Document $document;
 
     public function __construct(Document $document)
     {
@@ -58,6 +58,7 @@ class ProcessDocumentUpload implements ShouldQueue
             [
                 'document_id' => $this->document->id,
                 'subject_code' => $this->document->subject?->code ?? '',
+                'original_name' => $this->document->original_name ?? '',
                 'metadata' => json_encode($this->document->metadata ?? [])
             ]
         );
