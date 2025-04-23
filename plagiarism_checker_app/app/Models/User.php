@@ -121,4 +121,15 @@ class User extends Authenticatable implements HasName
     {
         return $this->hasRole(self::STUDENT_ROLE);
     }
+
+    /**
+     * Check if the user can access a specific panel for filament.
+     *
+     * @param Panel $panel
+     * @return boolean
+     */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return true;
+    }
 }

@@ -33,3 +33,15 @@ class FileHandler:
                 return '\n'.join([page.extract_text() for page in reader.pages])
         else:
             raise ValueError("❌ Unsupported file format")
+
+    def remove_file(self, file_path):
+        """Remove file from storage folder"""
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                print(f"   👉 Removed file: {file_path}")
+            else:
+                print(f"   ❌ File not found: {file_path}")
+        except Exception as e:
+            print(f"   ❌ Error removing file: {str(e)}")
+            raise e

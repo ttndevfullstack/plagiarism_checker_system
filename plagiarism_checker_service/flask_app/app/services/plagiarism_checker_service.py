@@ -21,6 +21,7 @@ class PlagiarismCheckerService:
         text = self.file_handler.extract_text_from_file(file_path)
         processed_text = self.text_service.preprocess_text(text)
         search_embedding = self.embedding_service.convert_text_to_embedding(processed_text)
+        self.file_handler.remove_file(file_path)
 
         if isinstance(search_embedding, np.ndarray):
             search_embedding = search_embedding.tolist()
@@ -36,7 +37,7 @@ class PlagiarismCheckerService:
             collection_name="documents",
             data=[search_embedding],
             anns_field="embedding",
-            output_fields=["document_id", "subject_code"],
+            output_fields=["document_id", "subject_code", "original_name"],
             **search_params,
             filter="subject_code like \"CNTT%\""
         )
@@ -47,7 +48,8 @@ class PlagiarismCheckerService:
                 for hit in hits:
                     search_results.append({
                         'document_id': str(hit.get('document_id', '')),  # Access directly with get()
-                        'subject_code': hit.get('subject_code', 'CNTT'),
+                        'subject_code': hit.get('subject_code', ''),
+                        'original_name': hit.get('original_name', ''),
                         'similarity_score': float(hit['distance']) if 'distance' in hit else 0.0
                     })
 
