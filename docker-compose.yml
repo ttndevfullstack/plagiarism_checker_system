@@ -1,26 +1,26 @@
 version: '3.8'
 
 services:
-  nginx-proofly:
-    build: ./z-docker-resource/nginx/
-    container_name: nginx-proofly
-    ports:
-      - 2380:80
-      - 2443:443
-    volumes:
-      - ./:/var/www/html/
-    networks:
-      - proofly
+  # nginx-proofly:
+  #   build: ./z-docker-resource/nginx/
+  #   container_name: nginx-proofly
+  #   ports:
+  #     - 2380:80
+  #     - 2443:443
+  #   volumes:
+  #     - ./:/var/www/html/
+  #   networks:
+  #     - proofly
 
-  php-proofly:
-    build: ./z-docker-resources/php/
-    container_name: php-proofly
-    expose:
-      - 9000
-    volumes:
-      - ./:/var/www/html/
-    networks:
-      - proofly
+  # php-proofly:
+  #   build: ./z-docker-resources/php/
+  #   container_name: php-proofly
+  #   expose:
+  #     - 9000
+  #   volumes:
+  #     - ./:/var/www/html/
+  #   networks:
+  #     - proofly
 
   # plagiarism-app:
   #   build:
@@ -70,40 +70,40 @@ services:
   #     timeout: 10s
   #     retries: 3
 
-  mysql-proofly:
-    container_name: mysql-proofly
-    restart: always
-    image: mysql:8.0
-    ports:
-      - 2336:3306
-    command:
-      --sql_mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
-    expose:
-      - 3306
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-password}
-      MYSQL_DATABASE: db_proofly
-      MYSQL_USER: ${DB_USER:-proofly}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-password}
-    volumes:
-      - ./z-docker-resources/volumes/mysql_data:/var/lib/mysql
-    networks:
-      - proofly
+  # mysql-proofly:
+  #   container_name: mysql-proofly
+  #   restart: always
+  #   image: mysql:8.0
+  #   ports:
+  #     - 2336:3306
+  #   command:
+  #     --sql_mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+  #   expose:
+  #     - 3306
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-password}
+  #     MYSQL_DATABASE: db_proofly
+  #     MYSQL_USER: ${DB_USER:-proofly}
+  #     MYSQL_PASSWORD: ${DB_PASSWORD:-password}
+  #   volumes:
+  #     - ./z-docker-resources/volumes/mysql_data:/var/lib/mysql
+  #   networks:
+  #     - proofly
 
-  phpmyadmin-proofly:
-    container_name: phpmyadmin-proofly
-    restart: always
-    image: phpmyadmin/phpmyadmin:latest
-    environment:
-      - MYSQL_ROOT_PASSWORD=password
-      - PMA_USER=proofly
-      - PMA_PASSWORD=password
-    ports:
-      - 8282:80
-    depends_on:
-      - mysql-proofly
-    networks:
-      - proofly
+  # phpmyadmin-proofly:
+  #   container_name: phpmyadmin-proofly
+  #   restart: always
+  #   image: phpmyadmin/phpmyadmin:latest
+  #   environment:
+  #     - MYSQL_ROOT_PASSWORD=password
+  #     - PMA_USER=proofly
+  #     - PMA_PASSWORD=password
+  #   ports:
+  #     - 8282:80
+  #   depends_on:
+  #     - mysql-proofly
+  #   networks:
+  #     - proofly
 
   milvus-etcd:
     container_name: milvus-etcd
