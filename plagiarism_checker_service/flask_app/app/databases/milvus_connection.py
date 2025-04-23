@@ -1,8 +1,8 @@
-from pymilvus import db, MilvusClient, Collection, CollectionSchema, FieldSchema, DataType
-from pymilvus.exceptions import MilvusException
+import logging
 from flask_app.config import Config
 from flask_app.app.helpers import Helper
-import logging
+from pymilvus import connections, db, MilvusClient
+from pymilvus.exceptions import MilvusException
 
 class MilvusConnection:
     _client = None
@@ -29,8 +29,27 @@ class MilvusConnection:
 
         return MilvusConnection._client
 
-    def create_database(self):
+    @staticmethod
+    def initialize_connection():
+        """Initialize connection to Milvus server"""
+        try:
+            protocol = "https" if Helper.isProduction() else "http"
+            connections.connect(
+                alias=Config.MILVUS_ALIAS,
+                uri=f"{protocol}://{Config.MILVUS_DB_HOST}:{Config.MILVUS_DB_PORT}",
+                user=Config.MILVUS_DB_USERNAME,
+                password=Config.MILVUS_DB_PASSWORD,
+            )
+            print(f"✅ Connected to Milvus server at {Config.MILVUS_DB_HOST}:{Config.MILVUS_DB_PORT}")
+        except Exception as e:
+            logging.error(f"Failed to connect to Milvus: {e}")
+            raise ConnectionError("Could not establish connection to Milvus.") from e
+
+    @staticmethod
+    def create_database():
         """Create a database if it doesn't exist."""
+        MilvusConnection.initialize_connection()
+        
         databases = db.list_database(using=Config.MILVUS_ALIAS)
         
         if Config.MILVUS_DB_NAME not in databases:
