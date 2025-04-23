@@ -23,7 +23,7 @@ class DocumentService:
             text = self.file_handler.extract_text_from_file(file_path)
             processed_text = self.text_service.preprocess_text(text)
             embedding = self.embedding_service.convert_text_to_embedding(processed_text)
-            # self.file_handler.remove_file(file_path)
+            self.file_handler.remove_file(file_path)
             
             if isinstance(embedding, np.ndarray):
                 embedding = embedding.tolist()
@@ -58,7 +58,7 @@ class DocumentService:
         
     def validate_document_data(self, document) -> bool:
       try:
-        required_fields = ['document_id', 'subject_code', 'embedding']
+        required_fields = ['document_id', 'subject_code', 'original_name', 'embedding']
         
         # Check if all required fields exist
         if not all(field in document for field in required_fields):

@@ -39,7 +39,7 @@ class PlagiarismCheckerService:
             anns_field="embedding",
             output_fields=["document_id", "subject_code", "original_name"],
             **search_params,
-            filter="subject_code like \"CNTT%\""
+            # filter="subject_code like \"CNTT%\""
         )
 
         search_results = []
