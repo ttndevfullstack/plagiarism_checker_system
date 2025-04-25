@@ -1,6 +1,8 @@
 import numpy as np
+from datetime import datetime, timezone
 from flask import jsonify
 from werkzeug.datastructures import FileStorage
+from typing import List, Dict, Any
 
 from flask_app.app.services.file_handler import FileHandler
 from flask_app.app.databases.milvus_connection import MilvusConnection
@@ -14,44 +16,126 @@ class PlagiarismCheckerService:
         self.client = MilvusConnection.get_client()
         self.embedding_service = EmbeddingModelFactory.get_model(embedding_model)
 
-    def check_plagiarism(self, file: FileStorage) -> jsonify:
-        print("👉 Starting check plagiarism")
+        self.min_paragraph_length = 50
+        self.similarity_threshold = 0.4
+
+    def check_plagiarism(self, file) -> Dict[str, Any]:
+        """Process file and check for plagiarism by paragraphs"""
+        print("👉 Starting plagiarism check")
         
+        # Extract and preprocess text
         file_path = self.file_handler.save_file(file)
         text = self.file_handler.extract_text_from_file(file_path)
-        processed_text = self.text_service.preprocess_text(text)
-        search_embedding = self.embedding_service.convert_text_to_embedding(processed_text)
-        self.file_handler.remove_file(file_path)
+        paragraphs = self.split_into_paragraphs(text)
+        
+        # Process paragraphs in batches for efficiency
+        batch_results = []
+        for i in range(0, len(paragraphs), 5):  # Batch size of 5
+            batch = paragraphs[i:i+5]
+            batch_results.extend(self.process_paragraph_batch(batch))
 
-        if isinstance(search_embedding, np.ndarray):
-            search_embedding = search_embedding.tolist()
+        # Generate final report
+        report = self.generate_report(batch_results)
+        print("✅ Plagiarism check completed successfully")
+        return report
 
+    def split_into_paragraphs(self, text: str) -> List[str]:
+        """Split text into meaningful paragraphs"""
+        paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
+        meaningful_paras = [p for p in paragraphs if len(p) >= self.min_paragraph_length]
+        return meaningful_paras
+
+    def process_paragraph_batch(self, paragraphs: List[str]) -> List[Dict[str, Any]]:
+        """Process a batch of paragraphs and search for matches"""
+        # Preprocess and embed
+        processed_paragraphs = [self.text_service.preprocess_text(p) for p in paragraphs]
+        embeddings = self.embedding_service.convert_text_to_embedding(processed_paragraphs)
+        
+        # Search Milvus in batch
         search_params = {
             "metric_type": "COSINE",
             "offset": 0,
-            "limit": 5,
+            "limit": 5,  # Top 5 matches per paragraph
             "params": {"nprobe": 16}
         }
 
-        res = self.client.search(
+        results = self.client.search(
             collection_name="documents",
-            data=[search_embedding],
+            data=embeddings,
             anns_field="embedding",
             output_fields=["document_id", "subject_code", "original_name"],
-            **search_params,
-            # filter="subject_code like \"CNTT%\""
+            **search_params
         )
 
-        search_results = []
-        if isinstance(res, list) and len(res) > 0:
-            for hits in res:
-                for hit in hits:
-                    search_results.append({
-                        'document_id': str(hit.get('document_id', '')),  # Access directly with get()
-                        'subject_code': hit.get('subject_code', ''),
-                        'original_name': hit.get('original_name', ''),
-                        'similarity_score': float(hit['distance']) if 'distance' in hit else 0.0
+        # Process results
+        paragraph_results = []
+        for idx, (para, hits) in enumerate(zip(paragraphs, results)):
+            para_id = f"para-{idx+1}"
+            sources = []
+            
+            for hit in hits:
+                # Fixed: Access distance as dictionary key instead of attribute
+                similarity = 1 - hit['distance']  # Convert to similarity percentage
+                if similarity >= self.similarity_threshold:
+                    sources.append({
+                        "url": hit['entity'].get("source_url", ""),
+                        "title": hit['entity'].get("original_name", "Unknown Source"),
+                        "similarity_percentage": round(similarity * 100, 1),
+                        "published_date": hit['entity'].get("published_date", "")
                     })
+            
+            # Calculate paragraph similarity (max of all matches)
+            para_similarity = max([s['similarity_percentage'] for s in sources], default=0)
+            
+            paragraph_results.append({
+                "id": para_id,
+                "text": para,
+                "similarity_percentage": para_similarity,
+                "sources": sources
+            })
+        
+        return paragraph_results
 
-        print("✅ Check plagiarism successfully")
-        return search_results 
+    def generate_report(self, paragraph_results: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Generate the final report in the specified format"""
+        # Calculate overall similarity
+        total_similarity = sum(p['similarity_percentage'] for p in paragraph_results)
+        avg_similarity = total_similarity / len(paragraph_results) if paragraph_results else 0
+        
+        # Generate sources summary
+        source_map = {}
+        for para in paragraph_results:
+            for source in para['sources']:
+                url = source['url']
+                if url not in source_map:
+                    source_map[url] = {
+                        "url": url,
+                        "title": source['title'],
+                        "total_matched": 0,
+                        "highest_similarity": 0
+                    }
+                source_map[url]['total_matched'] += 1
+                if source['similarity_percentage'] > source_map[url]['highest_similarity']:
+                    source_map[url]['highest_similarity'] = source['similarity_percentage']
+        
+        # Determine overall verdict
+        if avg_similarity > 70:
+            verdict = "High plagiarism detected. This content has substantial similarities with other sources."
+        elif avg_similarity > 40:
+            verdict = "Moderate plagiarism detected. This content has significant similarities with other sources."
+        elif avg_similarity > 20:
+            verdict = "Low plagiarism detected. Some similarities found with other sources."
+        else:
+            verdict = "Minimal plagiarism detected. Content appears mostly original."
+        
+        return {
+            "status": "success",
+            "data": {
+                "total_similarity_percentage": round(avg_similarity, 1),
+                "overall_verdict": verdict,
+                "source_count": len(source_map),
+                "processed_at": datetime.now(timezone.utc).isoformat(),
+                "paragraphs": paragraph_results,
+                "sources_summary": list(source_map.values())
+            }
+        }

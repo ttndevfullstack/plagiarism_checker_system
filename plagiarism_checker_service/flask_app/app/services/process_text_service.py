@@ -2,7 +2,7 @@ import re
 from difflib import SequenceMatcher
 import nltk
 from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
+from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.stem import WordNetLemmatizer
 import os
 
@@ -74,40 +74,31 @@ class ProcessTextService:
         except Exception as e:
             print(f"Error initializing NLTK: {str(e)}")
             raise
-
-    def preprocess_text(self, text):
-        """Remove special characters, extra spaces, and standardize text"""
-        print("   ✅ Preprocess file")
-
+    
+    def preprocess_text(self, text: str) -> str:
+        """Enhanced text preprocessing"""
         # Convert to lowercase
         text = text.lower()
         
-        # Remove special characters and numbers
-        text = re.sub(r'[^\w\s]', ' ', text)
+        # Remove special characters but preserve paragraph structure
+        text = re.sub(r'[^\w\s\.\n]', ' ', text)
         text = re.sub(r'\d+', '', text)
         
-        # Tokenize
-        tokens = word_tokenize(text)
+        # Tokenize sentences first to preserve context
+        sentences = sent_tokenize(text)
+        processed_sentences = []
         
-        # Remove stop words and single characters
-        tokens = [token for token in tokens if token not in self.stop_words and len(token) > 1]
+        for sent in sentences:
+            # Word tokenization
+            tokens = word_tokenize(sent)
+            
+            # Remove stopwords and short tokens
+            tokens = [token for token in tokens 
+                     if token not in self.stop_words and len(token) > 1]
+            
+            # Lemmatization
+            tokens = [self.lemmatizer.lemmatize(token) for token in tokens]
+            
+            processed_sentences.append(' '.join(tokens))
         
-        # Lemmatize
-        tokens = [self.lemmatizer.lemmatize(token) for token in tokens]
-        
-        # Join tokens and standardize whitespace
-        text = ' '.join(tokens)
-        text = re.sub(r'\s+', ' ', text)
-        
-        return text.strip()
-
-    def highlight_text(self, source, target, similarity):
-        matcher = SequenceMatcher(None, source, target)
-        highlighted = []
-        for opcode in matcher.get_opcodes():
-            tag, i1, i2, j1, j2 = opcode
-            if tag == 'equal':
-                highlighted.append(f'<span style="background-color: rgba(0, 255, 0, {similarity});">{source[i1:i2]}</span>')
-            else:
-                highlighted.append(source[i1:i2])
-        return ''.join(highlighted)
+        return ' '.join(processed_sentences)
