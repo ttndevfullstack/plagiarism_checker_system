@@ -3,7 +3,6 @@
 namespace App\Filament\Pages;
 
 use Filament\Pages\Page;
-use Filament\Actions\Action;
 
 class PlagiarismCheck extends Page
 {
@@ -94,6 +93,7 @@ class PlagiarismCheck extends Page
 
         return [
             'results' => json_decode($json, true)['data'],
+            'original_text' => 'The quick brown fox jumps over the lazy dog. Artificial intelligence is transforming modern industries. Climate change represents the greatest challenge of our time.',
         ];
     }
 }

@@ -2,12 +2,65 @@
     <div class="space-y-6">
         <x-filament::card>
             <div class="space-y-2">
-                <h2 class="text-xl font-semibold">
-                    Plagiarism Check
-                </h2>
-                <p class="text-gray-600 dark:text-gray-300">
-                    Choose one of the options below to submit your content for a plagiarism check
-                </p>
+              <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-medium">Plagiarism Report</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Generated {{ $results['processed_at'] }}</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold @if($results['total_similarity_percentage'] > 70) text-danger-600 @elseif($results['total_similarity_percentage'] > 30) text-warning-600 @else text-success-600 @endif">
+                            {{ $results['total_similarity_percentage'] }}%
+                        </div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">Similarity Score</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold">{{ count($results['sources_summary']) }}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">Sources Found</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rounded-lg border p-4 @if($results['total_similarity_percentage'] > 70) bg-danger-50 dark:bg-danger-900/30 border-danger-200 dark:border-danger-700 @elseif($results['total_similarity_percentage'] > 30) bg-warning-50 dark:bg-warning-900/30 border-warning-200 dark:border-warning-700 @else bg-success-50 dark:bg-success-900/30 border-success-200 dark:border-success-700 @endif">
+                <div class="font-medium">Verdict:</div>
+                    <p class="text-gray-800 dark:text-gray-200">{{ $results['overall_verdict'] }}</p>
+                </div>
+            </div>
+        </x-filament::card>
+        
+        <x-filament::card>
+            <!-- Sources Summary -->
+            <div class="lg:w-[20%]">
+              <div class="sticky top-4 space-y-4">
+                  <h4 class="font-medium text-gray-900 dark:text-white">Sources Summary</h4>
+                  <div class="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                      <table class="w-full divide-y divide-gray-200 dark:divide-gray-700">
+                          <thead class="bg-gray-50 dark:bg-gray-800">
+                              <tr>
+                                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Source</th>
+                                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Matches</th>
+                                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Highest</th>
+                              </tr>
+                          </thead>
+                          <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                              @foreach($results['sources_summary'] as $source)
+                              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                  <td class="px-4 py-3 max-w-[150px]">
+                                      <a href="{{ $source['url'] }}" target="_blank" class="text-base text-primary-600 dark:text-primary-400 hover:underline truncate block">
+                                          {{ $source['title'] }}
+                                      </a>
+                                      <div class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $source['url'] }}</div>
+                                  </td>
+                                  <td class="px-4 py-3 text-gray-700 dark:text-gray-300">{{ $source['total_matched'] }}</td>
+                                  <td class="px-4 py-3 @if($source['highest_similarity'] > 90) text-danger-600 dark:text-danger-400 @elseif($source['highest_similarity'] > 60) text-warning-600 dark:text-warning-400 @else text-primary-600 dark:text-primary-400 @endif">
+                                      {{ $source['highest_similarity'] }}%
+                                  </td>
+                              </tr>
+                              @endforeach
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
             </div>
         </x-filament::card>
 
@@ -16,64 +69,6 @@
             <div class="flex flex-col lg:flex-row gap-6">
                 <!-- Main content -->
                 <div class="w-full space-y-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h3 class="text-lg font-medium">Plagiarism Report</h3>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Generated {{ $results['processed_at'] }}</p>
-                        </div>
-                        <div class="flex items-center space-x-4">
-                            <div class="text-center">
-                                <div class="text-2xl font-bold @if($results['total_similarity_percentage'] > 70) text-danger-600 @elseif($results['total_similarity_percentage'] > 30) text-warning-600 @else text-success-600 @endif">
-                                    {{ $results['total_similarity_percentage'] }}%
-                                </div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">Similarity Score</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-2xl font-bold">{{ count($results['sources_summary']) }}</div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">Sources Found</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="rounded-lg border p-4 @if($results['total_similarity_percentage'] > 70) bg-danger-50 dark:bg-danger-900/30 border-danger-200 dark:border-danger-700 @elseif($results['total_similarity_percentage'] > 30) bg-warning-50 dark:bg-warning-900/30 border-warning-200 dark:border-warning-700 @else bg-success-50 dark:bg-success-900/30 border-success-200 dark:border-success-700 @endif">
-                        <div class="font-medium">Verdict:</div>
-                        <p class="text-gray-800 dark:text-gray-200">{{ $results['overall_verdict'] }}</p>
-                    </div>
-
-                    <!-- Sources Summary -->
-                    <div class="lg:w-[20%]">
-                      <div class="sticky top-4 space-y-4">
-                          <h4 class="font-medium text-gray-900 dark:text-white">Sources Summary</h4>
-                          <div class="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                              <table class="w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                  <thead class="bg-gray-50 dark:bg-gray-800">
-                                      <tr>
-                                          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Source</th>
-                                          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Matches</th>
-                                          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Highest</th>
-                                      </tr>
-                                  </thead>
-                                  <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                      @foreach($results['sources_summary'] as $source)
-                                      <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                          <td class="px-4 py-3 max-w-[150px]">
-                                              <a href="{{ $source['url'] }}" target="_blank" class="text-base text-primary-600 dark:text-primary-400 hover:underline truncate block">
-                                                  {{ $source['title'] }}
-                                              </a>
-                                              <div class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $source['url'] }}</div>
-                                          </td>
-                                          <td class="px-4 py-3 text-gray-700 dark:text-gray-300">{{ $source['total_matched'] }}</td>
-                                          <td class="px-4 py-3 @if($source['highest_similarity'] > 90) text-danger-600 dark:text-danger-400 @elseif($source['highest_similarity'] > 60) text-warning-600 dark:text-warning-400 @else text-primary-600 dark:text-primary-400 @endif">
-                                              {{ $source['highest_similarity'] }}%
-                                          </td>
-                                      </tr>
-                                      @endforeach
-                                  </tbody>
-                              </table>
-                          </div>
-                      </div>
-                    </div>
-
                     <div class="space-y-2">
                         <h4 class="font-medium text-gray-900 dark:text-white mb-4">Content Analysis</h4>
                         <div class="rounded border p-4 bg-gray-50 dark:bg-gray-800">
@@ -84,12 +79,12 @@
                                 x-on:mouseleave="showTooltip = false"
                                 class="relative my-2"
                             >
-                                <p class="@if($paragraph['similarity_percentage'] > 90) bg-danger-100 dark:bg-danger-900/50 border-l-4 border-danger-500 dark:border-danger-600 @elseif($paragraph['similarity_percentage'] > 60) bg-warning-100 dark:bg-warning-900/50 border-l-4 border-warning-500 dark:border-warning-600 @elseif($paragraph['similarity_percentage'] > 0) bg-primary-50 dark:bg-primary-900/50 border-l-4 border-primary-500 dark:border-primary-600 @endif p-2 rounded text-gray-800 dark:text-gray-200">
+                                <p class="border-l-4 @if($paragraph['similarity_percentage'] > 90) bg-danger-100 dark:bg-danger-900/50 border-danger-500 dark:border-danger-600 @elseif($paragraph['similarity_percentage'] > 60) bg-warning-100 dark:bg-warning-900/50 border-warning-500 dark:border-warning-600 @elseif($paragraph['similarity_percentage'] > 0) bg-primary-50 dark:bg-primary-900/50 border-primary-500 dark:border-primary-600 @endif p-2 rounded text-gray-800 dark:text-gray-200">
                                     {{ $paragraph['text'] }}
                                 </p>
                                 
                                 @if($paragraph['similarity_percentage'] > 0)
-                                <div 
+                                <div
                                     x-show="showTooltip"
                                     class="absolute z-10 w-64 p-2 mt-1 text-sm bg-white dark:bg-gray-700 rounded shadow-lg border border-gray-200 dark:border-gray-600"
                                 >
