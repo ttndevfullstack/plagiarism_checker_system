@@ -16,9 +16,9 @@ class PlagiarismCheckerResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-magnifying-glass';
 
-    protected static ?string $navigationGroup = 'Document Management';
+    protected static ?string $navigationGroup = 'Plagiarism Management';
 
-    protected static ?string $navigationLabel = 'Plagiarism Checker';
+    protected static ?string $navigationLabel = 'Plagiarism History';
 
     protected static ?string $modelLabel = 'Plagiarism Check';
 
@@ -34,6 +34,19 @@ class PlagiarismCheckerResource extends Resource
                     Tabs::make('Checker')
                         ->persistTab(false)
                         ->tabs([
+                            Tabs\Tab::make('Paste Text')
+                                ->id('paste-text')
+                                ->schema([
+                                    Forms\Components\Textarea::make('content')
+                                        ->label('Text Content')
+                                        ->required()
+                                        ->minLength(50)
+                                        ->maxLength(50000)
+                                        ->helperText('Paste your text here (50-50,000 characters)')
+                                        ->rows(15)
+                                        ->columnSpanFull(),
+                                ]),
+
                             Tabs\Tab::make('Upload File')
                                 ->id('upload-file')
                                 ->schema([
@@ -47,19 +60,6 @@ class PlagiarismCheckerResource extends Resource
                                         ->maxSize(10240)
                                         ->required()
                                         ->helperText('Supported formats: PDF, DOCX, TXT (Max 10MB)')
-                                        ->columnSpanFull(),
-                                ]),
-
-                            Tabs\Tab::make('Paste Text')
-                                ->id('paste-text')
-                                ->schema([
-                                    Forms\Components\Textarea::make('content')
-                                        ->label('Text Content')
-                                        ->required()
-                                        ->minLength(50)
-                                        ->maxLength(50000)
-                                        ->helperText('Paste your text here (50-50,000 characters)')
-                                        ->rows(15)
                                         ->columnSpanFull(),
                                 ]),
                         ])

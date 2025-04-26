@@ -6,21 +6,44 @@ use Filament\Pages\Page;
 
 class PlagiarismCheck extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static ?string $navigationIcon = 'heroicon-c-shield-check';
 
     protected static ?string $navigationLabel = 'Plagiarism Check';
+
+    protected static ?string $navigationGroup = 'Plagiarism Management';
 
     protected static ?string $title = 'Plagiarism Check Page';
 
     protected static string $view = 'filament.pages.plagiarism-check';
+
+    public $preview_content = null;
 
     public static function canAccess(): bool
     {
         return true;
     }
 
+    public function mount()
+    {
+        if (request()->has('preview_content')) {
+            $this->preview_content = json_decode(base64_decode(request()->get('preview_content')), true);
+        }
+    }
+
     protected function getViewData(): array
     {
+        if ($this->preview_content) {
+            return [
+                'preview_content' => $this->preview_content,
+                'results' => [
+                    'total_similarity_percentage' => 0,
+                    'total_similarity_percentage' => 0,
+                    'overall_verdict' => '',
+                    'sources_summary' => [],
+                ],
+            ];
+        }
+
         $json = '{
             "status": "success",
             "data": {
