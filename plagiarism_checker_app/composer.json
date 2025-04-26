@@ -24,6 +24,7 @@
     "league/flysystem-aws-s3-v3": "^3.0",
     "maatwebsite/excel": "^3.1",
     "malzariey/filament-daterangepicker-filter": "^3.2",
+    "smalot/pdfparser": "^2.12",
     "spatie/laravel-permission": "^6.10"
   },
   "require-dev": {

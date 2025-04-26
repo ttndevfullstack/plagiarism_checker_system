@@ -6,6 +6,7 @@ use App\Filament\Pages\PlagiarismCheck;
 use App\Filament\Resources\PlagiarismCheckerResource;
 use Filament\Actions\Action;
 use Filament\Resources\Pages\CreateRecord;
+use Smalot\PdfParser\Parser;
 
 class CreatePlagiarismChecker extends CreateRecord
 {
@@ -70,12 +71,13 @@ class CreatePlagiarismChecker extends CreateRecord
                         break;
 
                     case 'pdf':
-                        // Requires pdftotext installed on system
-                        $content = shell_exec("pdftotext " . escapeshellarg($filePath) . " -");
-                        if ($content) {
+                        try {
+                            $parser = new Parser();
+                            $pdf = $parser->parseFile($filePath);
+                            $content = $pdf->getText();
                             $previewData['content'] = trim($content);
-                        } else {
-                            $previewData['content'] = "Error: Could not extract PDF content. Please ensure pdftotext is installed or paste text directly.";
+                        } catch (\Exception $e) {
+                            $previewData['content'] = "Error extracting PDF content: " . $e->getMessage();
                         }
                         break;
 

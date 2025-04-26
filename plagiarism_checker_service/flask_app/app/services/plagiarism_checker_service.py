@@ -39,6 +39,24 @@ class PlagiarismCheckerService:
         print("✅ Plagiarism check completed successfully")
         return report
 
+    def check_plagiarism_content(self, content: str) -> Dict[str, Any]:
+        """Process text content directly and check for plagiarism"""
+        print("👉 Starting plagiarism check for content")
+        
+        # Split content into paragraphs
+        paragraphs = self.split_into_paragraphs(content)
+        
+        # Process paragraphs in batches
+        batch_results = []
+        for i in range(0, len(paragraphs), 5):
+            batch = paragraphs[i:i+5]
+            batch_results.extend(self.process_paragraph_batch(batch))
+
+        # Generate final report
+        report = self.generate_report(batch_results)
+        print("✅ Plagiarism check completed successfully")
+        return report
+
     def split_into_paragraphs(self, text: str) -> List[str]:
         """Split text into meaningful paragraphs"""
         paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
@@ -102,23 +120,42 @@ class PlagiarismCheckerService:
         total_similarity = sum(p['similarity_percentage'] for p in paragraph_results)
         avg_similarity = total_similarity / len(paragraph_results) if paragraph_results else 0
         
-        # Generate sources summary
+        # Generate sources summary - Modified to handle multiple sources properly
         source_map = {}
         for para in paragraph_results:
             for source in para['sources']:
-                url = source['url']
-                if url not in source_map:
-                    source_map[url] = {
-                        "url": url,
+                key = f"{source['url']}::{source['title']}"  # Create unique key for each source
+                if key not in source_map:
+                    source_map[key] = {
+                        "url": source['url'],
                         "title": source['title'],
                         "total_matched": 0,
-                        "highest_similarity": 0
+                        "highest_similarity": 0,
+                        "matches": []  # Track all matches
                     }
-                source_map[url]['total_matched'] += 1
-                if source['similarity_percentage'] > source_map[url]['highest_similarity']:
-                    source_map[url]['highest_similarity'] = source['similarity_percentage']
+                
+                # Add match details
+                source_map[key]['matches'].append({
+                    'paragraph_id': para['id'],
+                    'similarity': source['similarity_percentage']
+                })
+                
+                # Update statistics
+                source_map[key]['total_matched'] += 1
+                source_map[key]['highest_similarity'] = max(
+                    source_map[key]['highest_similarity'],
+                    source['similarity_percentage']
+                )
+
+        # Convert source_map to list and sort by highest similarity
+        sources_summary = list(source_map.values())
+        sources_summary.sort(key=lambda x: (-x['highest_similarity'], -x['total_matched']))
+
+        # Clean up matches from final output (optional)
+        for source in sources_summary:
+            del source['matches']
         
-        # Determine overall verdict
+        # Rest of verdict logic remains the same
         if avg_similarity > 70:
             verdict = "High plagiarism detected. This content has substantial similarities with other sources."
         elif avg_similarity > 40:
@@ -133,9 +170,9 @@ class PlagiarismCheckerService:
             "data": {
                 "total_similarity_percentage": round(avg_similarity, 1),
                 "overall_verdict": verdict,
-                "source_count": len(source_map),
+                "source_count": len(sources_summary),
                 "processed_at": datetime.now(timezone.utc).isoformat(),
                 "paragraphs": paragraph_results,
-                "sources_summary": list(source_map.values())
+                "sources_summary": sources_summary
             }
         }

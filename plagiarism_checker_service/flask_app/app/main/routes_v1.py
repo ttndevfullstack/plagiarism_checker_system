@@ -70,19 +70,21 @@ def upload_data():
 
 @bp_v1.route("/plagiarism-checker", methods=["POST"])
 def check_document_plagiarism():
-    if "files" not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-
-    try:
-        plagiarism_checker = PlagiarismCheckerService(Config.MINILM_EMBEDDING_MODEL)
-        results = plagiarism_checker.check_plagiarism(request.files["files"])
-    
-        return jsonify({
-            "success": True,
-            "data": {
-                "matches": results,
-                "total": len(results)
-            }
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    if "files" in request.files:
+        file = request.files["files"]
+        try:
+            plagiarism_checker = PlagiarismCheckerService(Config.MINILM_EMBEDDING_MODEL)
+            results = plagiarism_checker.check_plagiarism(file)
+            return jsonify(results)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    elif "content" in request.form:
+        try:
+            content = request.form["content"]
+            plagiarism_checker = PlagiarismCheckerService(Config.MINILM_EMBEDDING_MODEL)
+            results = plagiarism_checker.check_plagiarism_content(content)
+            return jsonify(results)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    else:
+        return jsonify({"error": "No file or content provided"}), 400

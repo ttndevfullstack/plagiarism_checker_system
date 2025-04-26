@@ -1,5 +1,30 @@
 <x-filament::page>
     <div class="space-y-6">
+        @if ($error)
+            <div class="rounded-lg bg-danger-50 dark:bg-danger-900/50 p-4 border border-danger-300 dark:border-danger-600">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <x-heroicon-m-x-circle class="h-5 w-5 text-danger-400" />
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-danger-800 dark:text-danger-200">Error</h3>
+                        <div class="mt-2 text-sm text-danger-700 dark:text-danger-300">
+                            {{ $error }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if ($isLoading)
+            <div class="flex items-center justify-center p-6">
+                <div class="flex items-center space-x-3">
+                    <div class="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-r-transparent"></div>
+                    <span class="text-lg font-medium">Analyzing content for plagiarism...</span>
+                </div>
+            </div>
+        @endif
+
         <x-filament::card>
             <div class="space-y-2">
                 <div class="flex items-center justify-between">
@@ -7,25 +32,25 @@
                         <h3 class="text-lg font-medium">Plagiarism Report</h3>
                         <p class="text-sm text-gray-500 dark:text-gray-400">Generated {{ $results['processed_at'] ?? now()->format('Y-m-d H:i:s') }}</p>
                     </div>
-                    <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-4 gap-5">
                         <div class="text-center">
                             <div
-                                class="text-2xl font-bold @if ($results['total_similarity_percentage'] > 70) text-danger-600 @elseif($results['total_similarity_percentage'] > 30) text-warning-600 @else text-success-600 @endif">
-                                {{ $results['total_similarity_percentage'] }}%
+                                class="text-2xl font-bold @if ($results['total_similarity_percentage'] ?? 0 > 70) text-danger-600 dark:text-danger-400 @elseif($results['total_similarity_percentage'] ?? 0 > 30) text-warning-600 dark:text-warning-400 @else text-success-600 dark:text-success-400 @endif">
+                                {{ $results['total_similarity_percentage'] ?? 0 }}%
                             </div>
                             <div class="text-xs text-gray-500 dark:text-gray-400">Similarity Score</div>
                         </div>
                         <div class="text-center">
-                            <div class="text-2xl font-bold">{{ count($results['sources_summary']) }}</div>
+                            <div class="text-2xl font-bold">{{ count($results['sources_summary'] ?? []) }}</div>
                             <div class="text-xs text-gray-500 dark:text-gray-400">Sources Found</div>
                         </div>
                     </div>
                 </div>
 
                 <div
-                    class="rounded-lg border p-4 @if ($results['total_similarity_percentage'] > 70) bg-danger-50 dark:bg-danger-900/30 border-danger-200 dark:border-danger-700 @elseif($results['total_similarity_percentage'] > 30) bg-warning-50 dark:bg-warning-900/30 border-warning-200 dark:border-warning-700 @else bg-success-50 dark:bg-success-900/30 border-success-200 dark:border-success-700 @endif">
+                    class="rounded-lg border p-4 @if ($results['total_similarity_percentage'] ?? 0 > 70) bg-danger-50 dark:bg-danger-900/30 border-danger-200 dark:border-danger-700 @elseif($results['total_similarity_percentage'] ?? 0 > 30) bg-warning-50 dark:bg-warning-900/30 border-warning-200 dark:border-warning-700 @else bg-success-50 dark:bg-success-900/30 border-success-200 dark:border-success-700 @endif">
                     <div class="font-medium">Verdict:</div>
-                    <p class="text-gray-800 dark:text-gray-200">{{ $results['overall_verdict'] }}</p>
+                    <p class="text-gray-800 dark:text-gray-200">{{ $results['overall_verdict'] ?? '' }}</p>
                 </div>
             </div>
         </x-filament::card>
@@ -51,7 +76,7 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                @foreach ($results['sources_summary'] as $source)
+                                @foreach ($results['sources_summary'] ?? [] as $source)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                         <td class="px-4 py-3 max-w-[150px]">
                                             <a href="{{ $source['url'] }}" target="_blank"
@@ -76,137 +101,125 @@
             </div>
         </x-filament::card>
 
-        @if ($results)
-            <x-filament::card>
-                <div class="flex flex-col lg:flex-row gap-6">
-                    <!-- Main content -->
-                    <div class="w-full space-y-4">
-                        <div class="space-y-2">
-                            <h4 class="font-medium text-gray-900 dark:text-white mb-4">Content Analysis</h4>
-                            <div class="rounded border p-4 bg-gray-50 dark:bg-gray-800">
-                                @if (isset($preview_content))
-                                    <div class="relative my-2">
-                                        {!! nl2br(e($preview_content['content'])) !!}
-                                    </div>
-                                @else
-                                    @foreach ($results['paragraphs'] as $paragraph)
-                                        <div x-data="{ showTooltip: false }" x-on:mouseover="showTooltip = true"
-                                            x-on:mouseleave="showTooltip = false" class="relative my-2">
-                                            <p
-                                                class="border-l-4 @if ($paragraph['similarity_percentage'] > 90) bg-danger-100 dark:bg-danger-900/50 border-danger-500 dark:border-danger-600 @elseif($paragraph['similarity_percentage'] > 60) bg-warning-100 dark:bg-warning-900/50 border-warning-500 dark:border-warning-600 @elseif($paragraph['similarity_percentage'] > 0) bg-primary-50 dark:bg-primary-900/50 border-primary-500 dark:border-primary-600 @endif p-2 rounded text-gray-800 dark:text-gray-200">
-                                                {{ $paragraph['text'] }}
-                                            </p>
+        <x-filament::card>
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- Main content -->
+                <div class="w-full space-y-4">
+                    <div class="space-y-2">
+                        <h4 class="font-medium text-gray-900 dark:text-white mb-4">Content Analysis</h4>
+                        <div class="rounded border p-4 bg-gray-50 dark:bg-gray-800">
+                            {{-- @if ($isLoading && ! is_null($preview_content))
+                                <div class="relative my-2">
+                                    {!! nl2br(e($preview_content['content'])) !!}
+                                </div>
+                            @else --}}
+                                @foreach ($results['paragraphs'] as $paragraph)
+                                    @php
+                                        // Calculate highlight class based on similarity percentage
+                                        $highlightClass = match(true) {
+                                            $paragraph['similarity_percentage'] > 90 => 'bg-danger-100/80 dark:bg-danger-900/60 text-danger-900 dark:text-danger-100 border-danger-300 dark:border-danger-600',
+                                            $paragraph['similarity_percentage'] > 70 => 'bg-danger-50/70 dark:bg-danger-900/40 text-danger-800 dark:text-danger-100 border-danger-200 dark:border-danger-500',
+                                            $paragraph['similarity_percentage'] > 50 => 'bg-warning-50/70 dark:bg-warning-900/40 text-warning-800 dark:text-warning-100 border-warning-200 dark:border-warning-500',
+                                            $paragraph['similarity_percentage'] > 30 => 'bg-primary-50/60 dark:bg-primary-900/30 text-primary-800 dark:text-primary-100 border-primary-200 dark:border-primary-500',
+                                            $paragraph['similarity_percentage'] > 0 => 'bg-gray-100/50 dark:bg-gray-700/30 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-600',
+                                            default => 'bg-gray-50 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200 border-gray-100 dark:border-gray-700'
+                                        };
+                                        
+                                        // Add glow effect for high similarity
+                                        $glowClass = $paragraph['similarity_percentage'] > 70 ? 'shadow-danger-200/50 dark:shadow-danger-800/30' : 
+                                                    ($paragraph['similarity_percentage'] > 50 ? 'shadow-warning-200/40 dark:shadow-warning-800/20' : '');
+                                    @endphp
 
-                                            @if ($paragraph['similarity_percentage'] > 0)
-                                                <div x-show="showTooltip"
-                                                    class="absolute z-10 w-64 p-2 mt-1 text-sm bg-white dark:bg-gray-700 rounded shadow-lg border border-gray-200 dark:border-gray-600">
-                                                    <div class="font-medium mb-1 text-gray-900 dark:text-white">
-                                                        {{ $paragraph['similarity_percentage'] }}% Similar</div>
-                                                    @if (count($paragraph['sources']) > 0)
-                                                        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Found
-                                                            in:</div>
-                                                        <ul class="space-y-1">
-                                                            @foreach ($paragraph['sources'] as $source)
-                                                                <li class="truncate">
-                                                                    <a href="{{ $source['url'] }}" target="_blank"
-                                                                        class="text-primary-600 dark:text-primary-400 hover:underline">
-                                                                        {{ $source['title'] }}
-                                                                        ({{ $source['similarity_percentage'] }}%)
-                                                                    </a>
-                                                                </li>
-                                                            @endforeach
-                                                        </ul>
-                                                    @endif
-                                                </div>
-                                            @endif
+                                    <div x-data="{ showTooltip: false, tooltipX: 0, tooltipY: 0 }" 
+                                         @mousemove="tooltipX = $event.clientX; tooltipY = $event.clientY"
+                                         @mouseover="showTooltip = true"
+                                         @mouseleave="showTooltip = false" 
+                                         class="relative my-2 group">
+                                        <div class="flex items-start gap-2">
+                                            <!-- Highlighted text -->
+                                            <div class="flex-1 min-w-0">
+                                                <p class="p-1 {{ $highlightClass }} {{ $glowClass }} transition-all duration-200 group-hover:shadow-sm">
+                                                    {{ $paragraph['text'] }}
+                                                </p>
+                                            </div>
                                         </div>
-                                    @endforeach
-                                @endif
 
-                            </div>
+                                        @if ($paragraph['similarity_percentage'] > 0 && count($paragraph['sources']) > 0)
+                                            <div x-show="showTooltip"
+                                                 x-transition:enter="transition ease-out duration-200"
+                                                 x-transition:enter-start="opacity-0"
+                                                 x-transition:enter-end="opacity-100"
+                                                 x-transition:leave="transition ease-in duration-150"
+                                                 x-transition:leave-start="opacity-100"
+                                                 x-transition:leave-end="opacity-0"
+                                                 :style="`position: fixed; left: ${tooltipX}px; top: ${tooltipY + 20}px; transform: translateX(-50%);`"
+                                                 class="z-50 w-96 p-3 text-sm bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600">
+                                                <div class="font-medium mb-2 text-gray-900 dark:text-white">
+                                                    Similarity Details
+                                                </div>
+                                                
+                                                <div class="space-y-2">
+                                                    @foreach ($paragraph['sources'] as $source)
+                                                        <div class="border-b border-gray-100 dark:border-gray-700 pb-2 last:border-0 last:pb-0">
+                                                            <div class="flex justify-between items-start">
+                                                                <div>
+                                                                    <a href="{{ $source['url'] }}" target="_blank"
+                                                                       class="font-medium text-primary-600 dark:text-primary-400 hover:underline">
+                                                                        {{ $source['title'] }}
+                                                                    </a>
+                                                                    @if($source['published_date'])
+                                                                        <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                                                                            ({{ \Carbon\Carbon::parse($source['published_date'])->format('M Y') }})
+                                                                        </span>
+                                                                    @endif
+                                                                </div>
+                                                                <span class="text-sm font-medium 
+                                                                    @if($source['similarity_percentage'] > 90) text-danger-600 dark:text-danger-400
+                                                                    @elseif($source['similarity_percentage'] > 70) text-warning-600 dark:text-warning-400
+                                                                    @else text-primary-600 dark:text-primary-400 @endif">
+                                                                    {{ $source['similarity_percentage'] }}%
+                                                                </span>
+                                                            </div>
+                                                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
+                                                                {{ $source['url'] }}
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            {{-- @endif --}}
                         </div>
                     </div>
                 </div>
-            </x-filament::card>
-        @else
-            <x-filament::tabs>
-                <x-filament::tabs.item active wire:click="$set('activeTab', 'upload')">
-                    Upload Document
-                </x-filament::tabs.item>
-                <x-filament::tabs.item wire:click="$set('activeTab', 'paste')">
-                    Paste Text
-                </x-filament::tabs.item>
-                <x-filament::tabs.item wire:click="$set('activeTab', 'url')">
-                    Check URL
-                </x-filament::tabs.item>
-            </x-filament::tabs>
-
-            <x-filament::card>
-                @if ($activeTab === 'upload')
-                    <div class="space-y-4">
-                        <h2 class="text-xl font-semibold">
-                            Upload Document
-                        </h2>
-                        <div
-                            class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
-                            <input type="file" class="hidden" wire:model="document">
-                            <button type="button"
-                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                                wire:click="$refs.documentUpload.click()">
-                                Select File
-                            </button>
-                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Supported formats: PDF, DOCX, TXT
-                            </p>
-                        </div>
-                    </div>
-                @elseif($activeTab === 'paste')
-                    <div class="space-y-4">
-                        <h2 class="text-xl font-semibold">
-                            Paste Text
-                        </h2>
-                        <textarea wire:model="content" rows="10"
-                            class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
-                            placeholder="Paste your content here..."></textarea>
-                    </div>
-                @elseif($activeTab === 'url')
-                    <div class="space-y-4">
-                        <h2 class="text-xl font-semibold">
-                            Check URL
-                        </h2>
-                        <input type="text" wire:model="url"
-                            class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
-                            placeholder="https://example.com">
-                    </div>
-                @endif
-
-                <div class="mt-6 flex justify-end">
-                    <button wire:click="checkPlagiarism" wire:loading.attr="disabled"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                        <span wire:loading.remove>Check for Plagiarism</span>
-                        <span wire:loading>
-                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg"
-                                fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                </path>
-                            </svg>
-                            Processing...
-                        </span>
-                    </button>
-                </div>
-            </x-filament::card>
-        @endif
+            </div>
+        </x-filament::card>
     </div>
 
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                // Initialize tooltips for paragraph hover effects
+                // Initialize Alpine.js components
                 document.querySelectorAll('[x-data]').forEach(el => {
                     Alpine.initializeComponent(el);
                 });
+                
+                // Smooth scroll to first high similarity paragraph
+                const firstHighSimilarity = document.querySelector('.bg-danger-100\\/80, .bg-danger-50\\/70');
+                if (firstHighSimilarity) {
+                    firstHighSimilarity.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                    });
+                    
+                    // Pulse animation for attention
+                    firstHighSimilarity.classList.add('animate-pulse');
+                    setTimeout(() => {
+                        firstHighSimilarity.classList.remove('animate-pulse');
+                    }, 2000);
+                }
             });
         </script>
     @endpush
