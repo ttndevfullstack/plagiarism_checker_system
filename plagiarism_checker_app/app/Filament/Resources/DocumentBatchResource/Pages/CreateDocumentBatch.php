@@ -7,6 +7,7 @@ use App\Imports\DocumentImport;
 use App\Jobs\ProcessDocumentBatch;
 use App\Services\Documents\DocumentBatchService;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
@@ -22,29 +23,37 @@ class CreateDocumentBatch extends CreateRecord
         $extractPath = null;
 
         try {
-            $originFilePath = Storage::disk($originalFile->disk)->path($originalFile->path);
+            DB::beginTransaction();
 
-            $extractPath = app(DocumentBatchService::class)->extractFileAndArchive($originFilePath);
-            // Process Excel file
+            $originFilePath = Storage::disk($originalFile->disk)->path($originalFile->path);
             $catalogFilePath = Storage::disk($catalogFile->disk)->path($catalogFile->path);
+            $extractPath = app(DocumentBatchService::class)->extractFileAndArchive($originFilePath);
+            
             Excel::import(new DocumentImport($this->record, $extractPath), $catalogFilePath);
+
+            DB::commit();
 
             ProcessDocumentBatch::dispatch($this->record);
 
         } catch (\Throwable $th) {
+            DB::rollBack();
+
             throw new \Exception($th->getMessage());
         } finally {
-            if ($extractPath && is_dir($extractPath)) {
-                $this->forceDeleteDirectory($extractPath);
-            }
+            $this->clearTempDirIfExist($extractPath);
         }
+    }
+
+    private function clearTempDirIfExist(string $extractPath): void
+    {
+        if (! $extractPath || ! is_dir($extractPath)) { return; }
+        
+        $this->forceDeleteDirectory($extractPath);
     }
 
     private function forceDeleteDirectory(string $dir): void
     {
-        if (!file_exists($dir)) {
-            return;
-        }
+        if (!file_exists($dir)) { return; }
 
         $files = array_diff(scandir($dir), ['.', '..']);
         

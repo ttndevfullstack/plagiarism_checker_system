@@ -41,8 +41,7 @@ class DocumentImport implements ToCollection, WithHeadingRow
                 }
 
                 $subject = Subject::where('code', $row['major_code'])->first();
-                $filePath = "{$this->archivePath}/{$this->documentBatch->media->title}/{$row['file_name']}";
-                
+                $filePath = "{$this->archivePath}/{$row['file_name']}";
                 if (! file_exists($filePath) || ! $subject) { continue; }
                 
                 $documentBatchDir = "media/document_batches/{$this->documentBatch->id}";

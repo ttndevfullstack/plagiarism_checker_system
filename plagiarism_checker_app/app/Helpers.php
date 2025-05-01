@@ -63,10 +63,33 @@ function media_path(string $mediaPath): string
 
 function media_path_by_id(int|string $mediaId): ?string
 {
-    $media = Media::find($mediaId);
-    if (!$media) {
-        return null;
-    }
+    if (! $media = Media::find($mediaId)) { return null; }
 
-    return asset('storage/' . Media::find($mediaId)->path);
+    return asset('storage/' . $media->path);
+}
+
+function highlight_text_color(float $percent = 0): string
+{
+    if ($percent > 80) {
+        return 'text-danger-600 dark:text-danger-400';
+    } elseif ($percent > 60) {
+        return 'text-pink-600 dark:text-pink-400';
+    } elseif ($percent > 40) {
+        return 'text-warning-600 dark:text-warning-400';
+    } else {
+        return 'text-success-600 dark:text-success-400';
+    }
+}
+
+function highlight_text_background(float $percent = 0): string
+{
+    if ($percent > 80) {
+        return 'bg-danger-100 dark:bg-danger-400 text-white';
+    } elseif ($percent > 60) {
+        return 'bg-pink-100 dark:bg-pink-400 text-white';
+    } elseif ($percent > 40) {
+        return 'bg-warning-100 dark:bg-warning-400 text-white';
+    } else {
+        return 'bg-success-100 dark:bg-success-400 text-white';
+    }
 }
