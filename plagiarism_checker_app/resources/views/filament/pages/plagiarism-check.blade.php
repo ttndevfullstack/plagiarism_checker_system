@@ -83,17 +83,17 @@
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                         <td class="px-4 py-3 max-w-[150px]">
                                             <a href="{{ $source['url'] }}" target="_blank"
-                                                class="text-base text-primary-600 dark:text-primary-400 hover:underline truncate block">
+                                                class="{{ highlight_text_color($source['highest_similarity'] ?? 0) }} text-base text-primary-600 dark:text-primary-400 hover:underline truncate block">
                                                 {{ $source['title'] }}
                                             </a>
                                             <div class="text-xs text-gray-500 dark:text-gray-400 truncate">
                                                 {{ $source['url'] }}</div>
                                         </td>
                                         <td
-                                            class="px-4 py-3 {{ highlight_text_color($source['highest_similarity'] ?? 0) }}">
+                                            class="{{ highlight_text_color($source['highest_similarity'] ?? 0) }} px-4 py-3">
                                             {{ $source['total_matched'] }}</td>
                                         <td
-                                            class="px-4 py-3 {{ highlight_text_color($source['highest_similarity'] ?? 0) }}">
+                                            class="{{ highlight_text_color($source['highest_similarity'] ?? 0) }} px-4 py-3">
                                             {{ $source['highest_similarity'] }}%
                                         </td>
                                     </tr>
@@ -117,6 +117,7 @@
                                     {!! nl2br(e($preview_content['content'])) !!}
                                 </div>
                             @else --}}
+
                             @foreach ($results['paragraphs'] ?? [] as $paragraph)
                                 @php
                                     // Add glow effect for high similarity
@@ -137,8 +138,7 @@
                                     <div class="flex items-start gap-2">
                                         <!-- Highlighted text -->
                                         <div class="flex-1 min-w-0">
-                                            <p
-                                                class="{{ highlight_text_background($paragraph['similarity_percentage'] ?? 0) }} {{ $glowClass }} p-1 transition-all duration-200 group-hover:shadow-sm">
+                                            <p class="{{ highlight_text_background($paragraph['similarity_percentage'] ?? 0) }} {{ $glowClass }} p-1 transition-all duration-200 group-hover:shadow-sm">
                                                 {{ $paragraph['text'] }}
                                             </p>
                                         </div>
@@ -159,7 +159,7 @@
                                             <div class="space-y-2">
                                                 @foreach ($paragraph['sources'] as $source)
                                                     <div class="border-b border-gray-100 dark:border-gray-700 pb-2 last:border-0 last:pb-0">
-                                                        <div class="flex justify-between items-start mr-4">
+                                                        <div class="flex justify-between items-start gap-4">
                                                             <div>
                                                                 <a
                                                                     href="{{ $source['url'] }}"
@@ -191,6 +191,7 @@
                                     @endif
                                 </div>
                             @endforeach
+
                             {{-- @endif --}}
                         </div>
                     </div>
@@ -204,7 +205,7 @@
             document.addEventListener('DOMContentLoaded', function() {
                 // Initialize Alpine.js components
                 document.querySelectorAll('[x-data]').forEach(el => {
-                    Alpine.initializeComponent(el);
+                    Alpine?.initializeComponent(el);
                 });
 
                 // Smooth scroll to first high similarity paragraph
@@ -225,3 +226,37 @@
         </script>
     @endpush
 </x-filament::page>
+
+@push('styles')
+    <style>
+        /* Text Colors */
+      .text-danger-600 { color: #dc2626; }           /* Tailwind's red-600 */
+      .dark .text-danger-400 { color: #f87171; }
+
+      .text-pink-600 { color: #db2777; }
+      .dark .text-pink-400 { color: #f9a8d4; }
+
+      .text-warning-600 { color: #d97706; }          /* Tailwind's amber-600 */
+      .dark .text-warning-400 { color: #fbbf24; }
+
+      .text-success-600 { color: #16a34a; }          /* Tailwind's green-600 */
+      .dark .text-success-400 { color: #4ade80; }
+
+      /* Background Colors */
+      .bg-danger-100 { background-color: #fee2e2; }
+      .dark .bg-danger-400 { background-color: #f87171; }
+
+      .bg-pink-100 { background-color: #fce7f3; }
+      .dark .bg-pink-400 { background-color: #f9a8d4; }
+
+      .bg-warning-100 { background-color: #fef3c7; }
+      .dark .bg-warning-400 { background-color: #fbbf24; }
+
+      .bg-success-100 { background-color: #dcfce7; }
+      .dark .bg-success-400 { background-color: #4ade80; }
+
+      /* Always apply white text */
+      .text-white { color: #ffffff; }
+      .text-black { color: #000000; }
+    </style>
+@endpush

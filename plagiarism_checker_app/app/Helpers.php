@@ -84,12 +84,12 @@ function highlight_text_color(float $percent = 0): string
 function highlight_text_background(float $percent = 0): string
 {
     if ($percent > 80) {
-        return 'bg-danger-100 dark:bg-danger-400 text-white';
+        return 'bg-danger-100 dark:bg-danger-400 text-black';
     } elseif ($percent > 60) {
-        return 'bg-pink-100 dark:bg-pink-400 text-white';
+        return 'bg-pink-100 dark:bg-pink-400 text-black';
     } elseif ($percent > 40) {
-        return 'bg-warning-100 dark:bg-warning-400 text-white';
+        return 'bg-warning-100 dark:bg-warning-400 text-black';
     } else {
-        return 'bg-success-100 dark:bg-success-400 text-white';
+        return 'bg-success-100 dark:bg-success-400 text-black';
     }
 }
