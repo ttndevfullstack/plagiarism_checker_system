@@ -27,6 +27,7 @@
             </div>
         @endif
 
+        <!-- Plagiarism Report -->
         <x-filament::card>
             <div class="space-y-2">
                 <div class="flex items-center justify-between">
@@ -58,8 +59,8 @@
             </div>
         </x-filament::card>
 
+        <!-- Sources Summary -->
         <x-filament::card>
-            <!-- Sources Summary -->
             <div class="lg:w-[20%]">
                 <div class="sticky top-4 space-y-4">
                     <h4 class="font-medium text-gray-900 dark:text-white">Sources Summary</h4>
@@ -105,20 +106,20 @@
             </div>
         </x-filament::card>
 
+        <!-- Main content -->
         <x-filament::card>
             <div class="flex flex-col lg:flex-row gap-6">
-                <!-- Main content -->
                 <div class="w-full space-y-4">
                     <div class="space-y-2">
                         <h4 class="font-medium text-gray-900 dark:text-white mb-4">Content Analysis</h4>
                         <div class="rounded border p-4 bg-gray-50 dark:bg-gray-800">
-                            {{-- @if ($isLoading && !is_null($preview_content))
-                                <div class="relative my-2">
-                                    {!! nl2br(e($preview_content['content'])) !!}
+                            @if (! is_null($preview_content))
+                                <div class="prose prose-lg max-w-none dark:prose-invert">
+                                    {!! $preview_content['content'] !!}
                                 </div>
-                            @else --}}
+                            @endif
 
-                            @foreach ($results['paragraphs'] ?? [] as $paragraph)
+                            {{-- @foreach ($results['paragraphs'] ?? [] as $paragraph)
                                 @php
                                     // Add glow effect for high similarity
                                     $glowClass =
@@ -190,9 +191,7 @@
                                         </div>
                                     @endif
                                 </div>
-                            @endforeach
-
-                            {{-- @endif --}}
+                            @endforeach --}}
                         </div>
                     </div>
                 </div>

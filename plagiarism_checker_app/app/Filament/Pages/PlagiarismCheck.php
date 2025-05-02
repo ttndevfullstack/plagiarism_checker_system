@@ -31,6 +31,15 @@ class PlagiarismCheck extends Page
         return true;
     }
 
+    protected function getHeaderActions(): array
+    {
+        return [
+            \Filament\Actions\CreateAction::make()
+                ->label('Check Plagiarism')
+                ->url(\App\Filament\Resources\PlagiarismCheckerResource::getUrl('create')),
+        ];
+    }
+
     public function mount()
     {
         if (request()->has('preview_content')) {

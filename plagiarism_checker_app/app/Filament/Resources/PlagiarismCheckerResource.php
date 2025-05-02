@@ -9,6 +9,7 @@ use App\Models\PlagiarismCheck;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Section;
 use App\Filament\Resources\PlagiarismCheckerResource\Pages;
+use Filament\Forms\Components\RichEditor;
 
 class PlagiarismCheckerResource extends Resource
 {
@@ -37,14 +38,38 @@ class PlagiarismCheckerResource extends Resource
                             Tabs\Tab::make('Paste Text')
                                 ->id('paste-text')
                                 ->schema([
-                                    Forms\Components\Textarea::make('content')
+                                    RichEditor::make('content')
                                         ->label('Text Content')
                                         ->required()
                                         ->minLength(50)
                                         ->maxLength(50000)
                                         ->helperText('Paste your text here (50-50,000 characters)')
-                                        ->rows(15)
+                                        ->disableGrammarly()
+                                        ->toolbarButtons([
+                                            'attachFiles',
+                                            'blockquote',
+                                            'bold',
+                                            'bulletList',
+                                            'codeBlock',
+                                            'h2',
+                                            'h3',
+                                            'italic',
+                                            'link',
+                                            'orderedList',
+                                            'redo',
+                                            'strike',
+                                            'underline',
+                                            'undo',
+                                        ])
                                         ->columnSpanFull(),
+                                    // Forms\Components\Textarea::make('content')
+                                    //     ->label('Text Content')
+                                    //     ->required()
+                                    //     ->minLength(50)
+                                    //     ->maxLength(50000)
+                                    //     ->helperText('Paste your text here (50-50,000 characters)')
+                                    //     ->rows(15)
+                                    //     ->columnSpanFull(),
                                 ]),
 
                             Tabs\Tab::make('Upload File')
