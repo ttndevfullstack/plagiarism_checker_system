@@ -70,29 +70,6 @@ class CreatePlagiarismChecker extends CreateRecord
         }
     }
 
-    private function rawParser(?array $files = null, ?string $content = null): void
-    {
-        $previewData = [];
-
-        if ($files && count($files)) {
-            $file = reset($files);
-
-            try {
-                $filePath = $file->getRealPath();
-                $extension = strtolower($file->getClientOriginalExtension());
-                $filename = $file->getClientOriginalName();
-
-                $documentParser = new DocumentParser();
-                $previewData['content'] = $documentParser->parse($filePath, $extension);
-                $previewData['filename'] = $filename;
-            } catch (\Exception $e) {
-                $previewData['content'] = "Error processing file: " . $e->getMessage();
-            }
-        } else {
-            $previewData['content'] = $content ?? "No content provided";
-        }
-    }
-
     private function redirectToReportPage(array $previewData): void
     {
         $this->redirect(PlagiarismCheck::getUrl([

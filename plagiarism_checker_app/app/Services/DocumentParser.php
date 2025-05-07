@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use PhpOffice\PhpWord\IOFactory;
@@ -11,6 +12,7 @@ use PhpOffice\PhpWord\Element\Title;
 use PhpOffice\PhpWord\Element\Link;
 use Smalot\PdfParser\Parser as PdfParser;
 use PhpOffice\PhpWord\Element\TextBreak;
+use PhpOffice\PhpWord\PhpWord;
 
 class DocumentParser
 {
@@ -27,52 +29,52 @@ class DocumentParser
     protected function parseDocx($filePath, $forPreview = false)
     {
         $phpWord = IOFactory::load($filePath);
-        
+
         if ($forPreview) {
             return $this->parseForPreview($phpWord);
         }
-        
+
         return $this->parseForPlainText($phpWord);
     }
 
     protected function parseForPlainText(\PhpOffice\PhpWord\PhpWord $phpWord)
     {
         $text = [];
-        
+
         foreach ($phpWord->getSections() as $section) {
             foreach ($section->getElements() as $element) {
                 $text[] = $this->extractText($element);
             }
         }
-        
+
         return implode("\n", array_filter($text));
     }
 
     protected function parseForPreview(\PhpOffice\PhpWord\PhpWord $phpWord)
     {
         $content = [];
-        
+
         foreach ($phpWord->getSections() as $section) {
             $sectionContent = $this->parseSection($section);
             if (!empty($sectionContent)) {
                 $content[] = $sectionContent;
             }
         }
-        
+
         return $content;
     }
 
     protected function parseSection(Section $section)
     {
         $elements = [];
-        
+
         foreach ($section->getElements() as $element) {
             $parsedElement = $this->parseElement($element);
             if ($parsedElement !== null) {
                 $elements[] = $parsedElement;
             }
         }
-        
+
         return $elements;
     }
 
@@ -91,7 +93,7 @@ class DocumentParser
         } elseif ($element instanceof TextBreak) {
             return $this->parseTextBreak();
         }
-        
+
         return null;
     }
 
@@ -117,7 +119,7 @@ class DocumentParser
         if ($style == 'Heading1') {
             $alignment = 'center';
         }
-        
+
         if (method_exists($title, 'getParent')) {
             $parent = $title->getParent();
             if ($parent instanceof Section && method_exists($parent, 'getStyle')) {
@@ -127,7 +129,7 @@ class DocumentParser
                 }
             }
         }
-        
+
         $content[] = [
             'text' => $text,
             'font' => [
@@ -140,7 +142,7 @@ class DocumentParser
             ],
             'alignment' => $alignment
         ];
-        
+
         return [
             'type' => 'heading',
             'level' => $title->getDepth(),
@@ -153,7 +155,7 @@ class DocumentParser
     {
         $content = [];
         $alignment = $textRun->getParagraphStyle() ? $textRun->getParagraphStyle()->getAlignment() : 'left';
-        
+
         foreach ($textRun->getElements() as $element) {
             if ($element instanceof Text) {
                 $parsed = $this->parseTextElement($element);
@@ -165,11 +167,11 @@ class DocumentParser
                 $content[] = $parsed;
             }
         }
-        
+
         // Group consecutive text elements with the same styling
         $groupedContent = [];
         $currentGroup = null;
-        
+
         foreach ($content as $item) {
             if ($currentGroup === null) {
                 $currentGroup = $item;
@@ -183,11 +185,11 @@ class DocumentParser
                 $currentGroup = $item;
             }
         }
-        
+
         if ($currentGroup !== null) {
             $groupedContent[] = $currentGroup;
         }
-        
+
         return [
             'type' => 'paragraph',
             'alignment' => $alignment,
@@ -200,20 +202,20 @@ class DocumentParser
         if (isset($style1['link']) !== isset($style2['link'])) {
             return false;
         }
-        
+
         $font1 = $style1['font'] ?? null;
         $font2 = $style2['font'] ?? null;
-        
+
         if ($font1 === null || $font2 === null) {
             return $font1 === $font2;
         }
-        
+
         return $font1['bold'] === $font2['bold'] &&
-               $font1['italic'] === $font2['italic'] &&
-               $font1['underline'] === $font2['underline'] &&
-               $font1['color'] === $font2['color'] &&
-               $font1['size'] === $font2['size'] &&
-               $font1['name'] === $font2['name'];
+            $font1['italic'] === $font2['italic'] &&
+            $font1['underline'] === $font2['underline'] &&
+            $font1['color'] === $font2['color'] &&
+            $font1['size'] === $font2['size'] &&
+            $font1['name'] === $font2['name'];
     }
 
     protected function parseTextElement(Text $text)
@@ -234,7 +236,7 @@ class DocumentParser
             'link' => $link->getSource()
         ];
     }
-    
+
     protected function parseTextBreak()
     {
         return [
@@ -246,11 +248,11 @@ class DocumentParser
     protected function getFontData($element)
     {
         $font = $element->getFontStyle();
-        
+
         if (!$font) {
             return null;
         }
-        
+
         return [
             'bold' => $font->isBold(),
             'italic' => $font->isItalic(),
@@ -265,30 +267,30 @@ class DocumentParser
     protected function parseTable(Table $table)
     {
         $rows = [];
-        
+
         foreach ($table->getRows() as $row) {
             $cells = [];
-            
+
             foreach ($row->getCells() as $cell) {
                 $cellContent = [];
-                
+
                 foreach ($cell->getElements() as $element) {
                     $parsedElement = $this->parseElement($element);
                     if ($parsedElement !== null) {
                         $cellContent[] = $parsedElement;
                     }
                 }
-                
+
                 $cells[] = [
                     'content' => $cellContent
                 ];
             }
-            
+
             $rows[] = [
                 'cells' => $cells
             ];
         }
-        
+
         return [
             'type' => 'table',
             'rows' => $rows
@@ -321,39 +323,14 @@ class DocumentParser
         } elseif ($element instanceof Title) {
             return $element->getText();
         }
-        
-        return '';
-    }
 
-    protected function parsePdf($filePath, $forPreview = false)
-    {
-        $parser = new PdfParser();
-        $pdf = $parser->parseFile($filePath);
-        
-        if ($forPreview) {
-            return [[
-                'type' => 'paragraph',
-                'content' => [[
-                    'text' => $pdf->getText(),
-                    'font' => [
-                        'bold' => false,
-                        'italic' => false,
-                        'underline' => false,
-                        'color' => '000000',
-                        'size' => 12,
-                        'name' => 'Times New Roman'
-                    ]
-                ]]
-            ]];
-        }
-        
-        return $pdf->getText();
+        return '';
     }
 
     protected function parseText($filePath, $forPreview = false)
     {
         $content = file_get_contents($filePath);
-        
+
         if ($forPreview) {
             return [[
                 'type' => 'paragraph',
@@ -370,7 +347,47 @@ class DocumentParser
                 ]]
             ]];
         }
-        
+
         return $content;
+    }
+
+    protected function parsePdf($filePath, $forPreview = false)
+    {
+        $filePath = $this->convertPdfToDocx($filePath);
+
+        return $this->parseDocx($filePath, $forPreview);
+    }
+
+    public function convertPdfToDocx(string $pdfPath): string
+    {
+        // Validate input file exists
+        if (!file_exists($pdfPath)) {
+            throw new \RuntimeException("PDF file not found at path: {$pdfPath}");
+        }
+
+        // Generate output path by changing extension to .docx
+        $outputPath = pathinfo($pdfPath, PATHINFO_DIRNAME) . '/' 
+                    . pathinfo($pdfPath, PATHINFO_FILENAME) . '.docx';
+
+        // Parse PDF content
+        $pdfParser = new PdfParser();
+        $pdf = $pdfParser->parseFile($pdfPath);
+        $text = $pdf->getText();
+        
+        // Create Word document
+        $phpWord = new PhpWord();
+        $section = $phpWord->addSection();
+        $section->addText($text);
+        
+        // Save Word document
+        $objWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
+        $objWriter->save($outputPath);
+        
+        // Verify output file was created
+        if (!file_exists($outputPath)) {
+            throw new \RuntimeException("Failed to create DOCX file at: {$outputPath}");
+        }
+        
+        return $outputPath;
     }
 }
