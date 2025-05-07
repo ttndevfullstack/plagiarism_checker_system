@@ -1,5 +1,1 @@
 /z-docker-resources/volumes
-.qodo
-
-# NLTK Data
-plagiarism_checker_service/flask_app/nltk_data/
