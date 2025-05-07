@@ -43,6 +43,26 @@ def show():
     return jsonify(res)
 
 
+@bp_v1.route("/data/documents/clear", methods=["GET"])
+def clear_data():
+    try:
+        client = MilvusConnection.get_client()
+        client.delete(
+            collection_name="documents",
+            filter="document_id > 0"
+        )
+
+        return jsonify({
+            "success": True,
+            "message": "Successfully cleared all documents from the collection"
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Failed to clear collection: {str(e)}"
+        }), 500
+
+
 @bp_v1.route("/data/upload", methods=["POST"])
 def upload_data():
     file = request.files.get('files')

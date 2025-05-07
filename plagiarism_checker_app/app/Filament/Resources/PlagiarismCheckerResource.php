@@ -62,14 +62,6 @@ class PlagiarismCheckerResource extends Resource
                                             'undo',
                                         ])
                                         ->columnSpanFull(),
-                                    // Forms\Components\Textarea::make('content')
-                                    //     ->label('Text Content')
-                                    //     ->required()
-                                    //     ->minLength(50)
-                                    //     ->maxLength(50000)
-                                    //     ->helperText('Paste your text here (50-50,000 characters)')
-                                    //     ->rows(15)
-                                    //     ->columnSpanFull(),
                                 ]),
 
                             Tabs\Tab::make('Upload File')

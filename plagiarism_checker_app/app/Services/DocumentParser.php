@@ -1,0 +1,376 @@
+<?php
+namespace App\Services;
+
+use PhpOffice\PhpWord\IOFactory;
+use PhpOffice\PhpWord\Element\AbstractElement;
+use PhpOffice\PhpWord\Element\Text;
+use PhpOffice\PhpWord\Element\TextRun;
+use PhpOffice\PhpWord\Element\Section;
+use PhpOffice\PhpWord\Element\Table;
+use PhpOffice\PhpWord\Element\Title;
+use PhpOffice\PhpWord\Element\Link;
+use Smalot\PdfParser\Parser as PdfParser;
+use PhpOffice\PhpWord\Element\TextBreak;
+
+class DocumentParser
+{
+    public function parse(string $filePath, string $extension, bool $forPreview = false)
+    {
+        return match ($extension) {
+            'docx' => $this->parseDocx($filePath, $forPreview),
+            'pdf' => $this->parsePdf($filePath, $forPreview),
+            'txt' => $this->parseText($filePath, $forPreview),
+            default => throw new \Exception("Unsupported file type"),
+        };
+    }
+
+    protected function parseDocx($filePath, $forPreview = false)
+    {
+        $phpWord = IOFactory::load($filePath);
+        
+        if ($forPreview) {
+            return $this->parseForPreview($phpWord);
+        }
+        
+        return $this->parseForPlainText($phpWord);
+    }
+
+    protected function parseForPlainText(\PhpOffice\PhpWord\PhpWord $phpWord)
+    {
+        $text = [];
+        
+        foreach ($phpWord->getSections() as $section) {
+            foreach ($section->getElements() as $element) {
+                $text[] = $this->extractText($element);
+            }
+        }
+        
+        return implode("\n", array_filter($text));
+    }
+
+    protected function parseForPreview(\PhpOffice\PhpWord\PhpWord $phpWord)
+    {
+        $content = [];
+        
+        foreach ($phpWord->getSections() as $section) {
+            $sectionContent = $this->parseSection($section);
+            if (!empty($sectionContent)) {
+                $content[] = $sectionContent;
+            }
+        }
+        
+        return $content;
+    }
+
+    protected function parseSection(Section $section)
+    {
+        $elements = [];
+        
+        foreach ($section->getElements() as $element) {
+            $parsedElement = $this->parseElement($element);
+            if ($parsedElement !== null) {
+                $elements[] = $parsedElement;
+            }
+        }
+        
+        return $elements;
+    }
+
+    protected function parseElement(AbstractElement $element)
+    {
+        if ($element instanceof TextRun) {
+            return $this->parseTextRun($element);
+        } elseif ($element instanceof Text) {
+            return $this->parseTextElement($element);
+        } elseif ($element instanceof Table) {
+            return $this->parseTable($element);
+        } elseif ($element instanceof Title) {
+            return $this->parseTitle($element);
+        } elseif ($element instanceof Link) {
+            return $this->parseLinkElement($element);
+        } elseif ($element instanceof TextBreak) {
+            return $this->parseTextBreak();
+        }
+        
+        return null;
+    }
+
+    protected function parseTitle(Title $title)
+    {
+        $content = [];
+        $alignment = 'left';
+        $text = '';
+        $style = $title->getStyle();
+
+        // Handle text content which might be TextRun or direct text
+        if ($title->getText() instanceof TextRun) {
+            $textRun = $title->getText();
+            foreach ($textRun->getElements() as $element) {
+                if ($element instanceof Text) {
+                    $text .= $element->getText();
+                }
+            }
+        } else {
+            $text = $title->getText();
+        }
+
+        if ($style == 'Heading1') {
+            $alignment = 'center';
+        }
+        
+        if (method_exists($title, 'getParent')) {
+            $parent = $title->getParent();
+            if ($parent instanceof Section && method_exists($parent, 'getStyle')) {
+                $sectionStyle = $parent->getStyle();
+                if ($sectionStyle && method_exists($sectionStyle, 'getAlignment')) {
+                    $alignment = $sectionStyle->getAlignment() ?: 'center';
+                }
+            }
+        }
+        
+        $content[] = [
+            'text' => $text,
+            'font' => [
+                'bold' => true,
+                'italic' => false,
+                'underline' => false,
+                'color' => '000000',
+                'size' => 24 - ($title->getDepth() * 2),
+                'name' => 'Times New Roman'
+            ],
+            'alignment' => $alignment
+        ];
+        
+        return [
+            'type' => 'heading',
+            'level' => $title->getDepth(),
+            'alignment' => $alignment,
+            'content' => $content
+        ];
+    }
+
+    protected function parseTextRun(TextRun $textRun)
+    {
+        $content = [];
+        $alignment = $textRun->getParagraphStyle() ? $textRun->getParagraphStyle()->getAlignment() : 'left';
+        
+        foreach ($textRun->getElements() as $element) {
+            if ($element instanceof Text) {
+                $parsed = $this->parseTextElement($element);
+                $parsed['alignment'] = $alignment;
+                $content[] = $parsed;
+            } elseif ($element instanceof Link) {
+                $parsed = $this->parseLinkElement($element);
+                $parsed['alignment'] = $alignment;
+                $content[] = $parsed;
+            }
+        }
+        
+        // Group consecutive text elements with the same styling
+        $groupedContent = [];
+        $currentGroup = null;
+        
+        foreach ($content as $item) {
+            if ($currentGroup === null) {
+                $currentGroup = $item;
+            } elseif ($this->isSameStyle($currentGroup, $item)) {
+                $currentGroup['text'] .= $item['text'];
+                if (isset($item['link'])) {
+                    $currentGroup['link'] = $item['link'];
+                }
+            } else {
+                $groupedContent[] = $currentGroup;
+                $currentGroup = $item;
+            }
+        }
+        
+        if ($currentGroup !== null) {
+            $groupedContent[] = $currentGroup;
+        }
+        
+        return [
+            'type' => 'paragraph',
+            'alignment' => $alignment,
+            'content' => $groupedContent
+        ];
+    }
+
+    protected function isSameStyle(array $style1, array $style2)
+    {
+        if (isset($style1['link']) !== isset($style2['link'])) {
+            return false;
+        }
+        
+        $font1 = $style1['font'] ?? null;
+        $font2 = $style2['font'] ?? null;
+        
+        if ($font1 === null || $font2 === null) {
+            return $font1 === $font2;
+        }
+        
+        return $font1['bold'] === $font2['bold'] &&
+               $font1['italic'] === $font2['italic'] &&
+               $font1['underline'] === $font2['underline'] &&
+               $font1['color'] === $font2['color'] &&
+               $font1['size'] === $font2['size'] &&
+               $font1['name'] === $font2['name'];
+    }
+
+    protected function parseTextElement(Text $text)
+    {
+        $paragraphStyle = $text->getParagraphStyle();
+        return [
+            'text' => $text->getText(),
+            'font' => $this->getFontData($text),
+            'alignment' => $paragraphStyle ? $paragraphStyle->getAlignment() : 'left'
+        ];
+    }
+
+    protected function parseLinkElement(Link $link)
+    {
+        return [
+            'text' => $link->getText(),
+            'font' => $this->getFontData($link),
+            'link' => $link->getSource()
+        ];
+    }
+    
+    protected function parseTextBreak()
+    {
+        return [
+            'type' => 'text-break',
+            'content' => ''
+        ];
+    }
+
+    protected function getFontData($element)
+    {
+        $font = $element->getFontStyle();
+        
+        if (!$font) {
+            return null;
+        }
+        
+        return [
+            'bold' => $font->isBold(),
+            'italic' => $font->isItalic(),
+            'underline' => $font->getUnderline() !== 'none',
+            'color' => $font->getColor() ?: '000000',
+            'size' => $font->getSize() ?: 12,
+            'name' => $font->getName() ?: 'Times New Roman',
+            'alignment' => $element->getParagraphStyle() ? $element->getParagraphStyle()->getAlignment() : 'left'
+        ];
+    }
+
+    protected function parseTable(Table $table)
+    {
+        $rows = [];
+        
+        foreach ($table->getRows() as $row) {
+            $cells = [];
+            
+            foreach ($row->getCells() as $cell) {
+                $cellContent = [];
+                
+                foreach ($cell->getElements() as $element) {
+                    $parsedElement = $this->parseElement($element);
+                    if ($parsedElement !== null) {
+                        $cellContent[] = $parsedElement;
+                    }
+                }
+                
+                $cells[] = [
+                    'content' => $cellContent
+                ];
+            }
+            
+            $rows[] = [
+                'cells' => $cells
+            ];
+        }
+        
+        return [
+            'type' => 'table',
+            'rows' => $rows
+        ];
+    }
+
+    protected function extractText($element)
+    {
+        if ($element instanceof Title) {
+            if ($element->getText() instanceof TextRun) {
+                $text = '';
+                foreach ($element->getText()->getElements() as $childElement) {
+                    if ($childElement instanceof Text) {
+                        $text .= $childElement->getText();
+                    }
+                }
+                return $text;
+            }
+            return $element->getText();
+        } elseif ($element instanceof TextRun) {
+            $text = '';
+            foreach ($element->getElements() as $childElement) {
+                if ($childElement instanceof Text) {
+                    $text .= $childElement->getText();
+                }
+            }
+            return $text;
+        } elseif ($element instanceof Text) {
+            return $element->getText();
+        } elseif ($element instanceof Title) {
+            return $element->getText();
+        }
+        
+        return '';
+    }
+
+    protected function parsePdf($filePath, $forPreview = false)
+    {
+        $parser = new PdfParser();
+        $pdf = $parser->parseFile($filePath);
+        
+        if ($forPreview) {
+            return [[
+                'type' => 'paragraph',
+                'content' => [[
+                    'text' => $pdf->getText(),
+                    'font' => [
+                        'bold' => false,
+                        'italic' => false,
+                        'underline' => false,
+                        'color' => '000000',
+                        'size' => 12,
+                        'name' => 'Times New Roman'
+                    ]
+                ]]
+            ]];
+        }
+        
+        return $pdf->getText();
+    }
+
+    protected function parseText($filePath, $forPreview = false)
+    {
+        $content = file_get_contents($filePath);
+        
+        if ($forPreview) {
+            return [[
+                'type' => 'paragraph',
+                'content' => [[
+                    'text' => $content,
+                    'font' => [
+                        'bold' => false,
+                        'italic' => false,
+                        'underline' => false,
+                        'color' => '000000',
+                        'size' => 12,
+                        'name' => 'Times New Roman'
+                    ]
+                ]]
+            ]];
+        }
+        
+        return $content;
+    }
+}

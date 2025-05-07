@@ -18,7 +18,7 @@ class PlagiarismCheck extends Page
 
     protected static string $view = 'filament.pages.plagiarism-check';
 
-    public $preview_content = null;
+    public $data = null;
 
     public $results = null;
 
@@ -42,16 +42,18 @@ class PlagiarismCheck extends Page
 
     public function mount()
     {
-        if (request()->has('preview_content')) {
-            $this->preview_content = json_decode(base64_decode(request()->get('preview_content')), true);
+        if (request()->has('data')) {
+            $this->data = json_decode(base64_decode(request()->get('data')), true);
             
             try {
-                $response = app(PlagiarismService::class)->checkPlagiarism($this->preview_content['content']);
-                $this->results = $response['data'];
+                // $response = app(PlagiarismService::class)->checkPlagiarism($this->data['content']);
+                
+                // $this->results = $response['data'];
                 $this->isLoading = false;
             } catch (\Exception $e) {
                 $this->error = $e->getMessage();
                 $this->isLoading = false;
+
                 Notification::make()
                     ->danger()
                     ->title('Error')
@@ -64,7 +66,7 @@ class PlagiarismCheck extends Page
     protected function getViewData(): array
     {
         return [
-            'preview_content' => $this->preview_content,
+            'preview_content' => $this->data['preview_content'] ?? [],
             'results' => $this->results,
             'isLoading' => $this->isLoading,
             'error' => $this->error,

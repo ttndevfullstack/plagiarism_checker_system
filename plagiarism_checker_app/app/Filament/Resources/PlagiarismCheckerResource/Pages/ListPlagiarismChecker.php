@@ -13,7 +13,8 @@ class ListPlagiarismChecker extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->label(__('Check Plagiarism')),
         ];
     }
 }
