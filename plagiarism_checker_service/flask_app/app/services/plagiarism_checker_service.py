@@ -1,7 +1,4 @@
-import numpy as np
 from datetime import datetime, timezone
-from flask import jsonify
-from werkzeug.datastructures import FileStorage
 from typing import List, Dict, Any
 
 from flask_app.app.services.file_handler import FileHandler
@@ -20,18 +17,20 @@ class PlagiarismCheckerService:
         self.similarity_threshold = 0.4
 
     def check_plagiarism(self, file) -> Dict[str, Any]:
-        """Process file and check for plagiarism by paragraphs"""
+        """Process file and check for plagiarism"""
         print("👉 Starting plagiarism check")
         
         # Extract and preprocess text
         file_path = self.file_handler.save_file(file)
         text = self.file_handler.extract_text_from_file(file_path)
-        paragraphs = self.split_into_paragraphs(text)
         
-        # Process paragraphs in batches for efficiency
+        # Use text chunking instead of paragraphs
+        chunks = self.text_service.split_into_chunks(text)
+        
+        # Process chunks in batches for efficiency
         batch_results = []
-        for i in range(0, len(paragraphs), 5):  # Batch size of 5
-            batch = paragraphs[i:i+5]
+        for i in range(0, len(chunks), 5):  # Batch size of 5
+            batch = chunks[i:i+5]
             batch_results.extend(self.process_paragraph_batch(batch))
 
         # Generate final report
@@ -43,13 +42,13 @@ class PlagiarismCheckerService:
         """Process text content directly and check for plagiarism"""
         print("👉 Starting plagiarism check for content")
         
-        # Split content into paragraphs
-        paragraphs = self.split_into_paragraphs(content)
+        # Use text chunking instead of paragraphs
+        chunks = self.text_service.split_into_chunks(content)
         
-        # Process paragraphs in batches
+        # Process chunks in batches
         batch_results = []
-        for i in range(0, len(paragraphs), 5):
-            batch = paragraphs[i:i+5]
+        for i in range(0, len(chunks), 5):  # Batch size of 5
+            batch = chunks[i:i+5]
             batch_results.extend(self.process_paragraph_batch(batch))
 
         # Generate final report

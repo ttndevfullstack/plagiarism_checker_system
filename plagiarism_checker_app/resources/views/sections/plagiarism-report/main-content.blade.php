@@ -4,10 +4,8 @@
             <div class="space-y-2">
                 <div class="flex items-center justify-between mb-4">
                     <h4 class="font-medium text-gray-900 dark:text-white">Content Analysis</h4>
-                    @if ($preview_content['filename'] ?? false)
-                        <span class="text-sm text-gray-500 dark:text-gray-400">
-                            File: {{ $preview_content['filename'] }}
-                        </span>
+                    @if ($filename)
+                        <span class="text-sm text-gray-500 dark:text-gray-400">File: {{ $filename }}</span>
                     @endif
                 </div>
 

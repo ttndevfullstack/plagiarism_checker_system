@@ -90,8 +90,8 @@ def upload_data():
 
 @bp_v1.route("/plagiarism-checker", methods=["POST"])
 def check_document_plagiarism():
-    if "files" in request.files:
-        file = request.files["files"]
+    if "file" in request.files:
+        file = request.files["file"]
         try:
             plagiarism_checker = PlagiarismCheckerService(Config.MINILM_EMBEDDING_MODEL)
             results = plagiarism_checker.check_plagiarism(file)

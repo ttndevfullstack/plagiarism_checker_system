@@ -46,9 +46,10 @@ class PlagiarismCheck extends Page
             $this->data = json_decode(base64_decode(request()->get('data')), true);
             
             try {
-                // $response = app(PlagiarismService::class)->checkPlagiarism($this->data['content']);
+                $response = app(PlagiarismService::class)->checkPlagiarism($this->data['rawContent']);
                 
-                // $this->results = $response['data'];
+                $this->results = $response['data'];
+                dd($this->results);
                 $this->isLoading = false;
             } catch (\Exception $e) {
                 $this->error = $e->getMessage();
@@ -67,6 +68,7 @@ class PlagiarismCheck extends Page
     {
         return [
             'preview_content' => $this->data['preview_content'] ?? [],
+            'filename' => $this->data['filename'] ?? null,
             'results' => $this->results,
             'isLoading' => $this->isLoading,
             'error' => $this->error,

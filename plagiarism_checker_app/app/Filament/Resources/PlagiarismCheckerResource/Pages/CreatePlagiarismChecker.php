@@ -58,12 +58,13 @@ class CreatePlagiarismChecker extends CreateRecord
             $extension = $file->getClientOriginalExtension();
             $filename = $file->getClientOriginalName();
 
-            $parser = new DocumentParser();
-            $previewContent = $parser->parse($filePath, $extension, true);
+            $rawContent = (new DocumentParser())->parse($filePath, $extension);
+            $previewContent = (new DocumentParser())->parse($filePath, $extension, true);
 
             return [
-                'preview_content' => $previewContent,
                 'filename' => $filename,
+                'rawContent' => $rawContent,
+                'preview_content' => $previewContent,
             ];
         } catch (\Exception $e) {
             throw new \Exception("Error processing file: " . $e->getMessage());
