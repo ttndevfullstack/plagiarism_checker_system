@@ -6,7 +6,6 @@ class Config:
     # Application
     ENVIRONMENT = "development"
     FILE_STORAGE_DIR = os.environ.get('FILE_STORAGE_DIR', 'flask_app/storage/uploads/files')
-    OPENAI_EMBEDDING_MODEL = os.environ.get('OPENAI_EMBEDDING_MODEL', 'OpenAI')
     MINILM_EMBEDDING_MODEL = os.environ.get('MINILM_EMBEDDING_MODEL', 'MiniLM')
     
     # OpenAI
