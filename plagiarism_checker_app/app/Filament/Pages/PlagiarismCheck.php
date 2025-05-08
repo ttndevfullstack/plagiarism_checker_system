@@ -49,7 +49,6 @@ class PlagiarismCheck extends Page
                 $response = app(PlagiarismService::class)->checkPlagiarism($this->data['rawContent']);
                 
                 $this->results = $response['data'];
-                dd($this->results);
                 $this->isLoading = false;
             } catch (\Exception $e) {
                 $this->error = $e->getMessage();

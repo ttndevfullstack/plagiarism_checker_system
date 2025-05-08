@@ -6,8 +6,6 @@ use PhpOffice\PhpWord\Element\Text;
 use PhpOffice\PhpWord\Element\TextRun;
 use PhpOffice\PhpWord\Element\Section;
 use PhpOffice\PhpWord\Element\Table;
-use PhpOffice\PhpWord\Element\Row;
-use PhpOffice\PhpWord\Element\Cell;
 use Smalot\PdfParser\Parser as PdfParser;
 
 class DocumentParser
