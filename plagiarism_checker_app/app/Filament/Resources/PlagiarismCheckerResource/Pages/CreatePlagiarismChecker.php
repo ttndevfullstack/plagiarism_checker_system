@@ -5,6 +5,7 @@ namespace App\Filament\Resources\PlagiarismCheckerResource\Pages;
 use App\Filament\Pages\PlagiarismCheck;
 use App\Filament\Resources\PlagiarismCheckerResource;
 use App\Services\DocumentParser;
+use App\Services\TextSlicer;
 use Filament\Actions\Action;
 use Filament\Resources\Pages\CreateRecord;
 
@@ -60,6 +61,21 @@ class CreatePlagiarismChecker extends CreateRecord
 
             $rawContent = (new DocumentParser())->parse($filePath, $extension);
             $previewContent = (new DocumentParser())->parse($filePath, $extension, true);
+            // $slicedContent = (new TextSlicer)->slice($rawContent);
+
+            $headings = [];
+            foreach ($previewContent[0] as $item) {
+                $isHeading = isset($item['type']) && $item['type'] === 'heading';
+                $isTitle = isset($item['type']) && $item['type'] === 'paragraph' && $item['content'][0]['font']['bold'] === true && strlen($item['content'][0]['text'] ?? []) <= 180;
+                
+                if ($isHeading || $isTitle) {
+                    if (isset($item['content'][0]['text'])) {
+                        $headings[] = $item['content'][0]['text'];
+                    }
+                }
+            }
+            // dd($previewContent[0][33]);
+            dd($headings);
 
             return [
                 'filename' => $filename,

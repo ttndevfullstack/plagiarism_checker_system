@@ -78,14 +78,14 @@
                     Similarity Found
                 </div>
                 <div style="height: 4px; background: #ecf0f1; margin-top: 0.75rem; border-radius: 2px;">
-                    <div style="height: 100%; width: {{ min(100, $results['similarity_score'] ?? 0) }}%; background: #e74c3c; border-radius: 2px;"></div>
+                    <div style="height: 100%; width: {{ min(100, $results['total_similarity_percentage'] ?? 0) }}%; background: #e74c3c; border-radius: 2px;"></div>
                 </div>
             </div>
             
             <!-- Sources Checked -->
             <div style="padding: 1rem;">
                 <div style="font-size: 2rem; font-weight: 700; color: #3498db; margin-bottom: 0.5rem;">
-                    {{ $results['sources_checked'] ?? '0' }}
+                    {{ $results['source_count'] ?? '0' }}
                 </div>
                 <div style="font-size: 0.875rem; color: #7f8c8d; font-weight: 500;">
                     Sources Checked
