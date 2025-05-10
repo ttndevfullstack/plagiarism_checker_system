@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use PhpOffice\PhpWord\Element\Title;
+
 class TextSlicer
 {
     public function slice(string $rawText): array
@@ -61,5 +63,61 @@ class TextSlicer
         }
 
         return $chunks;
+    }
+
+    public function extractHeadings(array $elements): array
+    {
+        $headings = [];
+        $headingStyles = array_map(fn($n) => "Heading{$n}", range(1, 6));
+
+        foreach ($elements as $element) {
+            $isHeading = false;
+            $text = '';
+
+            // Case 1: Title object
+            if ($element instanceof Title && $element->getDepth() >= 1) {
+                $isHeading = true;
+                $titleText = $element->getText();
+                $text = is_object($titleText)
+                    ? $this->extractTextFromContainer($titleText)
+                    : $titleText;
+            }
+
+            // Case 2: Styled TextRun or ListItemRun
+            elseif (method_exists($element, 'getParagraphStyle')) {
+                $style = $element->getParagraphStyle();
+                $styleName = is_string($style)
+                    ? $style
+                    : ((is_object($style) && method_exists($style, 'getStyleName')) ? $style->getStyleName() : '');
+                if (in_array($styleName, $headingStyles, true)) {
+                    $isHeading = true;
+                    $text = $this->extractTextFromContainer($element);
+                }
+            }
+
+            if ($isHeading) {
+                $cleaned = trim($text);
+                if ($cleaned !== '' && !in_array($cleaned, $headings, true)) {
+                    $headings[] = $cleaned;
+                }
+            }
+        }
+
+        return $headings;
+    }
+
+    public function extractTextFromContainer($container): string
+    {
+        $text = '';
+        if (method_exists($container, 'getElements')) {
+            foreach ($container->getElements() as $child) {
+                if (method_exists($child, 'getText')) {
+                    $text .= $child->getText() . ' ';
+                }
+            }
+        } elseif (method_exists($container, 'getText')) {
+            $text .= $container->getText();
+        }
+        return trim($text);
     }
 }

@@ -67,17 +67,98 @@ class DocumentParser
 
     protected function parseSection(Section $section)
     {
-        // dd($section->getElements()[33]);
         $elements = [];
+        $groupedElements = $this->groupParagraphElements($section->getElements());
+        
+        foreach ($groupedElements as $index => $groupedElement) {
+            $parsedElements = [];
 
-        foreach ($section->getElements() as $element) {
-            $parsedElement = $this->parseElement($element);
-            if ($parsedElement !== null) {
-                $elements[] = $parsedElement;
+            foreach ($groupedElement as $element) {
+                $parsedElement = $this->parseElement($element);
+                if ($parsedElement !== null) {
+                    $parsedElements[] = $parsedElement;
+                }
             }
+            $elements["text-{$index}"] = $parsedElements;
         }
 
         return $elements;
+    }
+
+    protected function groupParagraphElements(array $elements): array
+    {
+        $groups = [];
+        $currentGroup = [];
+
+        foreach ($elements as $index => $element) {
+            $currentGroup[] = $element;
+            
+            if ($index + 1 == count($elements)) {
+                if (! empty($currentGroup)) {
+                    $groups[] = $currentGroup;
+                    $currentGroup = [];
+                    break;
+                }
+            }
+
+            $nextElement = $elements[$index + 1];
+
+            // For title
+            if ($element instanceof Title) {
+                $groups[] = $currentGroup;
+                $currentGroup = [];
+                continue;
+            }
+
+            // For empty line and empty page
+            if ($element instanceof TextBreak || $element instanceof PageBreak) {
+                $groups[] = $currentGroup;
+                $currentGroup = [];
+                continue;
+            }
+
+            // For table
+            if ($element instanceof Table) {
+                $groups[] = $currentGroup;
+                $currentGroup = [];
+                continue;
+            }
+
+            // For table
+            if ($element instanceof ListItemRun) {
+                // The same type
+                if (get_class($element) == get_class($nextElement)) {
+                    continue;
+                } else {
+                    $groups[] = $currentGroup;
+                    $currentGroup = [];
+                    continue;
+                }
+            }
+
+            $textLength = mb_strlen($element->getText(), 'UTF-8');
+            if ($textLength >= config('document-parse.min_paragraph_length')) {
+                $groups[] = $currentGroup;
+                $currentGroup = [];
+                continue;
+            } else {
+                // The same type
+                if (get_class($element) == get_class($nextElement)) {
+                    continue;
+                } else {
+                    $groups[] = $currentGroup;
+                    $currentGroup = [];
+                    continue;
+                }
+            }
+        }
+
+        // Push remaining group
+        if (! empty($currentGroup)) {
+            $groups[] = $currentGroup;
+        }
+
+        return $groups;
     }
 
     protected function parseElement(AbstractElement $element)
@@ -121,7 +202,7 @@ class DocumentParser
 
         return [
             'type' => 'list-item',
-            'level' => $listStyle->getLevel(),
+            'level' => $listItem->getDepth(),
             'listType' => $listStyle->getListType(),
             'alignment' => $alignment,
             'content' => $content
@@ -272,7 +353,7 @@ class DocumentParser
     {
         return [
             'type' => 'text-break',
-            'content' => ''
+            'content' => []
         ];
     }
 
@@ -397,28 +478,91 @@ class DocumentParser
         }
 
         // Generate output path by changing extension to .docx
-        $outputPath = pathinfo($pdfPath, PATHINFO_DIRNAME) . '/' 
-                    . pathinfo($pdfPath, PATHINFO_FILENAME) . '.docx';
+        $outputPath = pathinfo($pdfPath, PATHINFO_DIRNAME) . '/'
+            . pathinfo($pdfPath, PATHINFO_FILENAME) . '.docx';
 
         // Parse PDF content
         $pdfParser = new PdfParser();
         $pdf = $pdfParser->parseFile($pdfPath);
         $text = $pdf->getText();
-        
+
         // Create Word document
         $phpWord = new PhpWord();
         $section = $phpWord->addSection();
         $section->addText($text);
-        
+
         // Save Word document
         $objWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
         $objWriter->save($outputPath);
-        
+
         // Verify output file was created
         if (!file_exists($outputPath)) {
             throw new \RuntimeException("Failed to create DOCX file at: {$outputPath}");
         }
-        
+
         return $outputPath;
+    }
+
+    public function concatGroupedParagraphs(array $sections): array 
+    {
+        $result = [];
+        
+        foreach ($sections as $section) {
+            foreach ($section as $groupKey => $elements) {
+                $text = '';
+                
+                foreach ($elements as $element) {
+                    $text .= $this->extractElementText($element);
+                }
+                
+                $text = trim($text);
+                $textLength = mb_strlen($text, 'UTF-8');
+                if (! empty($text) && $textLength >= config('document-parse.min_paragraph_length')) {
+                    $result[$groupKey] = $text;
+                }
+            }
+        }
+        
+        return $result;
+    }
+
+    private function extractElementText(array $element): string 
+    {
+        return match($element['type'] ?? null) {
+            'paragraph', 'heading' => $this->extractContentText($element['content']),
+            'table' => $this->extractTableText($element['rows']),
+            'list-item' => $this->extractContentText($element['content']),
+            'text-break' => "\n",
+            default => ''
+        };
+    }
+
+    private function extractContentText(array $contents): string 
+    {
+        $text = '';
+        foreach ($contents as $content) {
+            $text .= $content['text'] ?? '';
+            if (isset($content['link'])) {
+                $text .= ' [' . $content['link'] . ']';
+            }
+        }
+        return $text;
+    }
+
+    private function extractTableText(array $rows): string 
+    {
+        $text = '';
+        foreach ($rows as $row) {
+            $rowText = [];
+            foreach ($row['cells'] as $cell) {
+                $cellText = '';
+                foreach ($cell['content'] as $element) {
+                    $cellText .= $this->extractElementText($element);
+                }
+                $rowText[] = trim($cellText);
+            }
+            $text .= implode(" | ", array_filter($rowText)) . "\n";
+        }
+        return $text;
     }
 }

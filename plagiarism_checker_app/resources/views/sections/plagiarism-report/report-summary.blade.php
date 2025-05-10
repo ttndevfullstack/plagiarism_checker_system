@@ -45,13 +45,17 @@
 
         <!-- Congratulation Message -->
         <div style="margin-bottom: 2rem;">
-            <h2 style="font-size: 1.75rem; font-weight: 700; color: #2c3e50; margin-bottom: 0.75rem;">
+            {{-- <h2 style="font-size: 1.75rem; font-weight: 700; color: #2c3e50; margin-bottom: 0.75rem;">
                 Congratulations! 🎉
-            </h2>
-            <p style="font-size: 1.1rem; color: #7f8c8d; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+            </h2> --}}
+            {{-- <p style="font-size: 1.1rem; color: #7f8c8d; max-width: 600px; margin: 0 auto; line-height: 1.6;">
                 Your document has passed the plagiarism check with outstanding results. 
                 Your work demonstrates excellent originality and academic integrity.
-            </p>
+            </p> --}}
+            <h2 style="font-size: 1.75rem; font-weight: 700; color: #2c3e50; margin-bottom: 0.75rem;">
+                Plagiarism Check Results! 🎉
+            </h2>
+            <p style="font-size: 1.1rem; color: #7f8c8d; max-width: 600px; margin: 0 auto; line-height: 1.6;">{{ $results['overall_verdict'] ?? '' }}</p>
         </div>
 
         <!-- Statistics Grid -->
@@ -72,7 +76,7 @@
             <!-- Similarity Score -->
             <div style="padding: 1rem;">
                 <div style="font-size: 2rem; font-weight: 700; color: #e74c3c; margin-bottom: 0.5rem;">
-                    {{ $results['similarity_score'] ?? '0' }}%
+                    {{ $results['total_similarity_percentage'] ?? '0' }}%
                 </div>
                 <div style="font-size: 0.875rem; color: #7f8c8d; font-weight: 500;">
                     Similarity Found

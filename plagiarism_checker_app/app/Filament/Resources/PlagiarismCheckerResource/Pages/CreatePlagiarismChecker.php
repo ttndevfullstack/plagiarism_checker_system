@@ -59,28 +59,11 @@ class CreatePlagiarismChecker extends CreateRecord
             $extension = $file->getClientOriginalExtension();
             $filename = $file->getClientOriginalName();
 
-            $rawContent = (new DocumentParser())->parse($filePath, $extension);
-            $previewContent = (new DocumentParser())->parse($filePath, $extension, true);
-            // $slicedContent = (new TextSlicer)->slice($rawContent);
-
-            $headings = [];
-            foreach ($previewContent[0] as $item) {
-                $isHeading = isset($item['type']) && $item['type'] === 'heading';
-                $isTitle = isset($item['type']) && $item['type'] === 'paragraph' && $item['content'][0]['font']['bold'] === true && strlen($item['content'][0]['text'] ?? []) <= 180;
-                
-                if ($isHeading || $isTitle) {
-                    if (isset($item['content'][0]['text'])) {
-                        $headings[] = $item['content'][0]['text'];
-                    }
-                }
-            }
-            // dd($previewContent[0][33]);
-            dd($headings);
-
             return [
+                'file_path' => $filePath,
                 'filename' => $filename,
-                'rawContent' => $rawContent,
-                'preview_content' => $previewContent,
+                'extension' => $extension,
+                'preview_content' => null,
             ];
         } catch (\Exception $e) {
             throw new \Exception("Error processing file: " . $e->getMessage());

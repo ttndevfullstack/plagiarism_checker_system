@@ -39,32 +39,6 @@
     </div>
 </x-filament::page>
 
-@push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize Alpine.js components
-            document.querySelectorAll('[x-data]').forEach(el => {
-                Alpine?.initializeComponent(el);
-            });
-
-            // Smooth scroll to first high similarity paragraph
-            const firstHighSimilarity = document.querySelector('.bg-danger-100\\/80, .bg-danger-50\\/70');
-            if (firstHighSimilarity) {
-                firstHighSimilarity.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
-                });
-
-                // Pulse animation for attention
-                firstHighSimilarity.classList.add('animate-pulse');
-                setTimeout(() => {
-                    firstHighSimilarity.classList.remove('animate-pulse');
-                }, 2000);
-            }
-        });
-    </script>
-@endpush
-
 @push('styles')
     <style>
         /* Text Colors */
