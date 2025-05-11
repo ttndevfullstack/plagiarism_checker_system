@@ -1,35 +1,3 @@
-{{-- <x-filament::card>
-    <div class="space-y-2">
-        <div class="flex items-center justify-between">
-            <div>
-                <h3 class="text-lg font-medium">Plagiarism Report</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Generated {{ now()->format('Y-m-d H:i:s') }}
-                </p>
-            </div>
-
-            <div class="flex items-center space-x-4 gap-6">
-                <div class="text-center">
-                    <div
-                        class="text-2xl font-bold {{ highlight_text_color($results['total_similarity_percentage'] ?? 0) }}">
-                        {{ $results['total_similarity_percentage'] ?? 0 }}%
-                    </div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">Similarity Score</div>
-                </div>
-
-                <div class="text-center">
-                    <div class="text-2xl font-bold">{{ count($results['sources_summary'] ?? []) }}</div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">Sources Found</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="rounded-lg border p-4 {{ highlight_text_color($results['total_similarity_percentage'] ?? 0) }}">
-            <div class="font-medium">Verdict:</div>
-            <p class="text-gray-800 dark:text-gray-200">{{ $results['overall_verdict'] ?? '' }}</p>
-        </div>
-    </div>
-</x-filament::card> --}}
-
 <x-filament::card style="background: linear-gradient(135deg, #f5f7fa 0%, #e4f0fb 100%); border: none; border-radius: 12px; overflow: hidden;">
     <div style="text-align: center; padding: 2.5rem 1.5rem; position: relative;">
         <!-- Decorative elements -->
@@ -76,23 +44,23 @@
             <!-- Similarity Score -->
             <div style="padding: 1rem;">
                 <div style="font-size: 2rem; font-weight: 700; color: #e74c3c; margin-bottom: 0.5rem;">
-                    {{ $results['total_similarity_percentage'] ?? '0' }}%
+                    {{ $results['similarity_score'] ?? '0' }}%
                 </div>
                 <div style="font-size: 0.875rem; color: #7f8c8d; font-weight: 500;">
                     Similarity Found
                 </div>
                 <div style="height: 4px; background: #ecf0f1; margin-top: 0.75rem; border-radius: 2px;">
-                    <div style="height: 100%; width: {{ min(100, $results['total_similarity_percentage'] ?? 0) }}%; background: #e74c3c; border-radius: 2px;"></div>
+                    <div style="height: 100%; width: {{ min(100, $results['similarity_score'] ?? 0) }}%; background: #e74c3c; border-radius: 2px;"></div>
                 </div>
             </div>
             
             <!-- Sources Checked -->
             <div style="padding: 1rem;">
                 <div style="font-size: 2rem; font-weight: 700; color: #3498db; margin-bottom: 0.5rem;">
-                    {{ $results['source_count'] ?? '0' }}
+                    {{ $results['source_matched'] ?? '0' }}
                 </div>
                 <div style="font-size: 0.875rem; color: #7f8c8d; font-weight: 500;">
-                    Sources Checked
+                    Sources Matched
                 </div>
                 <div style="height: 4px; background: #ecf0f1; margin-top: 0.75rem; border-radius: 2px;">
                     <div style="height: 100%; width: 100%; background: #3498db; border-radius: 2px;"></div>

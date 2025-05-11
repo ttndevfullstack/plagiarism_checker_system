@@ -1,11 +1,3 @@
-import os
-import numpy as np
-import uuid
-from werkzeug.datastructures import FileStorage
-
-from flask_app.app.services.file_handler import FileHandler
-from flask_app.app.services.process_text_service import ProcessTextService
-from flask_app.app.factories.embedding_model_factory import EmbeddingModelFactory
 from flask_app.app.databases.milvus_connection import MilvusConnection
 
 class DatabaseHandler:
@@ -27,18 +19,16 @@ class DatabaseHandler:
             print(f"   ❌ Error inserting document into database: {str(e)}")
             raise
  
-    def upsert_document(self, document) -> int:
-        """Insert embeddings into Milvus"""
+    def insert_documents(self, documents: list) -> int:
+        """Insert multiple embeddings into Milvus"""
         try:
             result = MilvusConnection.get_client().upsert(
                 collection_name="documents",
-                # partition_name=document.subject_code,
-                data=[document]
+                data=documents  # ✅ No wrapping needed
             )
 
-            print(f"   ✅ Upserted document into database successfully")
-            # Milvus returns 'upsert_count' for upsert operations
+            print(f"   ✅ Upserted {len(documents)} documents into database successfully")
             return result.get('upsert_count', 0)
         except Exception as e:
-            print(f"   ❌ Error upserting document into database: {str(e)}")
+            print(f"   ❌ Error upserting documents into database: {str(e)}")
             raise

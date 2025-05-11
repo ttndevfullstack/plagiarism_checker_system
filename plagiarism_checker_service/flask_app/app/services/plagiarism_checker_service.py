@@ -14,7 +14,7 @@ class PlagiarismCheckerService:
         self.embedding_service = EmbeddingModelFactory.get_model(embedding_model)
 
         self.min_paragraph_length = 50
-        self.similarity_threshold = 0.4
+        self.similarity_threshold = 0.8
 
     def check_plagiarism_content(self, content: Dict[str, str]) -> Dict[str, Any]:
       """Process pre-chunked paragraphs and return a structured plagiarism report"""
@@ -43,14 +43,16 @@ class PlagiarismCheckerService:
           "metric_type": "COSINE",
           "offset": 0,
           "limit": 5,
-          "params": {"nprobe": 16}
+          "params": {
+              "ef": 64
+          }
       }
 
       results = self.client.search(
           collection_name="documents",
           data=[embedding],
           anns_field="embedding",
-          output_fields=["document_id", "subject_code", "original_name", "source_url", "published_date"],
+          output_fields=["document_id", "paragraph_id", "subject_code", "original_name", "source_url", "published_date"],
           **search_params
       )
 
@@ -128,10 +130,10 @@ class PlagiarismCheckerService:
             "status": "success",
             "data": {
                 "originality_score": originality_score,
-                "total_similarity_percentage": round(avg_similarity, 1),
-                "overall_verdict": verdict,
-                "source_count": len(sources_summary),
+                "similarity_score": round(avg_similarity, 1),
+                "source_matched": len(sources_summary),
                 "words_analyzed": words_analyzed,
+                "overall_verdict": verdict,
                 "processed_at": datetime.now(timezone.utc).isoformat(),
                 "paragraphs": paragraph_results,
                 "sources_summary": sources_summary

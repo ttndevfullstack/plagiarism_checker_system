@@ -96,3 +96,8 @@ class ProcessTextService:
             processed_sentences.append(' '.join(tokens))
 
         return ' '.join(processed_sentences)
+    
+    def chunk_text_into_paragraphs(self, text: str) -> list:
+        """Split raw text into paragraphs using double line breaks or block hints"""
+        paragraphs = [p.strip() for p in re.split(r'\n\s*\n+', text) if len(p.strip()) >= self.min_paragraph_length]
+        return paragraphs

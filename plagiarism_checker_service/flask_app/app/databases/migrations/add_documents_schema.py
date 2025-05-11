@@ -13,6 +13,7 @@ class DocumentMigration:
         
         # Add fields to schema
         schema.add_field(field_name="document_id", datatype=DataType.INT64, is_primary=True, auto_id=False)
+        schema.add_field(field_name="paragraph_id", datatype=DataType.INT64, is_primary=False, auto_id=False)
         schema.add_field(field_name="subject_code", datatype=DataType.VARCHAR, max_length=100)
         schema.add_field(field_name="original_name", datatype=DataType.VARCHAR, max_length=1000)
         schema.add_field(field_name="embedding", datatype=DataType.FLOAT_VECTOR, dim=384)
@@ -24,16 +25,24 @@ class DocumentMigration:
 
         index_params.add_index(field_name="document_id", index_type="AUTOINDEX")
 
-        # Index for embedding field for similarity search
+        # # Index for embedding field for similarity search
+        # index_params.add_index(
+        #     field_name="embedding",
+        #     index_name="embedding_index",
+        #     index_type="IVF_FLAT",   # Good balance between accuracy and speed
+        #     metric_type="COSINE",    # Best for plagiarism detection (text similarity)
+        #     params={
+        #         "nlist": 1024,       # Number of clusters (adjust based on collection size)
+        #         "nprobe": 16         # Number of clusters to search (adjust for speed/recall)
+        #     }
+        # )
+
         index_params.add_index(
             field_name="embedding",
             index_name="embedding_index",
-            index_type="IVF_FLAT",   # Good balance between accuracy and speed
-            metric_type="COSINE",    # Best for plagiarism detection (text similarity)
-            params={
-                "nlist": 1024,       # Number of clusters (adjust based on collection size)
-                "nprobe": 16         # Number of clusters to search (adjust for speed/recall)
-            }
+            index_type="HNSW",
+            metric_type="COSINE",
+            params={"M": 16, "efConstruction": 200}
         )
 
         return index_params

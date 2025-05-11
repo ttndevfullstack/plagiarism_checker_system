@@ -1,3 +1,4 @@
+import numpy as np
 from sentence_transformers import SentenceTransformer
 
 from flask_app.app.services.contracts.textable import Textable
@@ -12,6 +13,10 @@ class MiniLMEmbeddingService(Embeddingable, Textable):
         print("   👉 Convert text to embedding")
         
         embedding = self.model.encode(text)
+
+        # Ensure that the output of MiniLM is normalized to unit vectors:
+        embedding = embedding / np.linalg.norm(embedding)
+        
         return embedding
     
     def convert_embedding_to_text(self, text):
