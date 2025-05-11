@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Filament\Resources\PlagiarismCheckerResource\Pages;
+namespace App\Filament\User\Resources\PlagiarismCheckerResource\Pages;
 
-use App\Filament\Pages\PlagiarismCheck;
-use App\Filament\Resources\PlagiarismCheckerResource;
+use App\Filament\User\Pages\PlagiarismCheck;
+use App\Filament\User\Resources\PlagiarismCheckerResource;
 use Filament\Actions\Action;
 use Filament\Resources\Pages\CreateRecord;
 
