@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
 from typing import List, Dict, Any
+from datetime import datetime, timezone
 
 from flask_app.app.services.file_handler import FileHandler
 from flask_app.app.databases.milvus_connection import MilvusConnection
@@ -16,28 +16,6 @@ class PlagiarismCheckerService:
         self.min_paragraph_length = 50
         self.similarity_threshold = 0.4
 
-    def check_plagiarism(self, file) -> Dict[str, Any]:
-        """Process file and check for plagiarism"""
-        print("👉 Starting plagiarism check")
-        
-        # Extract and preprocess text
-        file_path = self.file_handler.save_file(file)
-        text = self.file_handler.extract_text_from_file(file_path)
-        
-        # Use text chunking instead of paragraphs
-        chunks = self.text_service.split_into_chunks(text)
-        
-        # Process chunks in batches for efficiency
-        batch_results = []
-        for i in range(0, len(chunks), 5):  # Batch size of 5
-            batch = chunks[i:i+5]
-            batch_results.extend(self.process_paragraph_batch(batch))
-
-        # Generate final report
-        report = self.generate_report(batch_results)
-        print("✅ Plagiarism check completed successfully")
-        return report
-
     def check_plagiarism_content(self, content: Dict[str, str]) -> Dict[str, Any]:
       """Process pre-chunked paragraphs and return a structured plagiarism report"""
       print("👉 Starting plagiarism check for pre-parsed paragraphs")
@@ -49,10 +27,9 @@ class PlagiarismCheckerService:
               continue  # Skip short paragraphs
 
           result = self.check_plagiarism_paragraph(paragraph)
-          result["id"] = chunk_id  # Assign original ID
+          result["id"] = chunk_id
           paragraph_results.append(result)
 
-      # Generate report
       report = self.generate_report(paragraph_results)
       print("✅ Plagiarism check completed successfully")
       return report
@@ -111,7 +88,7 @@ class PlagiarismCheckerService:
                         "title": source['title'],
                         "total_matched": 0,
                         "highest_similarity": 0,
-                        "matches": []  # Track all matches
+                        "matches": []
                     }
                 
                 # Add match details

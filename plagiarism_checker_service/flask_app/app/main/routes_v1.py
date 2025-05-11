@@ -43,7 +43,7 @@ def show():
     return jsonify(res)
 
 
-@bp_v1.route("/data/documents/clear", methods=["GET"])
+@bp_v1.route("/data/documents/clear")
 def clear_data():
     try:
         client = MilvusConnection.get_client()
@@ -90,37 +90,18 @@ def upload_data():
 
 @bp_v1.route("/plagiarism-checker", methods=["POST"])
 def check_document_plagiarism():
-    if "file" in request.files:
-        file = request.files["file"]
-        try:
-            plagiarism_checker = PlagiarismCheckerService(Config.MINILM_EMBEDDING_MODEL)
-            results = plagiarism_checker.check_plagiarism(file)
-            return jsonify(results)
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
-        
-    elif "content" in request.form:
-        try:
-            content = request.form["content"]
+    if request.is_json:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+            
+        if "content" in data:
+            content = data["content"]
+            
             plagiarism_checker = PlagiarismCheckerService(Config.MINILM_EMBEDDING_MODEL)
             results = plagiarism_checker.check_plagiarism_content(content)
             return jsonify(results)
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
-        
-    elif request.is_json:
-            data = request.get_json()
-            if not data:
-                return jsonify({"error": "No JSON data provided"}), 400
-                
-            if "content" in data:
-                content = data["content"]
-                
-                plagiarism_checker = PlagiarismCheckerService(Config.MINILM_EMBEDDING_MODEL)
-                results = plagiarism_checker.check_plagiarism_content(content)
-                return jsonify(results)
-            else:
-                return jsonify({"error": "Missing 'content' field in JSON"}), 400
-
+        else:
+            return jsonify({"error": "Missing 'content' field in JSON"}), 400
     else:
         return jsonify({"error": "No file or content provided"}), 400
