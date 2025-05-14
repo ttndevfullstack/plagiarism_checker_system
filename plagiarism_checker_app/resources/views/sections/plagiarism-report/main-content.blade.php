@@ -10,7 +10,9 @@
                 </div>
 
                 <div class="rounded border p-4 bg-gray-50 dark:bg-gray-800">
-                    @if (!is_null($preview_content))
+                    @if (!is_null($preview_text))
+                        <div>{!! $preview_text !!}</div>
+                    @elseif (!is_null($preview_content))
                         <div class="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-headings:text-gray-900 dark:prose-headings:text-white prose-p:text-gray-700 dark:prose-p:text-gray-300">
                             <div class="document-preview">
                                 @foreach($preview_content as $section)

@@ -523,7 +523,12 @@ class DocumentParser
             }
         }
         
-        return $result;
+        return $this->removeSoftParagraph($result);
+    }
+
+    private function removeSoftParagraph(array $paragraphs): array
+    {
+        return array_filter($paragraphs, fn($text) => strlen($text) >= config('document-parse.min_paragraph_length'));
     }
 
     private function extractElementText(array $element): string 

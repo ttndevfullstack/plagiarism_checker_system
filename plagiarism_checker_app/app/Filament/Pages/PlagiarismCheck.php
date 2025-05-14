@@ -29,6 +29,8 @@ class PlagiarismCheck extends Page
 
     public string $fileName = '';
 
+    protected ?string $previewText = null;
+
     protected array $previewContent = [];
 
     protected array $highlightContent = [];
@@ -52,12 +54,17 @@ class PlagiarismCheck extends Page
         if (request()->has('data')) {
             $data = json_decode(base64_decode(request()->get('data')), true);
             
-            $documentParser = new DocumentParser();
-            $this->previewContent = $documentParser->parse($data['file_path'], $data['extension'], true);
-            $cleanedContent = $documentParser->concatGroupedParagraphs($this->previewContent);
+            if ($data['preview_content'] ?? null) {
+                $this->previewText = $data['preview_content'];
+                $cleanedContent = ['text-1' => $data['preview_content']];
+            } else {
+                $documentParser = new DocumentParser();
+                $this->previewContent = $documentParser->parse($data['file_path'], $data['extension'], true);
+                $cleanedContent = $documentParser->concatGroupedParagraphs($this->previewContent);
+                $this->fileName = $data['filename'];
+            }
             
             $this->isLoading = false;
-            $this->fileName = $data['filename'];
 
             $this->checkPlagiarism($cleanedContent);
         }
@@ -87,6 +94,7 @@ class PlagiarismCheck extends Page
         }
 
         return [
+            'preview_text' => $this->previewText,
             'preview_content' => ! empty($this->highlightContent) ? $this->highlightContent : $this->previewContent,
             'filename' => $this->fileName,
             'results' => $this->results,

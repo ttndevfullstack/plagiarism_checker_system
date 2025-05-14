@@ -12,7 +12,7 @@ class PlagiarismService
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
         ])->post(config('plagiarism-checker.flask_app_url') . '/v1/api/plagiarism-checker', [
-            'content' => $content,
+            'content' => $this->removeHTMLTag($content),
         ]);
 
         if (!$response->successful()) {
@@ -20,5 +20,10 @@ class PlagiarismService
         }
 
         return $response->json();
+    }
+
+    private function removeHTMLTag(array $paragraphs): array
+    {
+        return array_map(fn ($paragraph) => strip_tags($paragraph), $paragraphs);
     }
 }
