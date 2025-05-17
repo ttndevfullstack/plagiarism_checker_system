@@ -41,6 +41,7 @@ class CreatePlagiarismChecker extends CreateRecord
             return [
                 'preview_content' => null,
                 'filename' => null,
+                'give_me_file' => false,
             ];
         }
 
@@ -48,6 +49,7 @@ class CreatePlagiarismChecker extends CreateRecord
             return [
                 'preview_content' => $content,
                 'filename' => null,
+                'give_me_file' => false,
             ];
         }
 
@@ -62,6 +64,7 @@ class CreatePlagiarismChecker extends CreateRecord
                 'filename' => $filename,
                 'extension' => $extension,
                 'preview_content' => null,
+                'give_me_file' => true,
             ];
         } catch (\Exception $e) {
             throw new \Exception("Error processing file: " . $e->getMessage());

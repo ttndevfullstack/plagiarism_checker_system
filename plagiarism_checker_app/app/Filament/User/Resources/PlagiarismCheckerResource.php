@@ -78,6 +78,9 @@ class PlagiarismCheckerResource extends Resource
                                         ->required()
                                         ->helperText('Supported formats: PDF, DOCX, TXT (Max 10MB)')
                                         ->columnSpanFull(),
+
+                                    Forms\Components\Checkbox::make('give_me_file')
+                                        ->label('Give me a file for result')
                                 ]),
                         ])
                         ->columnSpanFull(),

@@ -29,6 +29,10 @@ class PlagiarismCheck extends Page
 
     public string $fileName = '';
 
+    public bool $giveMeFile = false;
+
+    public ?string $outputPath = null;
+
     protected ?string $previewText = null;
 
     protected array $previewContent = [];
@@ -54,16 +58,29 @@ class PlagiarismCheck extends Page
         if (request()->has('data')) {
             $data = json_decode(base64_decode(request()->get('data')), true);
             
-            if ($data['preview_content'] ?? null) {
-                $this->previewText = $data['preview_content'];
-                $cleanedContent = ['text-1' => $data['preview_content']];
-            } else {
+            if ($data['file_path'] ?? null && $data['give_me_file'] ?? false) {   // Return a origin file
+                // Get the filename with extension (basename)
+                $filenameWithExt = basename($data['file_path']);
+                $fileInfo = pathinfo($filenameWithExt);
+                $filename = $fileInfo['filename'];
+                $extension = isset($fileInfo['extension']) ? '.' . $fileInfo['extension'] : '';
+                $outputFileName = $filename . '_OUTPUT' . $extension;
+                
                 $documentParser = new DocumentParser();
                 $this->previewContent = $documentParser->parse($data['file_path'], $data['extension'], true);
                 $cleanedContent = $documentParser->concatGroupedParagraphs($this->previewContent);
-                $this->fileName = $data['filename'];
+                $this->outputPath = $documentParser->outputHighlightTextDocxFile($documentParser->phpWord, $outputFileName);
+            } else if ($data['file_path']) {    // Show report and preview content in file
+                $documentParser = new DocumentParser();
+                $this->previewContent = $documentParser->parse($data['file_path'], $data['extension'], true);
+                $cleanedContent = $documentParser->concatGroupedParagraphs($this->previewContent);
+            } else {
+                $this->previewText = $data['preview_content'];    // Show report and preview content
+                $cleanedContent = ['text-1' => $data['preview_content']];
             }
             
+            $this->fileName = $data['filename'] ?? '';
+            $this->giveMeFile = $data['give_me_file'] ?? false;
             $this->isLoading = false;
 
             $this->checkPlagiarism($cleanedContent);

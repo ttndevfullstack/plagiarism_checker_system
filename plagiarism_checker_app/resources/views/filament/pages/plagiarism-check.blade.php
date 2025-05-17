@@ -34,7 +34,11 @@
         @include('sections.plagiarism-report.source-summary', ['results' => $results]) 
         
         <!-- Main content -->
-        @include('sections.plagiarism-report.main-content', ['results' => $results]) 
+        @if ($giveMeFile)
+            @include('sections.plagiarism-report.download-file')
+        @else
+            @include('sections.plagiarism-report.main-content', ['results' => $results]) 
+        @endif
 
     </div>
 </x-filament::page>

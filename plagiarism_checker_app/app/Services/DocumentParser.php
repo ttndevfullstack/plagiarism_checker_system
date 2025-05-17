@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Traits\RawParser;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\Element\AbstractElement;
 use PhpOffice\PhpWord\Element\Text;
@@ -17,6 +18,10 @@ use PhpOffice\PhpWord\PhpWord;
 
 class DocumentParser
 {
+    use RawParser;
+
+    public \PhpOffice\PhpWord\PhpWord $phpWord;
+
     public function parse(string $filePath, string $extension, bool $forPreview = false)
     {
         return match ($extension) {
@@ -29,13 +34,13 @@ class DocumentParser
 
     protected function parseDocx($filePath, $forPreview = false)
     {
-        $phpWord = IOFactory::load($filePath);
+        $this->phpWord = IOFactory::load($filePath);
 
         if ($forPreview) {
-            return $this->parseForPreview($phpWord);
+            return $this->parseForPreview($this->phpWord);
         }
 
-        return $this->parseForPlainText($phpWord);
+        return $this->parseForPlainText($this->phpWord);
     }
 
     protected function parseForPlainText(\PhpOffice\PhpWord\PhpWord $phpWord)
