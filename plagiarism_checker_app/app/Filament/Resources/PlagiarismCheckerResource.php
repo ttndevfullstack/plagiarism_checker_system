@@ -81,6 +81,7 @@ class PlagiarismCheckerResource extends Resource
                                     
                                     Forms\Components\Checkbox::make('give_me_file')
                                         ->label('Give me a file for result')
+                                        ->default(false)
                                 ]),
                         ])
                         ->columnSpanFull(),

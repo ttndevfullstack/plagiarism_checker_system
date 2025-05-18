@@ -93,3 +93,23 @@ function highlight_text_background(float $percent = 0): string
         return 'bg-success-100 dark:bg-success-400 text-black';
     }
 }
+
+function highlight_word_background(float $percent = 0): array
+{
+    $colors = [
+        'danger'  => ['bgColor' => 'FFEBEE', 'color' => 'D32F2F'],  // Light red bg with dark red text
+        'pink'    => ['bgColor' => 'FCE4EC', 'color' => 'C2185B'],  // Light pink bg with deep pink text
+        'warning' => ['bgColor' => 'FFF8E1', 'color' => 'FF8F00'],  // Light yellow bg with amber text
+        'success' => ['bgColor' => 'E8F5E9', 'color' => '2E7D32']   // Light green bg with dark green text
+    ];
+
+    if ($percent > 80) {
+        return $colors['danger'];
+    } elseif ($percent > 60) {
+        return $colors['pink'];
+    } elseif ($percent > 40) {
+        return $colors['warning'];
+    }
+    
+    return $colors['success'];
+}
