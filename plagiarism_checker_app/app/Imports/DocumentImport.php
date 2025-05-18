@@ -10,11 +10,13 @@ use Maatwebsite\Excel\Concerns\ToCollection;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Illuminate\Support\Facades\Storage;
+use Filament\Notifications\Notification;
 
 class DocumentImport implements ToCollection, WithHeadingRow
 {
     protected DocumentBatch $documentBatch;
     protected string $archivePath;
+    protected array $processedFileNames = [];
 
     public function __construct(DocumentBatch $documentBatch, string $archivePath)
     {
@@ -40,10 +42,22 @@ class DocumentImport implements ToCollection, WithHeadingRow
                     continue;
                 }
 
+                if ($this->isDuplicateFileName($row['file_name'])) {
+                    Notification::make()
+                        ->warning()
+                        ->title('Duplicate File')
+                        ->body("Skipping duplicate file: {$row['file_name']}")
+                        ->send();
+                    continue;
+                }
+
                 $subject = Subject::where('code', $row['major_code'])->first();
                 $filePath = "{$this->archivePath}/{$row['file_name']}";
                 if (! file_exists($filePath) || ! $subject) { continue; }
                 
+                // Add file name to processed list
+                $this->processedFileNames[] = $row['file_name'];
+
                 $documentBatchDir = "media/document_batches/{$this->documentBatch->id}";
                 $media = new (app(config('curator.model')));
                 $media->disk = 'public';
@@ -72,6 +86,11 @@ class DocumentImport implements ToCollection, WithHeadingRow
         } catch (\Throwable $th) {
             throw new \Exception($th->getMessage());
         }
+    }
+
+    private function isDuplicateFileName(string $fileName): bool
+    {
+        return in_array($fileName, $this->processedFileNames);
     }
 
     private function cleanData(Collection $rows): array

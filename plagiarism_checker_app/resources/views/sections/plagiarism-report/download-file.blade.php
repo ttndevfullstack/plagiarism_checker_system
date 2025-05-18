@@ -18,7 +18,7 @@
                     icon="heroicon-o-arrow-down-tray"
                     class="inline-flex items-center"
                     target="_blank"
-                    download
+                    download="plagiarism_report"
                 >
                     Download Document
                 </x-filament::button>

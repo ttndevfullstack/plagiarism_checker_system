@@ -43,9 +43,12 @@ class DocumentResource extends Resource
                         'application/pdf',
                         'application/msword',
                         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                        'text/plain'
+                        'text/plain',
+                        'application/zip', // Add ZIP MIME type
+                        'application/x-zip-compressed', // Alternative ZIP MIME type
+                        'application/octet-stream' // Fallback for some zip files
                     ])
-                    ->maxSize(30720)
+                    ->maxSize(30720000)
                     ->required(),
             ]);
     }

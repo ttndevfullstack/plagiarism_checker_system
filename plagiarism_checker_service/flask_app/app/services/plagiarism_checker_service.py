@@ -78,8 +78,18 @@ class PlagiarismCheckerService:
     def generate_report(self, paragraph_results: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Generate the final report in the specified format"""
         # Calculate maximum similarity across paragraphs
-        max_similarity = max(p['similarity_percentage'] for p in paragraph_results) if paragraph_results else 0.0
+        # Calculate weighted similarity across paragraphs
+        words_analyzed = 0
+        weighted_similarity = 0.0
         
+        for para in paragraph_results:
+            words = len(para['text'].split())
+            words_analyzed += words
+            weighted_similarity += para['similarity_percentage'] * words
+        
+        # Calculate overall similarity (weighted average)
+        overall_similarity = round(weighted_similarity / words_analyzed, 1) if words_analyzed > 0 else 0.0
+
         # Generate sources summary - Modified to handle multiple sources properly
         source_map = {}
         for para in paragraph_results:
@@ -110,19 +120,19 @@ class PlagiarismCheckerService:
         # Convert source_map to list and sort by highest similarity
         sources_summary = list(source_map.values())
         sources_summary.sort(key=lambda x: (-x['highest_similarity'], -x['total_matched']))
-        words_analyzed = sum(len(p['text'].split()) for p in paragraph_results)
-        originality_score = round(100.0 - max_similarity, 1)  # Use max similarity for originality score
+        # words_analyzed = sum(len(p['text'].split()) for p in paragraph_results)
+        originality_score = round(100.0 - overall_similarity, 1)  # Use max similarity for originality score
 
         # Clean up matches from final output (optional)
         for source in sources_summary:
             del source['matches']
         
         # Rest of verdict logic remains the same
-        if max_similarity > 70:
+        if overall_similarity > 70:
             verdict = "High plagiarism detected. This content has substantial similarities with other sources."
-        elif max_similarity > 40:
+        elif overall_similarity > 40:
             verdict = "Moderate plagiarism detected. This content has significant similarities with other sources."
-        elif max_similarity > 20:
+        elif overall_similarity > 20:
             verdict = "Low plagiarism detected. Some similarities found with other sources."
         else:
             verdict = "Minimal plagiarism detected. Content appears mostly original."
@@ -131,7 +141,7 @@ class PlagiarismCheckerService:
             "status": "success",
             "data": {
                 "originality_score": originality_score,
-                "similarity_score": round(max_similarity, 1),
+                "similarity_score": overall_similarity,
                 "source_matched": len(sources_summary),
                 "words_analyzed": words_analyzed,
                 "overall_verdict": verdict,

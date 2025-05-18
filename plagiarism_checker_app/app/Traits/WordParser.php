@@ -13,10 +13,13 @@ use PhpOffice\PhpWord\Element\Section;
 use PhpOffice\PhpWord\Element\TextBreak;
 use PhpOffice\PhpWord\Element\ListItemRun;
 use PhpOffice\PhpWord\Element\AbstractElement;
+use setasign\Fpdi\Fpdi;
 
 trait WordParser
 {   
     public PhpWord $phpWord;
+
+    public array $previewContent = [];
 
     public function parseDocx($filePath, $forPreview = false)
     {
@@ -29,7 +32,7 @@ trait WordParser
         return $this->parseForPlainText($this->phpWord);
     }
 
-    public function outputDocxFile(PhpWord $phpWord, string $outputFileName): string
+    public function outputDocument(PhpWord|Fpdi $parser, string $outputFileName): string
     {
         // Ensure the output directory exists
         $publicPath = public_path('downloads');
@@ -42,7 +45,11 @@ trait WordParser
         $outputPath = $publicPath . '/' . $safeFilename;
 
         // Save the document
-        $phpWord->save($outputPath);
+        if ($parser instanceof PhpWord) {
+            $parser->save($outputPath);
+        } else {
+            $parser->Output($outputPath, 'F');
+        }
 
         // Return the public URL for download
         return asset('downloads/' . $safeFilename);
@@ -50,16 +57,12 @@ trait WordParser
 
     public function parseForPreview(PhpWord $phpWord)
     {
-        $content = [];
-
         foreach ($phpWord->getSections() as $section) {
             $sectionContent = $this->parseSection($section);
             if (!empty($sectionContent)) {
-                $content[] = $sectionContent;
+                $this->previewContent[] = $sectionContent;
             }
         }
-
-        return $content;
     }
 
     public function parseSection(Section $section)

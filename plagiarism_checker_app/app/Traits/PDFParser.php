@@ -2,48 +2,59 @@
 
 namespace App\Traits;
 
-use Smalot\PdfParser\Parser;
-use PhpOffice\PhpWord\PhpWord;
+use setasign\Fpdi\Fpdi;
 
 trait PDFParser
 {
-    public function parsePdf($filePath, $forPreview = false)
-    {
-        $filePath = $this->convertPdfToDocx($filePath);
+    public Fpdi $pdfParser;
 
-        return $this->parseDocx($filePath, $forPreview);
+    public string $outputFilePath;
+
+    protected function initializePdfParser(): void
+    {
+        $this->pdfParser = new Fpdi();
+        $this->pdfParser->SetAutoPageBreak(true, 15);
     }
 
-    protected function convertPdfToDocx(string $pdfPath): string
+    /**
+     * Parse PDF file
+     */
+    public function parsePdf(string $filePath)
     {
-        // Validate input file exists
-        if (!file_exists($pdfPath)) {
-            throw new \RuntimeException("PDF file not found at path: {$pdfPath}");
+        if (!file_exists($filePath)) {
+            throw new \InvalidArgumentException("PDF file not found at path: {$filePath}");
         }
 
-        // Generate output path by changing extension to .docx
-        $outputPath = pathinfo($pdfPath, PATHINFO_DIRNAME) . '/'
-            . pathinfo($pdfPath, PATHINFO_FILENAME) . '.docx';
+        $this->initializePdfParser();
+        $this->pdfParser->setSourceFile($filePath);
+    }
 
-        // Parse PDF content
-        $pdfParser = new Parser();
-        $pdf = $pdfParser->parseFile($pdfPath);
-        $text = $pdf->getText();
-
-        // Create Word document
-        $phpWord = new PhpWord();
-        $section = $phpWord->addSection();
-        $section->addText($text);
-
-        // Save Word document
-        $objWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
-        $objWriter->save($outputPath);
-
-        // Verify output file was created
-        if (!file_exists($outputPath)) {
-            throw new \RuntimeException("Failed to create DOCX file at: {$outputPath}");
+    protected function highlightTextAreas(int $pageNo, array $size): void
+    {
+        // Example coordinates - you'll need to adjust these based on your PDF structure
+        $textAreas = [
+            ['x' => 20, 'y' => 50, 'w' => $size['width'] - 40, 'h' => $size['height'] - 70]
+        ];
+        
+        foreach ($textAreas as $area) {
+            $this->pdfParser->SetFillColor(255, 255, 0); // Yellow
+            $this->pdfParser->Rect(
+                $area['x'], 
+                $area['y'], 
+                $area['w'], 
+                $area['h'], 
+                'F' // Fill mode
+            );
         }
+    }
 
-        return $outputPath;
+    /**
+     * Clean up generated files
+     */
+    public function cleanup(): void
+    {
+        if (isset($this->outputFilePath)) {
+            @unlink($this->outputFilePath);
+        }
     }
 }

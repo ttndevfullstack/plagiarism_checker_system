@@ -6,6 +6,8 @@ use App\Services\PlagiarismService;
 use Filament\Pages\Page;
 use Filament\Notifications\Notification;
 use App\Services\DocumentParser;
+use setasign\Fpdi\Fpdi;
+use PhpOffice\PhpWord\PhpWord;
 
 class PlagiarismCheck extends Page
 {
@@ -29,6 +31,8 @@ class PlagiarismCheck extends Page
 
     public string $fileName = '';
 
+    public string $fileType = '';
+
     public bool $giveMeFile = false;
 
     public ?string $outputPath = null;
@@ -42,6 +46,8 @@ class PlagiarismCheck extends Page
     protected array $highlightContent = [];
 
     protected ?\PhpOffice\PhpWord\PhpWord $phpWord = null;
+
+    protected ?Fpdi $pdfParser = null;
 
     protected ?DocumentParser $documentParser = null;
 
@@ -63,6 +69,10 @@ class PlagiarismCheck extends Page
     {
         if (request()->has('data')) {
             $data = json_decode(base64_decode(request()->get('data')), true);
+
+            if ($data['extension'] ?? null) {
+                $this->setFileType($data['extension']);
+            }
             
             if ($data['file_path'] ?? null && $data['give_me_file'] ?? false) {   // Return a origin file
                 // Get the filename with extension (basename)
@@ -73,9 +83,17 @@ class PlagiarismCheck extends Page
                 $this->outputFileName = $filename . '_OUTPUT' . $extension;
                 
                 $this->documentParser = new DocumentParser();
-                $this->previewContent = $this->documentParser->parse($data['file_path'], $data['extension'], true);
-                $this->phpWord = $this->documentParser->phpWord;
-                $cleanedContent = $this->documentParser->concatGroupedParagraphs($this->previewContent);
+                $this->documentParser->parse($data['file_path'], $data['extension'], true);
+
+                if ($this->fileType == 'WORD') {
+                    $this->previewContent = $this->documentParser->previewContent;
+                    $this->phpWord = $this->documentParser->phpWord;
+                    $cleanedContent = $this->documentParser->concatGroupedParagraphs($this->previewContent);
+                } else if ($this->fileType == 'PDF') {
+                    $this->pdfParser = $this->documentParser->pdfParser;
+                } else {
+
+                }
             } else if ($data['file_path'] ?? null) {    // Show report and preview content in file
                 $this->documentParser = new DocumentParser();
                 $this->previewContent = $this->documentParser->parse($data['file_path'], $data['extension'], true);
@@ -113,8 +131,15 @@ class PlagiarismCheck extends Page
     protected function getViewData(): array
     {
         if ($this->results && $this->giveMeFile) {
-            $this->phpWord = $this->highlightFileContent($this->phpWord);
-            $this->outputPath = $this->documentParser->outputDocxFile($this->phpWord, $this->outputFileName);
+            if ($this->fileType == 'WORD') {
+                $this->phpWord = $this->highlightFileContent($this->phpWord);
+                $this->outputPath = $this->documentParser->outputDocument($this->phpWord, $this->outputFileName);
+            } else if ($this->fileType == 'PDF') {
+                $this->pdfParser = $this->highlightPDFFileContentColor($this->pdfParser);
+                $this->outputPath = $this->documentParser->outputDocument($this->pdfParser, $this->outputFileName);
+            } else {
+
+            }
         } else {
             $this->highlightContent = $this->highlightPreviewContent();
         }
@@ -130,7 +155,7 @@ class PlagiarismCheck extends Page
         ];
     }
 
-    private function highlightFileContent(\PhpOffice\PhpWord\PhpWord $phpWord): \PhpOffice\PhpWord\PhpWord
+    private function highlightFileContent(PhpWord $phpWord): PhpWord
     {
         foreach ($phpWord->getSections() as $section) {
             foreach ($section->getElements() as $element) {
@@ -166,6 +191,29 @@ class PlagiarismCheck extends Page
         }
 
         return $phpWord;
+    }
+
+    private function highlightPDFFileContentColor(Fpdi $pdfParser): Fpdi
+    {
+        $pageCount = $pdfParser->setSourceFile($pdfParser->getPdfFilename());
+        
+        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+            $templateId = $pdfParser->importPage($pageNo);
+            $size = $pdfParser->getTemplateSize($templateId);
+            
+            $pdfParser->AddPage(
+                $size['orientation'] ?? 'P',
+                [$size['width'], $size['height']]
+            );
+            
+            // Add the original page content
+            $pdfParser->useTemplate($templateId);
+            
+            // Highlight regular text (you may need to adjust these coordinates)
+            $this->highlightTextAreas($pageNo, $size);
+        }
+
+        return $pdfParser;
     }
 
     private function highlightPreviewContent(): array
@@ -208,5 +256,18 @@ class PlagiarismCheck extends Page
         if (empty($this->results['paragraphs'])) { return []; }
 
         return array_filter($this->results['paragraphs'], fn($paragraph) => $paragraph['id'] == $key);
+    }
+
+    private function setFileType(string $extension): void
+    {
+        if (in_array($extension, ['docx'])) {
+            $this->fileType = 'WORD';
+        }
+        if (in_array($extension, ['pdf'])) {
+            $this->fileType = 'PDF';
+        }
+        if (in_array($extension, ['txt'])) {
+            $this->fileType = 'TXT';
+        }
     }
 }
