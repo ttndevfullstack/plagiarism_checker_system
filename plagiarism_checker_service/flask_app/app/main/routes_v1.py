@@ -1,10 +1,11 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_file
 
 from flask_app.config import Config
 from flask_app.app.services.migration import Migration
 from flask_app.app.services.document_service import DocumentService
 from flask_app.app.databases.milvus_connection import MilvusConnection
 from flask_app.app.services.plagiarism_checker_service import PlagiarismCheckerService
+from flask_app.app.services.pdf_processor import PDFProcessor
 
 # Create a Blueprint for main routes
 bp_v1 = Blueprint("main", __name__, url_prefix="/v1/api")
@@ -105,3 +106,27 @@ def check_document_plagiarism():
             return jsonify({"error": "Missing 'content' field in JSON"}), 400
     else:
         return jsonify({"error": "No file or content provided"}), 400
+
+
+@bp_v1.route("/plagiarism-checker/pdf", methods=["POST"])
+def check_pdf_plagiarism():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+        
+    file = request.files['file']
+    if file.filename == '' or not file.filename.endswith('.pdf'):
+        return jsonify({"error": "Invalid file format. Please upload a PDF file"}), 400
+
+    try:
+        pdf_processor = PDFProcessor(Config.MINILM_EMBEDDING_MODEL)
+        highlighted_pdf_path, results = pdf_processor.process_pdf(file)
+        
+        # Return file and results
+        return send_file(
+            highlighted_pdf_path,
+            as_attachment=True,
+            download_name='highlighted_result.pdf',
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        return jsonify({"error": f"Processing failed: {str(e)}"}), 500

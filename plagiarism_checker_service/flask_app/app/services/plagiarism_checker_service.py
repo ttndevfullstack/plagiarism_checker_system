@@ -127,15 +127,27 @@ class PlagiarismCheckerService:
         for source in sources_summary:
             del source['matches']
         
-        # Rest of verdict logic remains the same
-        if overall_similarity >= 95:
-            verdict = "Exact match detected. Word-for-word copying found."
-        elif overall_similarity >= 70:
-            verdict = "Paraphrased content detected. Minor modifications with substantial similarity."
-        elif overall_similarity >= 30:
-            verdict = "Minor matches detected. Scattered similarities found."
+        # Updated professional verdict messages
+        if overall_similarity > 85:
+            verdict = ("⚠️ Critical Review Required (High Risk) ⚠️\n"
+                      "Your content shows significant matching text with existing sources. "
+                      "We strongly recommend immediate revision to ensure academic integrity. "
+                      "Consider rewriting affected sections using your own words.")
+        elif overall_similarity > 65:
+            verdict = ("⚠️ Review Recommended (Moderate Risk) ⚠️\n"
+                      "We've detected notable similarities with other sources. "
+                      "While some content may be properly cited, consider revising "
+                      "sections with high similarity to improve originality.")
+        elif overall_similarity > 30:
+            verdict = ("📝 Minor Review Suggested (Low Risk)\n"
+                      "Your work contains some common phrases or potentially cited content. "
+                      "While this level of similarity is generally acceptable, "
+                      "you may want to review highlighted sections for improvement.")
         else:
-            verdict = "No significant plagiarism detected. Content appears original."
+            verdict = ("🌟 Excellent Originality\n"
+                      "Congratulations! Your content appears to be highly original. "
+                      "The minimal similarities found are likely common phrases "
+                      "or properly cited materials.")
 
         return {
             "status": "success",

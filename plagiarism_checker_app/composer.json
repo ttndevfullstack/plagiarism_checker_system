@@ -25,10 +25,7 @@
     "maatwebsite/excel": "^3.1",
     "malzariey/filament-daterangepicker-filter": "^3.2",
     "phpoffice/phpword": "^1.3",
-    "setasign/fpdf": "^1.8",
-    "setasign/fpdi": "^2.6",
-    "spatie/laravel-permission": "^6.10",
-    "tecnickcom/tcpdf": "^6.9"
+    "spatie/laravel-permission": "^6.10"
   },
   "require-dev": {
     "fakerphp/faker": "^1.9.1",

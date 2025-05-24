@@ -2,27 +2,54 @@
 
 namespace App\Services;
 
-use App\Traits\PDFParser;
 use App\Traits\TXTParser;
 use App\Traits\WordParser;
 use PhpOffice\PhpWord\Element\Text;
 use PhpOffice\PhpWord\Element\Title;
 use PhpOffice\PhpWord\Element\TextRun;
+use PhpOffice\PhpWord\PhpWord;
 
 class DocumentParser
 {
     use WordParser;
-    use PDFParser;
     use TXTParser;
 
     public function parse(string $filePath, string $extension, bool $forPreview = false)
     {
         return match ($extension) {
             'docx' => $this->parseDocx($filePath, $forPreview),
-            'pdf' => $this->parsePdf($filePath, $forPreview),
             'txt' => $this->parseText($filePath, $forPreview),
             default => throw new \Exception("Unsupported file type"),
         };
+    }
+
+    public function outputDocument(PhpWord $parser, string $outputFileName): string
+    {
+        // Ensure the output directory exists
+        $publicPath = public_path('downloads');
+        if (!file_exists($publicPath)) {
+            mkdir($publicPath, 0755, true);
+        }
+
+        // Generate safe output filename
+        $safeFilename = preg_replace('/[^a-zA-Z0-9-_\.]/', '', $outputFileName);
+        $outputPath = $publicPath . '/' . $safeFilename;
+
+        // Save the document
+        $parser->save($outputPath);
+
+        // Return the public URL for download
+        return asset('downloads/' . $safeFilename);
+    }
+
+    public function getCleanedWordText(): array
+    {
+        return $this->extractWordTextByParagraph();
+    }
+
+    public function getCleanedPDFText(): array
+    {
+        return $this->extractPDFTextByParagraph();
     }
 
     protected function parseForPlainText(\PhpOffice\PhpWord\PhpWord $phpWord)
@@ -68,71 +95,13 @@ class DocumentParser
         return '';
     }
 
-    public function concatGroupedParagraphs(array $sections): array 
+    protected function outputHighlightedPdf(string $outputPath): string
     {
-        $result = [];
-        
-        foreach ($sections as $section) {
-            foreach ($section as $groupKey => $elements) {
-                $text = '';
-                
-                foreach ($elements as $element) {
-                    $text .= $this->extractElementText($element);
-                }
-                
-                $text = trim($text);
-                $textLength = mb_strlen($text, 'UTF-8');
-                if (! empty($text) && $textLength >= config('document-parse.min_paragraph_length')) {
-                    $result[$groupKey] = $text;
-                }
-            }
+        // Copy the highlighted PDF from Flask response
+        if (isset($this->highlightedPdfPath)) {
+            copy($this->highlightedPdfPath, $outputPath);
         }
         
-        return $this->removeSoftParagraph($result);
-    }
-
-    private function removeSoftParagraph(array $paragraphs): array
-    {
-        return array_filter($paragraphs, fn($text) => strlen($text) >= config('document-parse.min_paragraph_length'));
-    }
-
-    private function extractElementText(array $element): string 
-    {
-        return match($element['type'] ?? null) {
-            'paragraph', 'heading' => $this->extractContentText($element['content']),
-            'table' => $this->extractTableText($element['rows']),
-            'list-item' => $this->extractContentText($element['content']),
-            'text-break' => "\n",
-            default => ''
-        };
-    }
-
-    private function extractContentText(array $contents): string 
-    {
-        $text = '';
-        foreach ($contents as $content) {
-            $text .= $content['text'] ?? '';
-            if (isset($content['link'])) {
-                $text .= ' [' . $content['link'] . ']';
-            }
-        }
-        return $text;
-    }
-
-    private function extractTableText(array $rows): string 
-    {
-        $text = '';
-        foreach ($rows as $row) {
-            $rowText = [];
-            foreach ($row['cells'] as $cell) {
-                $cellText = '';
-                foreach ($cell['content'] as $element) {
-                    $cellText .= $this->extractElementText($element);
-                }
-                $rowText[] = trim($cellText);
-            }
-            $text .= implode(" | ", array_filter($rowText)) . "\n";
-        }
-        return $text;
+        return asset('downloads/' . basename($outputPath));
     }
 }

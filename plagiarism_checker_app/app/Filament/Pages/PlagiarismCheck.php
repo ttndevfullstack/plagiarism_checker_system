@@ -6,7 +6,6 @@ use App\Services\PlagiarismService;
 use Filament\Pages\Page;
 use Filament\Notifications\Notification;
 use App\Services\DocumentParser;
-use setasign\Fpdi\Fpdi;
 use PhpOffice\PhpWord\PhpWord;
 
 class PlagiarismCheck extends Page
@@ -31,6 +30,8 @@ class PlagiarismCheck extends Page
 
     public string $fileName = '';
 
+    public string $filePath = '';
+
     public string $fileType = '';
 
     public bool $giveMeFile = false;
@@ -46,8 +47,6 @@ class PlagiarismCheck extends Page
     protected array $highlightContent = [];
 
     protected ?\PhpOffice\PhpWord\PhpWord $phpWord = null;
-
-    protected ?Fpdi $pdfParser = null;
 
     protected ?DocumentParser $documentParser = null;
 
@@ -80,35 +79,46 @@ class PlagiarismCheck extends Page
                 $fileInfo = pathinfo($filenameWithExt);
                 $filename = $fileInfo['filename'];
                 $extension = isset($fileInfo['extension']) ? '.' . $fileInfo['extension'] : '';
-                $this->outputFileName = $filename . '_OUTPUT' . $extension;
+                $this->outputFileName = $filename . '_HighlightedColor' . $extension;
                 
-                $this->documentParser = new DocumentParser();
-                $this->documentParser->parse($data['file_path'], $data['extension'], true);
-
+                
                 if ($this->fileType == 'WORD') {
-                    $this->previewContent = $this->documentParser->previewContent;
+                    $this->documentParser = new DocumentParser();
+                    $this->documentParser->parse($data['file_path'], $data['extension'], true);
+                    $this->previewContent = $this->documentParser->wordPreviewContent;
                     $this->phpWord = $this->documentParser->phpWord;
-                    $cleanedContent = $this->documentParser->concatGroupedParagraphs($this->previewContent);
+                    $cleanedContent = $this->documentParser->getCleanedWordText();
+                    $this->checkPlagiarism($cleanedContent);
                 } else if ($this->fileType == 'PDF') {
-                    $this->pdfParser = $this->documentParser->pdfParser;
-                    dd($this->pdfParser);
+                    try {
+                        $response = app(PlagiarismService::class)->checkPDFPlagiarism($data['file_path']);
+                        $this->outputPath = $response['file_path'];
+                        $this->isLoading = false;
+                    } catch (\Exception $e) {
+                        $this->error = $e->getMessage();
+                        Notification::make()
+                            ->danger()
+                            ->title('Error')
+                            ->body($e->getMessage())
+                            ->send();
+                    }
                 } else {
 
                 }
             } else if ($data['file_path'] ?? null) {    // Show report and preview content in file
                 $this->documentParser = new DocumentParser();
                 $this->previewContent = $this->documentParser->parse($data['file_path'], $data['extension'], true);
-                $cleanedContent = $this->documentParser->concatGroupedParagraphs($this->previewContent);
+                $cleanedContent = $this->documentParser->getCleanedWordText();
             } else {
                 $this->previewText = $data['preview_content'];    // Show report and preview content
                 $cleanedContent = ['text-1' => $data['preview_content']];
+                $this->checkPlagiarism($cleanedContent);
             }
             
             $this->fileName = $data['filename'] ?? '';
+            $this->filePath = $data['file_path'] ?? '';
             $this->giveMeFile = $data['give_me_file'] ?? false;
             $this->isLoading = false;
-
-            $this->checkPlagiarism($cleanedContent);
         }
     }
 
@@ -133,13 +143,10 @@ class PlagiarismCheck extends Page
     {
         if ($this->results && $this->giveMeFile) {
             if ($this->fileType == 'WORD') {
-                $this->phpWord = $this->highlightFileContent($this->phpWord);
-                $this->outputPath = $this->documentParser->outputDocument($this->phpWord, $this->outputFileName);
-            } else if ($this->fileType == 'PDF') {
-                $this->pdfParser = $this->highlightPDFFileContentColor($this->pdfParser);
-                $this->outputPath = $this->documentParser->outputDocument($this->pdfParser, $this->outputFileName);
-            } else {
-
+                $this->outputPath = $this->documentParser->outputDocument(
+                    $this->highlightWordFileContentColor(),
+                    $this->outputFileName,
+                );
             }
         } else {
             $this->highlightContent = $this->highlightPreviewContent();
@@ -156,9 +163,9 @@ class PlagiarismCheck extends Page
         ];
     }
 
-    private function highlightFileContent(PhpWord $phpWord): PhpWord
+    private function highlightWordFileContentColor(): PhpWord
     {
-        foreach ($phpWord->getSections() as $section) {
+        foreach ($this->phpWord->getSections() as $section) {
             foreach ($section->getElements() as $element) {
                 if ($element instanceof \PhpOffice\PhpWord\Element\TextRun) {
                     foreach ($element->getElements() as $textElement) {
@@ -191,30 +198,7 @@ class PlagiarismCheck extends Page
             }
         }
 
-        return $phpWord;
-    }
-
-    private function highlightPDFFileContentColor(Fpdi $pdfParser): Fpdi
-    {
-        $pageCount = $pdfParser->setSourceFile($pdfParser->getPdfFilename());
-        
-        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-            $templateId = $pdfParser->importPage($pageNo);
-            $size = $pdfParser->getTemplateSize($templateId);
-            
-            $pdfParser->AddPage(
-                $size['orientation'] ?? 'P',
-                [$size['width'], $size['height']]
-            );
-            
-            // Add the original page content
-            $pdfParser->useTemplate($templateId);
-            
-            // Highlight regular text (you may need to adjust these coordinates)
-            $this->highlightTextAreas($pageNo, $size);
-        }
-
-        return $pdfParser;
+        return $this->phpWord;
     }
 
     private function highlightPreviewContent(): array

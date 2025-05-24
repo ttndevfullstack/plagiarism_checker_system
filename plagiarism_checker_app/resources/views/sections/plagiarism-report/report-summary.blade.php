@@ -25,26 +25,26 @@
 
         <!-- Result Message -->
         <div style="margin-bottom: 2rem;">
-            <h2 style="font-size: 1.75rem; font-weight: 700; color: {{ ($results['similarity_score'] ?? 0) > 70 ? '#e74c3c' : (($results['similarity_score'] ?? 0) > 40 ? '#f1c40f' : '#2ecc71') }}; margin-bottom: 0.75rem;">
-                @if(($results['similarity_score'] ?? 0) > 70)
-                    High Plagiarism Detected! ⚠️
-                @elseif(($results['similarity_score'] ?? 0) > 40)
-                    Moderate Plagiarism Found! ⚠️
-                @elseif(($results['similarity_score'] ?? 0) > 20)
-                    Low Plagiarism Detected 📝
+            <h2 style="font-size: 1.75rem; font-weight: 700; color: {{ ($results['similarity_score'] ?? 0) > 85 ? '#e74c3c' : (($results['similarity_score'] ?? 0) > 65 ? '#f39c12' : (($results['similarity_score'] ?? 0) > 30 ? '#f1c40f' : '#2ecc71')) }}; margin-bottom: 0.75rem;">
+                @if(($results['similarity_score'] ?? 0) > 85)
+                    ⚠️ High Risk - Critical Attention Required ⚠️
+                @elseif(($results['similarity_score'] ?? 0) > 65)
+                    ⚡ Moderate Risk - Review Suggested ⚡
+                @elseif(($results['similarity_score'] ?? 0) > 30)
+                    📝 Low Risk - Minor Review Advised 📝
                 @else
-                    Excellent Originality! 🎉
+                    🌟 Excellent - Highly Original Content 🌟
                 @endif
             </h2>
             <p style="font-size: 1.1rem; color: #7f8c8d; max-width: 600px; margin: 0 auto; line-height: 1.6;">
-                @if(($results['similarity_score'] ?? 0) > 70)
-                    This content has substantial similarities with other sources.
-                @elseif(($results['similarity_score'] ?? 0) > 40)
-                    This content has significant similarities with other sources.
-                @elseif(($results['similarity_score'] ?? 0) > 20)
-                    Some similarities found with other sources.
+                @if(($results['similarity_score'] ?? 0) > 85)
+                    This content requires immediate attention as it contains significant matching text with existing sources. We recommend thoroughly revising the highlighted sections to ensure academic integrity and originality.
+                @elseif(($results['similarity_score'] ?? 0) > 65)
+                    We've identified notable similarities with other sources. While some matches may be appropriate citations, we recommend reviewing the highlighted sections to enhance originality and ensure proper attribution.
+                @elseif(($results['similarity_score'] ?? 0) > 30)
+                    Your content shows some common phrases or potentially cited material. While this level is generally acceptable, you may want to review the highlighted sections for potential improvements.
                 @else
-                    Content appears mostly original.
+                    Congratulations! Your content demonstrates excellent originality. Any minor matches are likely common phrases or properly cited materials. Keep up the great work!
                 @endif
             </p>
         </div>

@@ -74,5 +74,38 @@
       /* Always apply white text */
       .text-white { color: #ffffff; }
       .text-black { color: #000000; }
+
+      /* Light mode backgrounds */
+      .bg-exact-match {
+          background-color: #ffebee;  /* Light red */
+      }
+      .bg-paraphrased {
+          background-color: #ffe0b2;  /* Light orange */
+      }
+      .bg-minor-match {
+          background-color: #e1bee7;  /* Light purple */
+      }
+      .bg-original {
+          background-color: #e8f5e9;  /* Light green */
+      }
+
+      /* Dark mode backgrounds */
+      .dark .bg-exact-match {
+          background-color: #ef9a9a;  /* Darker red */
+      }
+      .dark .bg-paraphrased {
+          background-color: #ffb74d;  /* Darker orange */
+      }
+      .dark .bg-minor-match {
+          background-color: #ba68c8;  /* Darker purple */
+      }
+      .dark .bg-original {
+          background-color: #81c784;  /* Darker green */
+      }
+
+      /* Text color (applies to both modes) */
+      .text-black {
+          color: #000000;
+      }
     </style>
 @endpush

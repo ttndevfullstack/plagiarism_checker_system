@@ -70,45 +70,45 @@ function media_path_by_id(int|string $mediaId): ?string
 
 function highlight_text_color(float $percent = 0): string
 {
-    if ($percent > 80) {
-        return 'text-danger-600 dark:text-danger-400';
-    } elseif ($percent > 60) {
-        return 'text-pink-600 dark:text-pink-400';
-    } elseif ($percent > 40) {
-        return 'text-warning-600 dark:text-warning-400';
+    if ($percent > 85) {
+        return 'text-danger-600 dark:text-danger-400';    // High Risk
+    } elseif ($percent > 65) {
+        return 'text-warning-600 dark:text-warning-400';  // Moderate Risk
+    } elseif ($percent > 30) {
+        return 'text-yellow-600 dark:text-yellow-400';    // Low Risk
     } else {
-        return 'text-success-600 dark:text-success-400';
+        return 'text-success-600 dark:text-success-400';  // Original
     }
 }
 
 function highlight_text_background(float $percent = 0): string
 {
-    if ($percent >= 95) {
-        return 'bg-red-100 dark:bg-red-400 text-black';  // Exact matches
-    } elseif ($percent >= 70) {
-        return 'bg-orange-100 dark:bg-orange-400 text-black';  // Paraphrased
-    } elseif ($percent >= 30) {
-        return 'bg-purple-100 dark:bg-purple-400 text-black';  // Minor matches
+    if ($percent > 85) {
+        return 'bg-exact-match text-black';     // High Risk (red)
+    } elseif ($percent > 65) {
+        return 'bg-paraphrased text-black';     // Moderate Risk (orange)
+    } elseif ($percent > 30) {
+        return 'bg-minor-match text-black';     // Low Risk (yellow)
     } else {
-        return 'bg-green-100 dark:bg-green-400 text-black';  // Original
+        return 'bg-original text-black';        // Original (green)
     }
 }
 
 function highlight_word_background(float $percent = 0): array
 {
     $colors = [
-        'exact' => ['bgColor' => 'FFEBEE', 'color' => 'D32F2F'],  // Light red bg with dark red text (95%+)
-        'paraphrased' => ['bgColor' => 'FFE0B2', 'color' => 'EF6C00'],  // Light orange bg with dark orange text (70-95%)
-        'minor' => ['bgColor' => 'E1BEE7', 'color' => '7B1FA2'],  // Light purple bg with dark purple text (30-70%)
-        'original' => ['bgColor' => 'E8F5E9', 'color' => '2E7D32']  // Light green bg with dark green text (<30%)
+        'high-risk' => ['bgColor' => 'FFEBEE', 'color' => 'C62828'],    // Red
+        'moderate-risk' => ['bgColor' => 'FFF3E0', 'color' => 'EF6C00'], // Orange
+        'low-risk' => ['bgColor' => 'FFF9C4', 'color' => 'F9A825'],     // Yellow
+        'original' => ['bgColor' => 'E8F5E9', 'color' => '2E7D32']      // Green
     ];
 
-    if ($percent >= 95) {
-        return $colors['exact'];
-    } elseif ($percent >= 70) {
-        return $colors['paraphrased'];
-    } elseif ($percent >= 30) {
-        return $colors['minor'];
+    if ($percent > 85) {
+        return $colors['high-risk'];
+    } elseif ($percent > 65) {
+        return $colors['moderate-risk'];
+    } elseif ($percent > 30) {
+        return $colors['low-risk'];
     }
     
     return $colors['original'];

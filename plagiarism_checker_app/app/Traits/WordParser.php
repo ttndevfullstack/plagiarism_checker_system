@@ -16,10 +16,10 @@ use PhpOffice\PhpWord\Element\AbstractElement;
 use setasign\Fpdi\Fpdi;
 
 trait WordParser
-{   
+{
     public PhpWord $phpWord;
 
-    public array $previewContent = [];
+    public array $wordPreviewContent = [];
 
     public function parseDocx($filePath, $forPreview = false)
     {
@@ -32,35 +32,12 @@ trait WordParser
         return $this->parseForPlainText($this->phpWord);
     }
 
-    public function outputDocument(PhpWord|Fpdi $parser, string $outputFileName): string
-    {
-        // Ensure the output directory exists
-        $publicPath = public_path('downloads');
-        if (!file_exists($publicPath)) {
-            mkdir($publicPath, 0755, true);
-        }
-
-        // Generate safe output filename
-        $safeFilename = preg_replace('/[^a-zA-Z0-9-_\.]/', '', $outputFileName);
-        $outputPath = $publicPath . '/' . $safeFilename;
-
-        // Save the document
-        if ($parser instanceof PhpWord) {
-            $parser->save($outputPath);
-        } else {
-            $parser->Output($outputPath, 'F');
-        }
-
-        // Return the public URL for download
-        return asset('downloads/' . $safeFilename);
-    }
-
     public function parseForPreview(PhpWord $phpWord)
     {
         foreach ($phpWord->getSections() as $section) {
             $sectionContent = $this->parseSection($section);
             if (!empty($sectionContent)) {
-                $this->previewContent[] = $sectionContent;
+                $this->wordPreviewContent[] = $sectionContent;
             }
         }
     }
@@ -410,5 +387,73 @@ trait WordParser
             $font1['color'] === $font2['color'] &&
             $font1['size'] === $font2['size'] &&
             $font1['name'] === $font2['name'];
+    }
+
+    public function extractWordTextByParagraph(): array 
+    {
+        $result = [];
+        
+        foreach ($this->wordPreviewContent as $section) {
+            foreach ($section as $groupKey => $elements) {
+                $text = '';
+                
+                foreach ($elements as $element) {
+                    $text .= $this->extractElementText($element);
+                }
+                
+                $text = trim($text);
+                $textLength = mb_strlen($text, 'UTF-8');
+                if (! empty($text) && $textLength >= config('document-parse.min_paragraph_length')) {
+                    $result[$groupKey] = $text;
+                }
+            }
+        }
+        
+        return $this->removeSoftParagraph($result);
+    }
+
+    private function removeSoftParagraph(array $paragraphs): array
+    {
+        return array_filter($paragraphs, fn($text) => strlen($text) >= config('document-parse.min_paragraph_length'));
+    }
+
+    private function extractElementText(array $element): string 
+    {
+        return match($element['type'] ?? null) {
+            'paragraph', 'heading' => $this->extractContentText($element['content']),
+            'table' => $this->extractTableText($element['rows']),
+            'list-item' => $this->extractContentText($element['content']),
+            'text-break' => "\n",
+            default => ''
+        };
+    }
+
+    private function extractContentText(array $contents): string 
+    {
+        $text = '';
+        foreach ($contents as $content) {
+            $text .= $content['text'] ?? '';
+            if (isset($content['link'])) {
+                $text .= ' [' . $content['link'] . ']';
+            }
+        }
+        return $text;
+    }
+
+    private function extractTableText(array $rows): string 
+    {
+        $text = '';
+        foreach ($rows as $row) {
+            $rowText = [];
+            foreach ($row['cells'] as $cell) {
+                $cellText = '';
+                foreach ($cell['content'] as $element) {
+                    $cellText .= $this->extractElementText($element);
+                }
+                $rowText[] = trim($cellText);
+            }
+            $text .= implode(" | ", array_filter($rowText)) . "\n";
+        }
+        return $text;
     }
 }
