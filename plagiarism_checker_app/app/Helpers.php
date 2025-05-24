@@ -83,33 +83,33 @@ function highlight_text_color(float $percent = 0): string
 
 function highlight_text_background(float $percent = 0): string
 {
-    if ($percent > 80) {
-        return 'bg-danger-100 dark:bg-danger-400 text-black';
-    } elseif ($percent > 60) {
-        return 'bg-pink-100 dark:bg-pink-400 text-black';
-    } elseif ($percent > 40) {
-        return 'bg-warning-100 dark:bg-warning-400 text-black';
+    if ($percent >= 95) {
+        return 'bg-red-100 dark:bg-red-400 text-black';  // Exact matches
+    } elseif ($percent >= 70) {
+        return 'bg-orange-100 dark:bg-orange-400 text-black';  // Paraphrased
+    } elseif ($percent >= 30) {
+        return 'bg-purple-100 dark:bg-purple-400 text-black';  // Minor matches
     } else {
-        return 'bg-success-100 dark:bg-success-400 text-black';
+        return 'bg-green-100 dark:bg-green-400 text-black';  // Original
     }
 }
 
 function highlight_word_background(float $percent = 0): array
 {
     $colors = [
-        'danger'  => ['bgColor' => 'FFEBEE', 'color' => 'D32F2F'],  // Light red bg with dark red text
-        'pink'    => ['bgColor' => 'FCE4EC', 'color' => 'C2185B'],  // Light pink bg with deep pink text
-        'warning' => ['bgColor' => 'FFF8E1', 'color' => 'FF8F00'],  // Light yellow bg with amber text
-        'success' => ['bgColor' => 'E8F5E9', 'color' => '2E7D32']   // Light green bg with dark green text
+        'exact' => ['bgColor' => 'FFEBEE', 'color' => 'D32F2F'],  // Light red bg with dark red text (95%+)
+        'paraphrased' => ['bgColor' => 'FFE0B2', 'color' => 'EF6C00'],  // Light orange bg with dark orange text (70-95%)
+        'minor' => ['bgColor' => 'E1BEE7', 'color' => '7B1FA2'],  // Light purple bg with dark purple text (30-70%)
+        'original' => ['bgColor' => 'E8F5E9', 'color' => '2E7D32']  // Light green bg with dark green text (<30%)
     ];
 
-    if ($percent > 80) {
-        return $colors['danger'];
-    } elseif ($percent > 60) {
-        return $colors['pink'];
-    } elseif ($percent > 40) {
-        return $colors['warning'];
+    if ($percent >= 95) {
+        return $colors['exact'];
+    } elseif ($percent >= 70) {
+        return $colors['paraphrased'];
+    } elseif ($percent >= 30) {
+        return $colors['minor'];
     }
     
-    return $colors['success'];
+    return $colors['original'];
 }

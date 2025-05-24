@@ -128,14 +128,14 @@ class PlagiarismCheckerService:
             del source['matches']
         
         # Rest of verdict logic remains the same
-        if overall_similarity > 70:
-            verdict = "High plagiarism detected. This content has substantial similarities with other sources."
-        elif overall_similarity > 40:
-            verdict = "Moderate plagiarism detected. This content has significant similarities with other sources."
-        elif overall_similarity > 20:
-            verdict = "Low plagiarism detected. Some similarities found with other sources."
+        if overall_similarity >= 95:
+            verdict = "Exact match detected. Word-for-word copying found."
+        elif overall_similarity >= 70:
+            verdict = "Paraphrased content detected. Minor modifications with substantial similarity."
+        elif overall_similarity >= 30:
+            verdict = "Minor matches detected. Scattered similarities found."
         else:
-            verdict = "Minimal plagiarism detected. Content appears mostly original."
+            verdict = "No significant plagiarism detected. Content appears original."
 
         return {
             "status": "success",

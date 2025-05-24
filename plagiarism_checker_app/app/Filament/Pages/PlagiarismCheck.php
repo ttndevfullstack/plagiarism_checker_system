@@ -91,6 +91,7 @@ class PlagiarismCheck extends Page
                     $cleanedContent = $this->documentParser->concatGroupedParagraphs($this->previewContent);
                 } else if ($this->fileType == 'PDF') {
                     $this->pdfParser = $this->documentParser->pdfParser;
+                    dd($this->pdfParser);
                 } else {
 
                 }
