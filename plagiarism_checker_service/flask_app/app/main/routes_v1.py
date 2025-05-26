@@ -78,15 +78,33 @@ def upload_data():
         
         document_service = DocumentService(Config.MINILM_EMBEDDING_MODEL)
         success = document_service.upload_document(file, metadata)
-        
+
         if success:
-            return jsonify({"success": True, "message": "Successfully uploaded document"}), 201
+            return jsonify({"success": True, "message": "Successfully uploaded document", "data": success}), 201
         
         return jsonify({"success": False, "error": "Document insertion failed"}), 500
 
     except Exception as e:
         print(f"Error processing upload: {str(e)}")
         return jsonify({"success": False, "error": f"Internal Server Error: {str(e)}"}), 500
+    
+@bp_v1.route("/testing", methods=["POST"])
+def testing():
+    if request.is_json:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+            
+        if "content" in data:
+            content = data["content"]
+            
+            plagiarism_checker = PlagiarismCheckerService(Config.MINILM_EMBEDDING_MODEL)
+            results = plagiarism_checker.check_plagiarism_content(content)
+            return jsonify(results)
+        else:
+            return jsonify({"error": "Missing 'content' field in JSON"}), 400
+    else:
+        return jsonify({"error": "No file or content provided"}), 400
 
 
 @bp_v1.route("/plagiarism-checker", methods=["POST"])
@@ -120,6 +138,11 @@ def check_pdf_plagiarism():
     try:
         pdf_processor = PDFProcessor(Config.MINILM_EMBEDDING_MODEL)
         highlighted_pdf_path, results = pdf_processor.process_pdf(file)
+        return jsonify({
+            "success": True,
+            "message": "Plagiarism check completed successfully",
+            "data": pdf_processor.process_pdf(file)
+        }), 200
         
         # Return file and results
         return send_file(

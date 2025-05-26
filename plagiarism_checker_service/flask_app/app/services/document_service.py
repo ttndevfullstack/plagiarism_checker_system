@@ -33,6 +33,7 @@ class DocumentService:
             documents_to_insert = []
             for i, paragraph in enumerate(paragraphs):
                 clean_text = self.text_service.preprocess_text(paragraph)
+                
                 if len(clean_text.strip()) < 50:
                     continue  # skip very short paragraphs
 

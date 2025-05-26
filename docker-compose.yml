@@ -105,6 +105,19 @@ services:
   #   networks:
   #     - proofly
 
+  attu:
+    image: zilliz/attu:v2.5.6
+    container_name: attu
+    ports:
+      - "3000:3000"
+    environment:
+      - MILVUS_URL=http://milvus-standalone:19530
+    depends_on:
+      milvus-standalone:
+        condition: service_healthy
+    networks:
+      - proofly
+
   milvus-etcd:
     container_name: milvus-etcd
     image: quay.io/coreos/etcd:v3.5.18

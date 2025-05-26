@@ -1,4 +1,3 @@
-from flask import jsonify
 from typing import List, Dict, Any
 from datetime import datetime, timezone
 
@@ -15,12 +14,10 @@ class PlagiarismCheckerService:
         self.embedding_service = EmbeddingModelFactory.get_model(embedding_model)
 
         self.min_paragraph_length = 100
-        self.similarity_threshold = 0.75
+        self.similarity_threshold = 0.3
 
     def check_plagiarism_content(self, content: Dict[str, str]) -> Dict[str, Any]:
         """Process pre-chunked paragraphs and return a structured plagiarism report"""
-        print("👉 Starting plagiarism check for pre-parsed paragraphs")
-
         paragraph_results = []
 
         for chunk_id, paragraph in content.items():
@@ -60,7 +57,7 @@ class PlagiarismCheckerService:
 
         sources = []
         for hit in results[0]:
-            similarity = min(round((hit['distance']) * 100, 1), 100.0)
+            similarity = round(max(0.0, min(1.0, 1 - hit['distance'])) * 100, 1)
             if similarity >= self.similarity_threshold * 100:
                 sources.append({
                     "url": hit['entity'].get("source_url", ""),

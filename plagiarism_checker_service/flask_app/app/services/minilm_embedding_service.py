@@ -10,10 +10,7 @@ class MiniLMEmbeddingService(Embeddingable, Textable):
 
     def convert_text_to_embedding(self, text: str):
         """Generate embeddings using MiniLM Model"""
-        print("   👉 Convert text to embedding")
-        
         embedding = self.model.encode(text)
-
         # Ensure that the output of MiniLM is normalized to unit vectors:
         embedding = embedding / np.linalg.norm(embedding)
         

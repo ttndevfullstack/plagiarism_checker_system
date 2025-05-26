@@ -14,7 +14,7 @@ class DatabaseHandler:
             )
 
             print(f"   ✅ Inserted document into database successfully")
-            return result['insert_count']
+            # return result['insert_count']
         except Exception as e:
             print(f"   ❌ Error inserting document into database: {str(e)}")
             raise
