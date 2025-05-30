@@ -60,6 +60,7 @@ class PlagiarismCheckerService:
             similarity = round(max(0.0, min(1.0, 1 - hit['distance'])) * 100, 1)
             if similarity >= self.similarity_threshold * 100:
                 sources.append({
+                    "url": hit['entity'].get("document_id", ""),
                     "url": hit['entity'].get("source_url", ""),
                     "title": hit['entity'].get("original_name", "Unknown Source"),
                     "similarity_percentage": similarity,
@@ -94,6 +95,7 @@ class PlagiarismCheckerService:
                 key = f"{source['url']}::{source['title']}"  # Create unique key for each source
                 if key not in source_map:
                     source_map[key] = {
+                        "document_id": source['document_id'],
                         "url": source['url'],
                         "title": source['title'],
                         "total_matched": 0,

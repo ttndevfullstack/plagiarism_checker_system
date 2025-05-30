@@ -30,15 +30,21 @@
         <!-- Report Summary -->
         @include('sections.plagiarism-report.report-summary', ['results' => $results])
 
-        <!-- Sources Summary -->
-        @include('sections.plagiarism-report.source-summary', ['results' => $results]) 
-        
-        <!-- Main content -->
-        @if ($giveMeFile)
-            @include('sections.plagiarism-report.download-file')
-        @else
-            @include('sections.plagiarism-report.main-content', ['results' => $results]) 
-        @endif
+        <!-- Grid Layout: Sources Summary (70%) & Main Content (30%) -->
+        <div class="plagiarism-grid">
+            <!-- Sources Summary: 70% -->
+            <div class="plagiarism-grid-left">
+              @if ($giveMeFile)
+                    @include('sections.plagiarism-report.download-file')
+                @else
+                    @include('sections.plagiarism-report.main-content', ['results' => $results]) 
+                @endif
+            </div>
+            <!-- Main content: 30% -->
+            <div class="plagiarism-grid-right">
+                  @include('sections.plagiarism-report.source-summary', ['results' => $results])                 
+            </div>
+        </div>
 
     </div>
 </x-filament::page>
@@ -106,6 +112,25 @@
       /* Text color (applies to both modes) */
       .text-black {
           color: #000000;
+      }
+
+      /* Plagiarism Grid Layout */
+      .plagiarism-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 1.5rem;
+          align-items: start;
+      }
+      @media (min-width: 1024px) {
+          .plagiarism-grid {
+              grid-template-columns: 70% 30%;
+          }
+      }
+      .plagiarism-grid-left {
+          width: 100%;
+      }
+      .plagiarism-grid-right {
+          width: 100%;
       }
     </style>
 @endpush

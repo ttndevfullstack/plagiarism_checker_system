@@ -10,6 +10,8 @@ use PhpOffice\PhpWord\PhpWord;
 
 class PlagiarismCheck extends Page
 {
+    protected static string $layout = 'filament-panels::components.layout.without-nav';
+
     protected static ?string $navigationIcon = 'heroicon-c-shield-check';
 
     protected static ?string $navigationLabel = 'Plagiarism Check';
@@ -19,6 +21,8 @@ class PlagiarismCheck extends Page
     protected static ?string $title = 'Plagiarism Check Page';
 
     protected static string $view = 'filament.pages.plagiarism-check';
+
+    protected static bool $shouldRegisterNavigation = false;
 
     public $data = null;
 
@@ -59,7 +63,7 @@ class PlagiarismCheck extends Page
     {
         return [
             \Filament\Actions\CreateAction::make()
-                ->label('Check Plagiarism')
+                ->label('Continue Check')
                 ->url(\App\Filament\Resources\PlagiarismCheckerResource::getUrl('create')),
         ];
     }
