@@ -46,5 +46,3 @@
         </div>
     </div>
 </x-filament::card>
-    </div>
-</x-filament::card>

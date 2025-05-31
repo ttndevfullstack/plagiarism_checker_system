@@ -137,19 +137,18 @@ def check_pdf_plagiarism():
 
     try:
         pdf_processor = PDFProcessor(Config.MINILM_EMBEDDING_MODEL)
-        highlighted_pdf_path, results = pdf_processor.process_pdf(file)
-        return jsonify({
+        output_path, report = pdf_processor.process_pdf(file)
+        
+        response = {
             "success": True,
             "message": "Plagiarism check completed successfully",
-            "data": pdf_processor.process_pdf(file)
-        }), 200
+            "data": {
+                "file_path": output_path,
+                "results": report
+            }
+        }
         
-        # Return file and results
-        return send_file(
-            highlighted_pdf_path,
-            as_attachment=True,
-            download_name='highlighted_result.pdf',
-            mimetype='application/pdf'
-        )
+        return jsonify(response), 200
+        
     except Exception as e:
         return jsonify({"error": f"Processing failed: {str(e)}"}), 500

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\PlagiarismCheckerResource\Pages;
 
 use App\Filament\Pages\PlagiarismCheck;
+use App\Filament\Pages\PDFPlagiarismReport;
 use App\Filament\Resources\PlagiarismCheckerResource;
 use Filament\Actions\Action;
 use Filament\Resources\Pages\CreateRecord;
@@ -76,8 +77,14 @@ class CreatePlagiarismChecker extends CreateRecord
 
     private function redirectToReportPage(array $previewData): void
     {
-        $this->redirect(PlagiarismCheck::getUrl([
-            'data' => base64_encode(json_encode($previewData))
-        ]));
+        if ($previewData['extension'] == 'pdf') {
+            $this->redirect(PDFPlagiarismReport::getUrl([
+                'data' => base64_encode(json_encode($previewData))
+            ]));    
+        } else {
+            $this->redirect(PlagiarismCheck::getUrl([
+                'data' => base64_encode(json_encode($previewData))
+            ]));
+        }
     }
 }

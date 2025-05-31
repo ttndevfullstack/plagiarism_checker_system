@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 class PlagiarismService
 {
@@ -33,18 +34,19 @@ class PlagiarismService
         if (!$response->successful()) {
             throw new \Exception('PDF plagiarism check failed: ' . $response->body());
         }
-
-        // Save the highlighted PDF
-        $publicPath = public_path('downloads');
-        if (!file_exists($publicPath)) {
-            mkdir($publicPath, 0755, true);
+        
+        $responseData = $response->json();
+        // dd($responseData);
+        
+        if (!isset($responseData['data'])) {
+            throw new \Exception('Invalid response format from plagiarism service');
         }
 
-        $outputFile = $publicPath . '/' . 'highlighted_' . basename($filePath);
-        file_put_contents($outputFile, $response->body());
-
         return [
-            'file_path' => asset('downloads/' . basename($outputFile))
+            'file_path' => $responseData['data']['file_path'] ?? null,
+            'results' => $responseData['data']['results'] ?? [],
+            'status' => $responseData['success'] ?? false,
+            'message' => $responseData['message'] ?? ''
         ];
     }
 

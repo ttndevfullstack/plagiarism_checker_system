@@ -60,7 +60,7 @@ class PlagiarismCheckerService:
             similarity = round(max(0.0, min(1.0, 1 - hit['distance'])) * 100, 1)
             if similarity >= self.similarity_threshold * 100:
                 sources.append({
-                    "url": hit['entity'].get("document_id", ""),
+                    "document_id": hit['entity'].get("document_id", ""),
                     "url": hit['entity'].get("source_url", ""),
                     "title": hit['entity'].get("original_name", "Unknown Source"),
                     "similarity_percentage": similarity,
@@ -92,11 +92,11 @@ class PlagiarismCheckerService:
         source_map = {}
         for para in paragraph_results:
             for source in para['sources']:
-                key = f"{source['url']}::{source['title']}"  # Create unique key for each source
+                key = f"{source.get('document_id', '')}::{source['title']}"
                 if key not in source_map:
                     source_map[key] = {
-                        "document_id": source['document_id'],
-                        "url": source['url'],
+                        "document_id": source.get('document_id', ''),
+                        "url": source.get('url', ''),
                         "title": source['title'],
                         "total_matched": 0,
                         "highest_similarity": 0,
@@ -127,26 +127,26 @@ class PlagiarismCheckerService:
             del source['matches']
         
         # Updated professional verdict messages
-        if overall_similarity > 85:
-            verdict = ("⚠️ Critical Review Required (High Risk) ⚠️\n"
+        if overall_similarity > 75:
+            verdict = ("🔴 Critical Match Level (75-100%)\n"
                       "Your content shows significant matching text with existing sources. "
-                      "We strongly recommend immediate revision to ensure academic integrity. "
-                      "Consider rewriting affected sections using your own words.")
-        elif overall_similarity > 65:
-            verdict = ("⚠️ Review Recommended (Moderate Risk) ⚠️\n"
-                      "We've detected notable similarities with other sources. "
-                      "While some content may be properly cited, consider revising "
-                      "sections with high similarity to improve originality.")
-        elif overall_similarity > 30:
-            verdict = ("📝 Minor Review Suggested (Low Risk)\n"
-                      "Your work contains some common phrases or potentially cited content. "
-                      "While this level of similarity is generally acceptable, "
-                      "you may want to review highlighted sections for improvement.")
+                      "We strongly recommend immediate revision to ensure academic integrity.")
+        elif overall_similarity > 50:
+            verdict = ("🟠 High Match Level (50-74%)\n"
+                      "Notable similarities detected with other sources. "
+                      "Consider revising sections with high similarity to improve originality.")
+        elif overall_similarity > 25:
+            verdict = ("🟡 Moderate Match Level (25-49%)\n"
+                      "Some matching content detected. Review highlighted sections "
+                      "and ensure proper citations where needed.")
+        elif overall_similarity > 0:
+            verdict = ("🟢 Low Match Level (1-24%)\n"
+                      "Minor matches found. Content appears largely original "
+                      "with few common phrases or properly cited materials.")
         else:
-            verdict = ("🌟 Excellent Originality\n"
-                      "Congratulations! Your content appears to be highly original. "
-                      "The minimal similarities found are likely common phrases "
-                      "or properly cited materials.")
+            verdict = ("✅ No Matches Found (0%)\n"
+                      "No significant matching content detected. "
+                      "Your work appears to be highly original.")
 
         return {
             "status": "success",

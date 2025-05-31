@@ -12,19 +12,19 @@ class PDFPlagiarismReport extends Page
 
     protected static ?string $navigationIcon = 'heroicon-c-shield-check';
 
-    protected static ?string $navigationLabel = 'Plagiarism Check';
+    protected static ?string $navigationLabel = 'PDF Plagiarism Report';
 
     protected static ?string $navigationGroup = 'Plagiarism Management';
 
     protected static ?string $title = 'Plagiarism Check Page';
 
-    protected static string $view = 'filament.pages.plagiarism-check';
+    protected static string $view = 'filament.pages.pdf-plagiarism-report';
 
-    protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = true;
 
     public $data = null;
 
-    public $results = null;
+    public ?array $results = null;
 
     public $isLoading = true;
 
@@ -58,13 +58,23 @@ class PDFPlagiarismReport extends Page
 
     public function mount()
     {
+        $this->isLoading = false;
+
         if (request()->has('data')) {
             $data = json_decode(base64_decode(request()->get('data')), true);
 
             try {
-                $response = app(PlagiarismService::class)->checkPDFPlagiarism($data['file_path']);
-                $this->outputPath = $response['file_path'];
-                $this->isLoading = false;
+                $results = app(PlagiarismService::class)->checkPDFPlagiarism($data['file_path']);
+
+                // Store the file path relative to public directory
+                $this->filePath = asset('storage/downloads/' . basename($data['file_path']));
+                $this->results = $results['results'];
+
+                Notification::make()
+                    ->success()
+                    ->title('Analysis Complete')
+                    ->body('The PDF has been analyzed for plagiarism.')
+                    ->send();
             } catch (\Exception $e) {
                 $this->error = $e->getMessage();
                 Notification::make()
@@ -73,18 +83,16 @@ class PDFPlagiarismReport extends Page
                     ->body($e->getMessage())
                     ->send();
             }
-            
+
             $this->fileName = $data['filename'] ?? '';
-            $this->filePath = $data['file_path'] ?? '';
             $this->isLoading = false;
         }
     }
 
     protected function getViewData(): array
     {
-
         return [
-            'filename' => $this->fileName,
+            'filePath' => $this->filePath,
             'results' => $this->results,
             'isLoading' => $this->isLoading,
             'error' => $this->error,
