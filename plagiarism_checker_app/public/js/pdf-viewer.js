@@ -1,175 +1,209 @@
-// Get URL from the page
-const url = window.pdfUrl;
+const PDFReportModule = {
+    constants: {
+        SCALE: 1.5,
+        HIGHLIGHT_TYPES: ['Highlight', 'Text']
+    },
 
-let pdfDoc = null,
-    pageNum = 1,
-    pageIsRendering = false,
-    pageNumIsPending = null,
-    scale = 1.5,
-    canvas = document.querySelector('#pdf-render'),
-    ctx = canvas.getContext('2d'),
-    textLayer = null;
+    elements: {
+        canvas: null,
+        ctx: null,
+        textLayer: null,
+        pageNum: document.querySelector('#page-num'),
+        pageCount: document.querySelector('#page-count'),
+        prevButton: document.querySelector('#prev-page'),
+        nextButton: document.querySelector('#next-page'),
+        topBar: document.querySelector('.top-bar')
+    },
 
-// Render the page
-const renderPage = num => {
-  pageIsRendering = true;
+    state: {
+        pdfDoc: null,
+        currentPage: 1,
+        isRendering: false,
+        pendingPage: null,
+        url: window.pdfUrl
+    },
 
-  pdfDoc.getPage(num).then(page => {
-    const viewport = page.getViewport({ scale });
-    canvas.height = viewport.height;
-    canvas.width = viewport.width;
+    init() {
+        // Initialize elements
+        this.elements.canvas = document.querySelector('#pdf-render');
+        this.elements.ctx = this.elements.canvas.getContext('2d');
 
-    // Prepare canvas for rendering
-    const renderContext = {
-      canvasContext: ctx,
-      viewport: viewport,
-      textLayer: textLayer,
-      renderInteractiveForms: true,
-      enableScripting: true
-    };
+        // Add event listeners
+        this.elements.prevButton.addEventListener('click', () => this.showPrevPage());
+        this.elements.nextButton.addEventListener('click', () => this.showNextPage());
+        document.addEventListener('mousedown', (e) => this.handleTextSelection(e));
 
-    // Create text layer div if not exists
-    if (!textLayer) {
-      textLayer = document.createElement('div');
-      textLayer.className = 'textLayer';
-      canvas.parentNode.insertBefore(textLayer, canvas.nextSibling);
-    }
-
-    // Clear previous text layer content
-    textLayer.innerHTML = '';
-    textLayer.style.width = canvas.style.width;
-    textLayer.style.height = canvas.style.height;
-
-    // Render page and create text layer
-    const renderTask = page.render(renderContext);
-    
-    // Get text content and render text layer
-    page.getTextContent().then(textContent => {
-      pdfjsLib.renderTextLayer({
-        textContent: textContent,
-        container: textLayer,
-        viewport: viewport,
-        textDivs: []
-      });
-    });
-
-    // Get annotations and render them
-    page.getAnnotations().then(annotations => {
-      annotations.forEach(annotation => {
-        if (annotation.subtype === 'Highlight' || annotation.subtype === 'Text') {
-          const rect = annotation.rect;
-          const highlight = document.createElement('div');
-          highlight.className = 'pdf-annotation';
-          highlight.style.left = rect[0] + 'px';
-          highlight.style.top = rect[1] + 'px';
-          highlight.style.width = (rect[2] - rect[0]) + 'px';
-          highlight.style.height = (rect[3] - rect[1]) + 'px';
-          
-          if (annotation.title) {
-            highlight.setAttribute('title', annotation.title);
-          }
-          
-          // Add hover event for popup
-          if (annotation.contents) {
-            highlight.addEventListener('mouseover', (e) => showTooltip(e, annotation.contents));
-            highlight.addEventListener('mouseout', hideTooltip);
-          }
-          
-          textLayer.appendChild(highlight);
+        // Load PDF
+        if (this.state.url) {
+            this.loadPDF();
+        } else {
+            console.error('No PDF URL provided');
         }
-      });
-    });
+    },
 
-    renderTask.promise.then(() => {
-      pageIsRendering = false;
-      if (pageNumIsPending !== null) {
-        renderPage(pageNumIsPending);
-        pageNumIsPending = null;
-      }
-    });
+    loadPDF() {
+        pdfjsLib.getDocument(this.state.url).promise
+            .then(pdfDoc => {
+                this.state.pdfDoc = pdfDoc;
+                this.elements.pageCount.textContent = pdfDoc.numPages;
+                this.renderPage(this.state.currentPage);
+            })
+            .catch(err => this.handleError(err));
+    },
 
-    document.querySelector('#page-num').textContent = num;
-  });
-};
+    renderPage(num) {
+        this.state.isRendering = true;
 
-// Check for pages rendering
-const queueRenderPage = num => {
-  if (pageIsRendering) {
-    pageNumIsPending = num;
-  } else {
-    renderPage(num);
-  }
-};
+        this.state.pdfDoc.getPage(num).then(page => {
+            const viewport = page.getViewport({ scale: this.constants.SCALE });
+            this.setupCanvas(viewport);
+            this.setupTextLayer();
 
-// Show Prev Page
-const showPrevPage = () => {
-  if (pageNum <= 1) {
-    return;
-  }
-  pageNum--;
-  queueRenderPage(pageNum);
-};
+            const renderContext = {
+                canvasContext: this.elements.ctx,
+                viewport,
+                textLayer: this.elements.textLayer,
+                renderInteractiveForms: true,
+                enableScripting: true
+            };
 
-// Show Next Page
-const showNextPage = () => {
-  if (pageNum >= pdfDoc.numPages) {
-    return;
-  }
-  pageNum++;
-  queueRenderPage(pageNum);
-};
+            const renderTask = page.render(renderContext);
 
-// Get Document
-if (url) {
-    pdfjsLib
-        .getDocument(url)
-        .promise.then(pdfDoc_ => {
-            pdfDoc = pdfDoc_;
-            document.querySelector('#page-count').textContent = pdfDoc.numPages;
-            renderPage(pageNum);
-        })
-        .catch(err => {
-            // Display error
-            const div = document.createElement('div');
-            div.className = 'error';
-            div.appendChild(document.createTextNode(err.message));
-            document.querySelector('body').insertBefore(div, canvas);
-            // Remove top bar
-            document.querySelector('.top-bar').style.display = 'none';
+            Promise.all([
+                this.renderTextContent(page, viewport),
+                this.renderAnnotations(page),
+                renderTask.promise
+            ]).then(() => {
+                this.state.isRendering = false;
+                if (this.state.pendingPage !== null) {
+                    this.renderPage(this.state.pendingPage);
+                    this.state.pendingPage = null;
+                }
+            });
+
+            this.elements.pageNum.textContent = num;
         });
-} else {
-    console.error('No PDF URL provided');
-}
+    },
 
-// Button Events
-document.querySelector('#prev-page').addEventListener('click', showPrevPage);
-document.querySelector('#next-page').addEventListener('click', showNextPage);
+    setupCanvas(viewport) {
+        this.elements.canvas.height = viewport.height;
+        this.elements.canvas.width = viewport.width;
+    },
 
-// Add tooltip functions
-function showTooltip(event, content) {
-  let tooltip = document.getElementById('pdf-tooltip');
-  if (!tooltip) {
-    tooltip = document.createElement('div');
-    tooltip.id = 'pdf-tooltip';
-    document.body.appendChild(tooltip);
-  }
-  
-  tooltip.innerHTML = content;
-  tooltip.style.left = (event.pageX + 10) + 'px';
-  tooltip.style.top = (event.pageY + 10) + 'px';
-  tooltip.style.display = 'block';
-}
+    setupTextLayer() {
+        if (!this.elements.textLayer) {
+            this.elements.textLayer = document.createElement('div');
+            this.elements.textLayer.className = 'textLayer';
+            this.elements.canvas.parentNode.insertBefore(
+                this.elements.textLayer,
+                this.elements.canvas.nextSibling
+            );
+        }
+        this.elements.textLayer.innerHTML = '';
+        this.elements.textLayer.style.width = this.elements.canvas.style.width;
+        this.elements.textLayer.style.height = this.elements.canvas.style.height;
+    },
 
-function hideTooltip() {
-  const tooltip = document.getElementById('pdf-tooltip');
-  if (tooltip) {
-    tooltip.style.display = 'none';
-  }
-}
+    renderTextContent(page, viewport) {
+        return page.getTextContent().then(textContent => {
+            pdfjsLib.renderTextLayer({
+                textContent,
+                container: this.elements.textLayer,
+                viewport,
+                textDivs: []
+            });
+        });
+    },
 
-// Enable text selection
-document.addEventListener('mousedown', (e) => {
-  if (e.target.closest('.textLayer')) {
-    e.stopPropagation();
-  }
-});
+    renderAnnotations(page) {
+        return page.getAnnotations().then(annotations => {
+            annotations.forEach(annotation => {
+                if (this.constants.HIGHLIGHT_TYPES.includes(annotation.subtype)) {
+                    this.createHighlight(annotation);
+                }
+            });
+        });
+    },
+
+    createHighlight(annotation) {
+        const highlight = document.createElement('div');
+        highlight.className = 'pdf-annotation';
+        
+        const { rect } = annotation;
+        Object.assign(highlight.style, {
+            left: `${rect[0]}px`,
+            top: `${rect[1]}px`,
+            width: `${rect[2] - rect[0]}px`,
+            height: `${rect[3] - rect[1]}px`
+        });
+
+        if (annotation.title) {
+            highlight.setAttribute('title', annotation.title);
+        }
+
+        if (annotation.contents) {
+            highlight.addEventListener('mouseover', (e) => this.showTooltip(e, annotation.contents));
+            highlight.addEventListener('mouseout', () => this.hideTooltip());
+        }
+
+        this.elements.textLayer.appendChild(highlight);
+    },
+
+    showTooltip(event, content) {
+        let tooltip = document.getElementById('pdf-tooltip');
+        if (!tooltip) {
+            tooltip = document.createElement('div');
+            tooltip.id = 'pdf-tooltip';
+            document.body.appendChild(tooltip);
+        }
+        
+        tooltip.innerHTML = content;
+        tooltip.style.left = `${event.pageX + 10}px`;
+        tooltip.style.top = `${event.pageY + 10}px`;
+        tooltip.style.display = 'block';
+    },
+
+    hideTooltip() {
+        const tooltip = document.getElementById('pdf-tooltip');
+        if (tooltip) {
+            tooltip.style.display = 'none';
+        }
+    },
+
+    queueRenderPage(num) {
+        if (this.state.isRendering) {
+            this.state.pendingPage = num;
+        } else {
+            this.renderPage(num);
+        }
+    },
+
+    showPrevPage() {
+        if (this.state.currentPage <= 1) return;
+        this.state.currentPage--;
+        this.queueRenderPage(this.state.currentPage);
+    },
+
+    showNextPage() {
+        if (this.state.currentPage >= this.state.pdfDoc.numPages) return;
+        this.state.currentPage++;
+        this.queueRenderPage(this.state.currentPage);
+    },
+
+    handleTextSelection(e) {
+        if (e.target.closest('.textLayer')) {
+            e.stopPropagation();
+        }
+    },
+
+    handleError(error) {
+        const div = document.createElement('div');
+        div.className = 'error';
+        div.appendChild(document.createTextNode(error.message));
+        document.querySelector('body').insertBefore(div, this.elements.canvas);
+        this.elements.topBar.style.display = 'none';
+    }
+};
+
+// Initialize the module when document is ready
+document.addEventListener('DOMContentLoaded', () => PDFReportModule.init());
