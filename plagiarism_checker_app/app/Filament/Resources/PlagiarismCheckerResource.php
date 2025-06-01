@@ -69,27 +69,13 @@ class PlagiarismCheckerResource extends Resource
                                 ->schema([
                                     Forms\Components\FileUpload::make('document')
                                         ->label('Upload Document')
-                                        ->disk('local')  // Change to local disk
-                                        ->directory('downloads')
                                         ->acceptedFileTypes([
                                             'application/pdf',
                                             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                                             'text/plain'
                                         ])
-                                        ->preserveFilenames()
-                                        ->afterStateUpdated(function ($state, $get, $set) {
-                                            if ($state) {
-                                                $path = storage_path('app/' . $state);
-                                                if (file_exists($path)) {
-                                                    $newPath = storage_path('app/public/downloads/' . basename($path));
-                                                    copy($path, $newPath);
-                                                }
-                                            }
-                                        })
                                         ->maxSize(10240)
-                                        ->required()
                                         ->helperText('Supported formats: PDF, DOCX, TXT (Max 10MB)')
-                                        ->downloadable()
                                         ->columnSpanFull(),
                                     
                                     Forms\Components\Checkbox::make('give_me_file')

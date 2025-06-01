@@ -36,14 +36,20 @@ class PlagiarismService
         }
         
         $responseData = $response->json();
-        // dd($responseData);
         
         if (!isset($responseData['data'])) {
             throw new \Exception('Invalid response format from plagiarism service');
         }
 
+        // Decode and save the PDF file
+        $pdfContent = base64_decode($responseData['data']['pdf_content']);
+        $fileName = 'highlighted_' . time() . '.pdf';
+        $filePath = 'public/downloads/' . $fileName;
+        
+        Storage::put($filePath, $pdfContent);
+
         return [
-            'file_path' => $responseData['data']['file_path'] ?? null,
+            'file_path' => asset('storage/downloads/' . $fileName),
             'results' => $responseData['data']['results'] ?? [],
             'status' => $responseData['success'] ?? false,
             'message' => $responseData['message'] ?? ''

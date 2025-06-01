@@ -1,7 +1,6 @@
 const PDFReportModule = {
     constants: {
-        SCALE: 1.5,
-        HIGHLIGHT_TYPES: ['Highlight', 'Text']
+        SCALE: 1.5
     },
 
     elements: {
@@ -31,7 +30,6 @@ const PDFReportModule = {
         // Add event listeners
         this.elements.prevButton.addEventListener('click', () => this.showPrevPage());
         this.elements.nextButton.addEventListener('click', () => this.showNextPage());
-        document.addEventListener('mousedown', (e) => this.handleTextSelection(e));
 
         // Load PDF
         if (this.state.url) {
@@ -63,15 +61,12 @@ const PDFReportModule = {
                 canvasContext: this.elements.ctx,
                 viewport,
                 textLayer: this.elements.textLayer,
-                renderInteractiveForms: true,
-                enableScripting: true
             };
 
             const renderTask = page.render(renderContext);
 
             Promise.all([
                 this.renderTextContent(page, viewport),
-                this.renderAnnotations(page),
                 renderTask.promise
             ]).then(() => {
                 this.state.isRendering = false;
@@ -115,61 +110,6 @@ const PDFReportModule = {
         });
     },
 
-    renderAnnotations(page) {
-        return page.getAnnotations().then(annotations => {
-            annotations.forEach(annotation => {
-                if (this.constants.HIGHLIGHT_TYPES.includes(annotation.subtype)) {
-                    this.createHighlight(annotation);
-                }
-            });
-        });
-    },
-
-    createHighlight(annotation) {
-        const highlight = document.createElement('div');
-        highlight.className = 'pdf-annotation';
-        
-        const { rect } = annotation;
-        Object.assign(highlight.style, {
-            left: `${rect[0]}px`,
-            top: `${rect[1]}px`,
-            width: `${rect[2] - rect[0]}px`,
-            height: `${rect[3] - rect[1]}px`
-        });
-
-        if (annotation.title) {
-            highlight.setAttribute('title', annotation.title);
-        }
-
-        if (annotation.contents) {
-            highlight.addEventListener('mouseover', (e) => this.showTooltip(e, annotation.contents));
-            highlight.addEventListener('mouseout', () => this.hideTooltip());
-        }
-
-        this.elements.textLayer.appendChild(highlight);
-    },
-
-    showTooltip(event, content) {
-        let tooltip = document.getElementById('pdf-tooltip');
-        if (!tooltip) {
-            tooltip = document.createElement('div');
-            tooltip.id = 'pdf-tooltip';
-            document.body.appendChild(tooltip);
-        }
-        
-        tooltip.innerHTML = content;
-        tooltip.style.left = `${event.pageX + 10}px`;
-        tooltip.style.top = `${event.pageY + 10}px`;
-        tooltip.style.display = 'block';
-    },
-
-    hideTooltip() {
-        const tooltip = document.getElementById('pdf-tooltip');
-        if (tooltip) {
-            tooltip.style.display = 'none';
-        }
-    },
-
     queueRenderPage(num) {
         if (this.state.isRendering) {
             this.state.pendingPage = num;
@@ -188,12 +128,6 @@ const PDFReportModule = {
         if (this.state.currentPage >= this.state.pdfDoc.numPages) return;
         this.state.currentPage++;
         this.queueRenderPage(this.state.currentPage);
-    },
-
-    handleTextSelection(e) {
-        if (e.target.closest('.textLayer')) {
-            e.stopPropagation();
-        }
     },
 
     handleError(error) {

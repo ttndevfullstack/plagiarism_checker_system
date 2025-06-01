@@ -169,8 +169,6 @@ return [
         App\Providers\RouteServiceProvider::class,
         App\Providers\Filament\AdminPanelProvider::class,
         App\Providers\Filament\UserPanelProvider::class,
-        // App\Providers\FileStorageServiceProvider::class,
-        App\Providers\FileUploadServiceProvider::class,
 
         /*
          * External Service Providers...

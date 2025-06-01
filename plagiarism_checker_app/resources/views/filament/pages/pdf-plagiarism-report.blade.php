@@ -35,18 +35,29 @@
             <!-- PDF Preview: 75% -->
             <div class="plagiarism-grid-left">
                 <x-filament::card class="h-full">
-                    <h1>{{ $filePath }}</h1>
                     <div class="filament-page">
-                        <div class="top-bar">
-                            <button class="btn" id="prev-page">
-                                <i class="fas fa-arrow-circle-left"></i> Prev Page
-                            </button>
-                            <button class="btn" id="next-page">
-                                Next Page <i class="fas fa-arrow-circle-right"></i>
-                            </button>
-                            <span class="page-info">
-                                Page <span id="page-num"></span> of <span id="page-count"></span>
-                            </span>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <div class="flex items-center space-x-4">
+                                <x-filament::button
+                                    id="prev-page"
+                                    icon="heroicon-m-arrow-left"
+                                    class="focus:outline-none"
+                                    style="margin-right: 10px">
+                                    Prev
+                                </x-filament::button>
+                                
+                                <x-filament::button
+                                    id="next-page"
+                                    icon="heroicon-m-arrow-right"
+                                    icon-position="after"
+                                    class="focus:outline-none">
+                                    Next
+                                </x-filament::button>
+                            </div>
+                            
+                            <div class="text-sm text-gray-600 dark:text-gray-300">
+                                Page <span id="page-num" class="font-medium"></span> of <span id="page-count" class="font-medium"></span>
+                            </div>
                         </div>
 
                         <canvas id="pdf-render"></canvas>
@@ -204,7 +215,6 @@
             grid-template-columns: 1fr;
             gap: 1.5rem;
             align-items: start;
-            margin: 1rem;
         }
 
         @media (min-width: 1024px) {
@@ -227,31 +237,6 @@
         #pdf-render {
             width: 100%;
             height: auto;
-        }
-
-
-
-        .top-bar {
-            background: #333;
-            color: #fff;
-            padding: 1rem;
-        }
-
-        .btn {
-            background: coral;
-            color: #fff;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 0.7rem 2rem;
-        }
-
-        .btn:hover {
-            opacity: 0.9;
-        }
-
-        .page-info {
-            margin-left: 1rem;
         }
 
         .error {

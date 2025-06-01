@@ -1,5 +1,7 @@
-from flask import Blueprint, request, jsonify, send_file
+import base64
+import os
 
+from flask import Blueprint, request, jsonify, send_file
 from flask_app.config import Config
 from flask_app.app.services.migration import Migration
 from flask_app.app.services.document_service import DocumentService
@@ -137,14 +139,22 @@ def check_pdf_plagiarism():
 
     try:
         pdf_processor = PDFProcessor(Config.MINILM_EMBEDDING_MODEL)
-        output_path, report = pdf_processor.process_pdf(file)
+        highlighted_pdf_path, results = pdf_processor.process_pdf(file)
+        
+        # Read the PDF file and encode it
+        with open(highlighted_pdf_path, 'rb') as pdf_file:
+            pdf_content = pdf_file.read()
+            pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
+        
+        # Clean up the temporary file
+        os.remove(highlighted_pdf_path)
         
         response = {
             "success": True,
             "message": "Plagiarism check completed successfully",
             "data": {
-                "file_path": output_path,
-                "results": report
+                "pdf_content": pdf_base64,
+                "results": results
             }
         }
         

@@ -1,179 +1,188 @@
 import fitz
+import json
 from typing import Dict, Any, List, Tuple
 import tempfile
 import os
-import logging
-import time
-import shutil
+import re
 
 from flask_app.app.services.plagiarism_checker_service import PlagiarismCheckerService
 
 class PDFProcessor:
     def __init__(self, embedding_model: str):
         self.plagiarism_service = PlagiarismCheckerService(embedding_model)
+        # Colors in RGBA format (values between 0 and 1)
         self.colors = {
-            'critical': {  # 75-100%
-                'bg': (0.984, 0.737, 0.737),  # Red
-                'text': (0.8, 0.2, 0.2)
+            'high-risk': {
+                'bg': (1.0, 0.92, 0.92),     # FFEBEE (Red)
+                'text': (0.78, 0.16, 0.16)    # C62828
             },
-            'high': {  # 50-74%
-                'bg': (1.0, 0.847, 0.737),  # Orange
-                'text': (0.8, 0.4, 0.0)
+            'moderate-risk': {
+                'bg': (1.0, 0.95, 0.88),     # FFF3E0 (Orange)
+                'text': (0.94, 0.42, 0.0)     # EF6C00
             },
-            'moderate': {  # 25-49%
-                'bg': (0.984, 0.953, 0.737),  # Yellow
-                'text': (0.6, 0.6, 0.0)
+            'low-risk': {
+                'bg': (1.0, 0.98, 0.77),     # FFF9C4 (Yellow)
+                'text': (0.98, 0.66, 0.15)    # F9A825
             },
-            'low': {  # 1-24%
-                'bg': (0.859, 0.969, 0.859),  # Green
-                'text': (0.0, 0.5, 0.0)
+            'original': {
+                'bg': (0.91, 0.96, 0.91),    # E8F5E9 (Green)
+                'text': (0.18, 0.49, 0.2)    # 2E7D32
             }
         }
+        # List of fallback fonts in order of preference
         self.fallback_fonts = ["helv", "times", "cour"]
 
-    def _extract_paragraphs(self, pdf_path: str) -> Tuple[Dict[str, str], Dict[str, List[Dict[str, Any]]]]:
-        """Extract text with precise word-level coordinates"""
-        paragraphs = {}
-        word_positions = {}
-        doc = fitz.open(pdf_path)
-        paragraph_index = 0
-        current_paragraph = ""
-        current_words = []
-
-        for page_num in range(len(doc)):
-            page = doc[page_num]
-            blocks = page.get_text("words")  # Get word-level data
-            
-            for word_info in blocks:
-                x0, y0, x1, y1 = word_info[0:4]  # Coordinates
-                word = word_info[4]  # Actual word
-                
-                # Store word position data
-                current_words.append({
-                    "text": word,
-                    "page": page_num,
-                    "bbox": [x0, y0, x1, y1]
-                })
-                
-                current_paragraph += word + " "
-                
-                # Create new paragraph when reaching size limit or end of semantic block
-                if len(current_paragraph) >= 2000 or self._is_paragraph_break(word):
-                    if current_paragraph.strip():
-                        key = f"paragraph_{paragraph_index}"
-                        paragraphs[key] = current_paragraph.strip()
-                        word_positions[key] = current_words.copy()
-                        paragraph_index += 1
-                        current_paragraph = ""
-                        current_words = []
-
-        # Handle remaining text
-        if current_paragraph.strip():
-            key = f"paragraph_{paragraph_index}"
-            paragraphs[key] = current_paragraph.strip()
-            word_positions[key] = current_words
-
-        doc.close()
-        return paragraphs, word_positions
-
-    def _is_paragraph_break(self, word: str) -> bool:
-        """Detect natural paragraph breaks"""
-        return word.strip().endswith(('.', '!', '?', ':"', '."', '!"', '?"'))
-
     def process_pdf(self, pdf_file) -> Tuple[str, Dict[str, Any]]:
+        """Process PDF file and return the plagiarism report and highlighted PDF path"""
         try:
+            # Create temp file for the uploaded PDF
             temp_input = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
             pdf_file.save(temp_input.name)
             
-            # Extract text with coordinates
-            paragraphs, word_positions = self._extract_paragraphs(temp_input.name)
+            # Extract text and check plagiarism
+            sentences = self._extract_sentences(temp_input.name)
+            # return sentences
+            report = self.plagiarism_service.check_plagiarism_content(sentences)
             
-            # Get plagiarism results
-            report = self.plagiarism_service.check_plagiarism_content(paragraphs)
+            # Create highlighted PDF
+            output_path = self._highlight_pdf(temp_input.name, report['data']['paragraphs'])
             
-            # Add word position data to report
-            self._enrich_report_with_positions(report, word_positions)
-            
-            return temp_input.name, report
+            return output_path, report
         except Exception as e:
-            logging.exception("PDF processing failed")
-            raise Exception(f"PDF processing failed: {str(e)}")
+            raise Exception(f"PDF plagiarism check failed: {str(e)}")
+        finally:
+            # Clean up temp input file
+            if 'temp_input' in locals() and os.path.exists(temp_input.name):
+                os.unlink(temp_input.name)
 
-    def _enrich_report_with_positions(self, report: Dict[str, Any], word_positions: Dict[str, List[Dict[str, Any]]]):
-        """Add word position data to plagiarism results"""
-        for paragraph in report['data']['paragraphs']:
-            para_id = paragraph['id']
-            if para_id in word_positions:
-                paragraph['word_positions'] = word_positions[para_id]
+    def _split_into_sentences(self, text: str) -> List[str]:
+        """Split text into sentences using regex"""
+        # Handle common abbreviations and special cases
+        text = re.sub(r'([A-Z]\.)(?=[A-Z]\.)', r'\1|', text)  # Handle initials
+        text = re.sub(r'(Mr\.|Mrs\.|Dr\.|Prof\.|Sr\.|Jr\.|vs\.|etc\.)', r'\1|', text)
+        
+        # Split into sentences
+        sentences = re.split(r'(?<=[.!?])\s+(?=[A-Z])', text)
+        
+        # Remove the temporary marks and clean sentences
+        sentences = [s.replace('|', '.').strip() for s in sentences if s.strip()]
+        return sentences
+
+    def _extract_sentences(self, pdf_path: str) -> Dict[str, str]:
+        """Extract text from PDF by sentences with unique keys"""
+        sentences = {}
+        doc = fitz.open(pdf_path)
+        
+        for page_num in range(len(doc)):
+            page = doc[page_num]
+            blocks = page.get_text("dict")["blocks"]
+            
+            for block_num, block in enumerate(blocks):
+                if "lines" in block:
+                    text = ""
+                    for line in block["lines"]:
+                        for span in line["spans"]:
+                            text += span["text"]
+                        text += " "
+                    
+                    text = text.strip()
+                    if text:
+                        block_sentences = self._split_into_sentences(text)
+                        for sent_num, sentence in enumerate(block_sentences):
+                            if sentence.strip():
+                                key = f"page_{page_num}_block_{block_num}_sent_{sent_num}"
+                                sentences[key] = sentence.strip()
+        
+        doc.close()
+        return sentences
 
     def _get_highlight_color(self, similarity: float) -> Dict[str, Tuple[float, float, float]]:
-        """Get colors based on similarity percentage - Turnitin style"""
-        if similarity >= 75:
-            return self.colors['critical']
-        elif similarity >= 50:
-            return self.colors['high']
-        elif similarity >= 25:
-            return self.colors['moderate']
-        elif similarity > 0:
-            return self.colors['low']
-        return None
+        """Get highlight color based on similarity percentage"""
+        if similarity > 85:
+            return self.colors['high-risk']
+        elif similarity > 65:
+            return self.colors['moderate-risk']
+        elif similarity > 30:
+            return self.colors['low-risk']
+        return self.colors['original']
 
     def _get_safe_font(self, font_name: str) -> fitz.Font:
+        """Get a safe font to use, falling back to defaults if needed"""
         try:
+            # First try the requested font
             return fitz.Font(font_name)
         except:
+            # Try fallback fonts in order
             for fallback in self.fallback_fonts:
                 try:
                     return fitz.Font(fallback)
                 except:
                     continue
+            # If all else fails, use the default font
             return fitz.Font("helv")
 
-    def _highlight_pdf(self, input_path: str, plagiarism_results: List[Dict[str, Any]], 
-                      paragraph_block_mapping: Dict[str, List[Dict[str, Any]]]) -> str:
-        """Create highlighted PDF with source information - Turnitin style"""
+    def _highlight_pdf(self, input_path: str, plagiarism_results: List[Dict[str, Any]]) -> str:
+        """Add text highlights to sentences based on plagiarism results"""
         temp_output = tempfile.NamedTemporaryFile(delete=False, suffix='_highlighted.pdf')
         result_map = {result['id']: result for result in plagiarism_results}
         doc = fitz.open(input_path)
 
-        for paragraph_id, blocks in paragraph_block_mapping.items():
-            if paragraph_id not in result_map:
-                continue
-                
-            result = result_map[paragraph_id]
-            similarity = result['similarity_percentage']
-            colors = self._get_highlight_color(similarity)
-            if not colors:
-                continue
+        # Simplified color definitions for text highlighting
+        highlight_colors = {
+            'high-risk': (1.0, 0.7, 0.7),      # Red highlight
+            'moderate-risk': (1.0, 0.85, 0.7),  # Orange highlight
+            'low-risk': (1.0, 1.0, 0.7),        # Yellow highlight
+            'original': (0.7, 1.0, 0.7)         # Green highlight
+        }
 
-            sources = result.get('sources', [])
-            for block in blocks:
-                page = doc[block['page']]
-                
-                # Create highlight with Turnitin-style colors
-                rect = fitz.Rect(block['bbox'])
-                annot = page.add_highlight_annot(rect)
-                annot.set_colors(stroke=colors['text'], fill=colors['bg'])
-                annot.set_opacity(0.4)  # Turnitin-like transparency
-                
-                # Add source information popup
-                if sources:
-                    source = sources[0]
-                    popup_text = (
-                        f"Similarity: {similarity:.1f}%\n"
-                        f"Source: {source['title']}\n"
-                        f"Document ID: {source['document_id']}"
-                    )
-                    
-                    info = {
-                        "title": "Similarity Match",
-                        "subject": f"{similarity:.1f}% match",
-                        "content": popup_text
-                    }
-                    
-                    annot.set_info(info)
-                    annot.update()
+        def get_highlight_color(similarity: float):
+            if similarity > 85: return highlight_colors['high-risk']
+            elif similarity > 65: return highlight_colors['moderate-risk']
+            elif similarity > 30: return highlight_colors['low-risk']
+            return highlight_colors['original']
 
+        for page_num in range(len(doc)):
+            page = doc[page_num]
+            blocks = page.get_text("dict")["blocks"]
+            
+            processed_sentences = set()  # Track processed sentences to avoid duplicates
+            
+            for block_num, block in enumerate(blocks):
+                if "lines" not in block:
+                    continue
+
+                # Extract text from block
+                text = ""
+                for line in block["lines"]:
+                    for span in line["spans"]:
+                        text += span["text"]
+                    text += " "
+                text = text.strip()
+
+                if not text:
+                    continue
+
+                # Split block text into sentences and process each
+                sentences = self._split_into_sentences(text)
+                for sent_num, sentence in enumerate(sentences):
+                    key = f"page_{page_num}_block_{block_num}_sent_{sent_num}"
+                    
+                    if key not in result_map or sentence in processed_sentences:
+                        continue
+
+                    processed_sentences.add(sentence)
+                    similarity = result_map[key]['similarity_percentage']
+                    highlight_color = get_highlight_color(similarity)
+
+                    # Find and highlight this sentence
+                    text_instances = page.search_for(sentence)
+                    for inst in text_instances:
+                        highlight = page.add_highlight_annot(inst)
+                        highlight.set_colors(stroke=highlight_color)
+                        highlight.set_opacity(0.5)
+                        highlight.update()
+
+        # Save and optimize the PDF
         doc.save(temp_output.name, garbage=4, deflate=True, clean=True)
         doc.close()
         return temp_output.name

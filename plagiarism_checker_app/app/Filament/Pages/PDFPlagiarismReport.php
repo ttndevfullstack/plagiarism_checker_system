@@ -20,7 +20,7 @@ class PDFPlagiarismReport extends Page
 
     protected static string $view = 'filament.pages.pdf-plagiarism-report';
 
-    protected static bool $shouldRegisterNavigation = true;
+    protected static bool $shouldRegisterNavigation = false;
 
     public $data = null;
 
@@ -58,17 +58,17 @@ class PDFPlagiarismReport extends Page
 
     public function mount()
     {
-        $this->isLoading = false;
+        $this->isLoading = true;
 
         if (request()->has('data')) {
             $data = json_decode(base64_decode(request()->get('data')), true);
 
             try {
-                $results = app(PlagiarismService::class)->checkPDFPlagiarism($data['file_path']);
+                $response = app(PlagiarismService::class)->checkPDFPlagiarism($data['file_path']);
 
                 // Store the file path relative to public directory
-                $this->filePath = asset('storage/downloads/' . basename($data['file_path']));
-                $this->results = $results['results'];
+                $this->filePath = $response['file_path'];
+                $this->results = $response['results']['data'];
 
                 Notification::make()
                     ->success()
