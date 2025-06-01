@@ -17,14 +17,8 @@
             </div>
         @endif
 
-        @if ($isLoading)
-            <div class="flex items-center justify-center p-6">
-                <div class="flex items-center space-x-3">
-                    <div class="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-r-transparent">
-                    </div>
-                    <span class="text-lg font-medium">Analyzing content for plagiarism...</span>
-                </div>
-            </div>
+        @if ($isLoading = true)
+            @include('partials.analyzing')
         @endif
 
         <!-- Report Summary -->
