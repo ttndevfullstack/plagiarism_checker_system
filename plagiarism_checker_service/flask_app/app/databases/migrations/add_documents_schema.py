@@ -37,6 +37,15 @@ class DocumentMigration:
         #     }
         # )
 
+        # In create_indexes (schema file)
+        # index_params.add_index(
+        #     field_name="embedding",
+        #     index_name="embedding_index",
+        #     index_type="IVF_FLAT",   # Better for accuracy
+        #     metric_type="IP",        # Use IP with normalized vectors
+        #     params={"nlist": 2048}   # Higher for better recall
+        # )
+
         index_params.add_index(
             field_name="embedding",
             index_name="embedding_index",

@@ -14,7 +14,7 @@ class PlagiarismCheckerService:
         self.embedding_service = EmbeddingModelFactory.get_model(embedding_model)
 
         self.min_paragraph_length = 100
-        self.similarity_threshold = 0.3
+        self.similarity_threshold = 0.7
 
     def check_plagiarism_content(self, content: Dict[str, str]) -> Dict[str, Any]:
         """Process pre-chunked paragraphs and return a structured plagiarism report"""
@@ -37,6 +37,13 @@ class PlagiarismCheckerService:
         processed_paragraph = self.text_service.preprocess_text(paragraph)
         embedding = self.embedding_service.convert_text_to_embedding(processed_paragraph)
 
+        # search_params = {
+        #     "metric_type": "IP",  # Must match index metric type
+        #     "offset": 0,
+        #     "limit": 10,  # Increase for better recall
+        #     "params": {"nprobe": 32}  # Search more clusters
+        # }
+
         search_params = {
             "metric_type": "COSINE",
             "offset": 0,
@@ -50,14 +57,14 @@ class PlagiarismCheckerService:
             collection_name="documents",
             data=[embedding],
             anns_field="embedding",
-            output_fields=["document_id", "paragraph_id", "subject_code", "original_name", "source_url", "published_date"],
+            output_fields=["document_id", "paragraph_id", "subject_code", "original_name"],
             **search_params
         )
         print("Search Results:", results)
 
         sources = []
         for hit in results[0]:
-            similarity = round(max(0.0, min(1.0, 1 - hit['distance'])) * 100, 1)
+            similarity = round(max(0.0, min(1.0, hit['distance'])) * 100, 1)
             if similarity >= self.similarity_threshold * 100:
                 sources.append({
                     "document_id": hit['entity'].get("document_id", ""),
@@ -119,35 +126,12 @@ class PlagiarismCheckerService:
         # Convert source_map to list and sort by highest similarity
         sources_summary = list(source_map.values())
         sources_summary.sort(key=lambda x: (-x['highest_similarity'], -x['total_matched']))
-        # words_analyzed = sum(len(p['text'].split()) for p in paragraph_results)
         originality_score = round(100.0 - overall_similarity, 1)  # Use max similarity for originality score
 
         # Clean up matches from final output (optional)
         for source in sources_summary:
             del source['matches']
         
-        # Updated professional verdict messages
-        if overall_similarity > 75:
-            verdict = ("🔴 Critical Match Level (75-100%)\n"
-                      "Your content shows significant matching text with existing sources. "
-                      "We strongly recommend immediate revision to ensure academic integrity.")
-        elif overall_similarity > 50:
-            verdict = ("🟠 High Match Level (50-74%)\n"
-                      "Notable similarities detected with other sources. "
-                      "Consider revising sections with high similarity to improve originality.")
-        elif overall_similarity > 25:
-            verdict = ("🟡 Moderate Match Level (25-49%)\n"
-                      "Some matching content detected. Review highlighted sections "
-                      "and ensure proper citations where needed.")
-        elif overall_similarity > 0:
-            verdict = ("🟢 Low Match Level (1-24%)\n"
-                      "Minor matches found. Content appears largely original "
-                      "with few common phrases or properly cited materials.")
-        else:
-            verdict = ("✅ No Matches Found (0%)\n"
-                      "No significant matching content detected. "
-                      "Your work appears to be highly original.")
-
         return {
             "status": "success",
             "data": {
@@ -155,9 +139,31 @@ class PlagiarismCheckerService:
                 "similarity_score": overall_similarity,
                 "source_matched": len(sources_summary),
                 "words_analyzed": words_analyzed,
-                "overall_verdict": verdict,
+                "overall_verdict": self.get_verdict(overall_similarity),
                 "processed_at": datetime.now(timezone.utc).isoformat(),
                 "paragraphs": paragraph_results,
                 "sources_summary": sources_summary
             }
         }
+    
+    def get_verdict(self, similarity_score: float) -> str:
+        if similarity_score > 75:
+            return ("🔴 Critical Match Level (75-100%)\n"
+                      "Your content shows significant matching text with existing sources. "
+                      "We strongly recommend immediate revision to ensure academic integrity.")
+        elif similarity_score > 50:
+            return ("🟠 High Match Level (50-74%)\n"
+                      "Notable similarities detected with other sources. "
+                      "Consider revising sections with high similarity to improve originality.")
+        elif similarity_score > 25:
+            return ("🟡 Moderate Match Level (25-49%)\n"
+                      "Some matching content detected. Review highlighted sections "
+                      "and ensure proper citations where needed.")
+        elif similarity_score > 0:
+            return ("🟢 Low Match Level (1-24%)\n"
+                      "Minor matches found. Content appears largely original "
+                      "with few common phrases or properly cited materials.")
+        else:
+            return ("✅ No Matches Found (0%)\n"
+                      "No significant matching content detected. "
+                      "Your work appears to be highly original.")

@@ -17,7 +17,7 @@
             </div>
         @endif
 
-        @if ($isLoading = true)
+        @if ($isLoading)
             @include('partials.analyzing')
         @endif
 

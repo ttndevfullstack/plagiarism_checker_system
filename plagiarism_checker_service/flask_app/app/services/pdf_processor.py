@@ -10,27 +10,6 @@ from flask_app.app.services.plagiarism_checker_service import PlagiarismCheckerS
 class PDFProcessor:
     def __init__(self, embedding_model: str):
         self.plagiarism_service = PlagiarismCheckerService(embedding_model)
-        # Colors in RGBA format (values between 0 and 1)
-        self.colors = {
-            'high-risk': {
-                'bg': (1.0, 0.92, 0.92),     # FFEBEE (Red)
-                'text': (0.78, 0.16, 0.16)    # C62828
-            },
-            'moderate-risk': {
-                'bg': (1.0, 0.95, 0.88),     # FFF3E0 (Orange)
-                'text': (0.94, 0.42, 0.0)     # EF6C00
-            },
-            'low-risk': {
-                'bg': (1.0, 0.98, 0.77),     # FFF9C4 (Yellow)
-                'text': (0.98, 0.66, 0.15)    # F9A825
-            },
-            'original': {
-                'bg': (0.91, 0.96, 0.91),    # E8F5E9 (Green)
-                'text': (0.18, 0.49, 0.2)    # 2E7D32
-            }
-        }
-        # List of fallback fonts in order of preference
-        self.fallback_fonts = ["helv", "times", "cour"]
 
     def process_pdf(self, pdf_file) -> Tuple[str, Dict[str, Any]]:
         """Process PDF file and return the plagiarism report and highlighted PDF path"""
@@ -96,31 +75,6 @@ class PDFProcessor:
         doc.close()
         return sentences
 
-    def _get_highlight_color(self, similarity: float) -> Dict[str, Tuple[float, float, float]]:
-        """Get highlight color based on similarity percentage"""
-        if similarity > 85:
-            return self.colors['high-risk']
-        elif similarity > 65:
-            return self.colors['moderate-risk']
-        elif similarity > 30:
-            return self.colors['low-risk']
-        return self.colors['original']
-
-    def _get_safe_font(self, font_name: str) -> fitz.Font:
-        """Get a safe font to use, falling back to defaults if needed"""
-        try:
-            # First try the requested font
-            return fitz.Font(font_name)
-        except:
-            # Try fallback fonts in order
-            for fallback in self.fallback_fonts:
-                try:
-                    return fitz.Font(fallback)
-                except:
-                    continue
-            # If all else fails, use the default font
-            return fitz.Font("helv")
-
     def _highlight_pdf(self, input_path: str, plagiarism_results: List[Dict[str, Any]]) -> str:
         """Add text highlights to sentences based on plagiarism results"""
         temp_output = tempfile.NamedTemporaryFile(delete=False, suffix='_highlighted.pdf')
@@ -130,16 +84,15 @@ class PDFProcessor:
         # Simplified color definitions for text highlighting
         highlight_colors = {
             'high-risk': (1.0, 0.7, 0.7),      # Red highlight
-            'moderate-risk': (1.0, 0.85, 0.7),  # Orange highlight
+            'moderate-risk': (1.0, 0.8, 0.86),  # Orange highlight
             'low-risk': (1.0, 1.0, 0.7),        # Yellow highlight
-            'original': (0.7, 1.0, 0.7)         # Green highlight
         }
 
         def get_highlight_color(similarity: float):
             if similarity > 85: return highlight_colors['high-risk']
             elif similarity > 65: return highlight_colors['moderate-risk']
             elif similarity > 30: return highlight_colors['low-risk']
-            return highlight_colors['original']
+            return None  # No highlight for original content
 
         for page_num in range(len(doc)):
             page = doc[page_num]
@@ -173,6 +126,9 @@ class PDFProcessor:
                     processed_sentences.add(sentence)
                     similarity = result_map[key]['similarity_percentage']
                     highlight_color = get_highlight_color(similarity)
+                    if (highlight_color is None):
+                        continue
+                    print(f"{similarity} - {highlight_color} - {sentence}")
 
                     # Find and highlight this sentence
                     text_instances = page.search_for(sentence)

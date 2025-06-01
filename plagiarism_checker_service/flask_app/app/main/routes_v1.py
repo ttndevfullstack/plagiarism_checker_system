@@ -99,7 +99,6 @@ def testing():
             
         if "content" in data:
             content = data["content"]
-            
             plagiarism_checker = PlagiarismCheckerService(Config.MINILM_EMBEDDING_MODEL)
             results = plagiarism_checker.check_plagiarism_content(content)
             return jsonify(results)
@@ -153,8 +152,8 @@ def check_pdf_plagiarism():
             "success": True,
             "message": "Plagiarism check completed successfully",
             "data": {
-                "pdf_content": pdf_base64,
-                "results": results
+                "results": results,
+                "pdf_content": pdf_base64
             }
         }
         
