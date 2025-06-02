@@ -14,7 +14,7 @@ class PlagiarismCheckerService:
         self.embedding_service = EmbeddingModelFactory.get_model(embedding_model)
 
         self.min_paragraph_length = 100
-        self.similarity_threshold = 0.7
+        self.similarity_threshold = 0.5
 
     def check_plagiarism_content(self, content: Dict[str, str]) -> Dict[str, Any]:
         """Process pre-chunked paragraphs and return a structured plagiarism report"""
@@ -25,6 +25,7 @@ class PlagiarismCheckerService:
                 continue  # Skip short paragraphs
 
             result = self.check_plagiarism_paragraph(paragraph)
+            print("report: ", result)
             result["id"] = chunk_id
             paragraph_results.append(result)
 

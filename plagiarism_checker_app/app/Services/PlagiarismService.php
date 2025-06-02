@@ -25,7 +25,7 @@ class PlagiarismService
 
     public function checkPDFPlagiarism(string $filePath): array
     {
-        $response = Http::attach(
+        $response = Http::timeout(300)->attach(
             'file', 
             file_get_contents($filePath), 
             basename($filePath)
