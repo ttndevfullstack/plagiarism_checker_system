@@ -1,5 +1,8 @@
 import base64
 import os
+from io import BytesIO
+import tempfile
+from reportlab.lib import colors
 
 from flask import Blueprint, request, jsonify, send_file
 from flask_app.config import Config
@@ -8,6 +11,7 @@ from flask_app.app.services.document_service import DocumentService
 from flask_app.app.databases.milvus_connection import MilvusConnection
 from flask_app.app.services.plagiarism_checker_service import PlagiarismCheckerService
 from flask_app.app.services.pdf_processor import PDFProcessor
+from flask_app.app.services.pdf_highlighter import PDFHighlighter
 
 # Create a Blueprint for main routes
 bp_v1 = Blueprint("main", __name__, url_prefix="/v1/api")
@@ -161,3 +165,55 @@ def check_pdf_plagiarism():
         
     except Exception as e:
         return jsonify({"error": f"Processing failed: {str(e)}"}), 500
+
+
+@bp_v1.route("/pdf/test", methods=["POST"])
+def check_pdf_plagiarism_test():
+    # Check if file was uploaded
+    if 'file' not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+    
+    pdf_file = request.files['file']
+    
+    # Check if file is PDF
+    if not pdf_file.filename.lower().endswith('.pdf'):
+        return jsonify({"error": "File must be a PDF"}), 400
+    
+    # Save temporarily
+    temp_pdf_path = os.path.join(tempfile.gettempdir(), pdf_file.filename)
+    pdf_file.save(temp_pdf_path)
+    
+    try:
+        # Initialize highlighter
+        highlighter = PDFHighlighter(temp_pdf_path)
+        
+        # Example phrases to highlight
+        phrases_to_check = [
+            ("plagiarism", (1, 0.8, 0)),      # Orange
+            ("Kubernetes", (0.2, 0.6, 1)),    # Blue
+            ("Docker", (0.8, 0.4, 0.8)),      # Purple
+            ("academic offence", (0, 0.6, 0.3))  # Green
+        ]
+        
+        # Find and highlight all phrases
+        for text, color in phrases_to_check:
+            highlighter.find_text_and_highlight(text, color)
+        
+        # Generate the highlighted PDF
+        pdf_bytes = highlighter.generate_highlighted_pdf_bytes()
+        
+        # Create response with PDF
+        return send_file(
+            BytesIO(pdf_bytes),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name='plagiarism_report.pdf'
+        )
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+    finally:
+        # Clean up temp file
+        if os.path.exists(temp_pdf_path):
+            os.remove(temp_pdf_path)
