@@ -1,42 +1,40 @@
-import os
 import re
 import fitz
 import tempfile
 
 from typing import Dict, Any, List, Tuple
+from flask_app.app.services.file_handler import FileHandler
 from flask_app.app.services.process_text_service import ProcessTextService
 from flask_app.app.services.plagiarism_checker_service import PlagiarismCheckerService
 
 class PDFProcessor:
     def __init__(self, embedding_model: str):
+        self.file_handler = FileHandler()
         self.text_service = ProcessTextService()
         self.plagiarism_service = PlagiarismCheckerService(embedding_model)
         self.min_sentence_length = 50
 
-    def process_pdf(self, pdf_file) -> Tuple[str, Dict[str, Any]]:
+    def process_pdf(self, file) -> Tuple[str, Dict[str, Any]]:
         """Process PDF file and return the plagiarism report and highlighted PDF path"""
         try:
             # Create temp file for the uploaded PDF
-            temp_input = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
-            pdf_file.save(temp_input.name)
+            file_path = self.file_handler.save_file(file)
             
             # Extract text and check plagiarism
-            sentence_data, total_words = self._extract_sentences(temp_input.name)
+            sentence_data, total_words = self._extract_sentences(file_path)
             sentences = {k: v['combined_text'] for k, v in sentence_data.items()}
             
             # Check plagiarism
             report = self.plagiarism_service.check_plagiarism_content(sentences, total_words)
 
             # Create highlighted PDF with sentence data
-            output_path = self._highlight_pdf(temp_input.name, report['data']['paragraphs'], sentence_data)
+            output_path = self._highlight_pdf(file_path, report['data']['paragraphs'], sentence_data)
             
             return output_path, report
         except Exception as e:
             raise Exception(f"PDF plagiarism check failed: {str(e)}")
         finally:
-            # Clean up temp input file
-            if 'temp_input' in locals() and os.path.exists(temp_input.name):
-                os.unlink(temp_input.name)
+            self.file_handler.remove_file(file_path)
 
     def _split_into_sentences(self, text: str) -> List[str]:
         """Split text into sentences using regex"""

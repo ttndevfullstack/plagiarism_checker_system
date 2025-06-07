@@ -1,17 +1,12 @@
-import base64
 import os
-from io import BytesIO
-import tempfile
-from reportlab.lib import colors
+import base64
 
-from flask import Blueprint, request, jsonify, send_file
 from flask_app.config import Config
+from flask import Blueprint, request, jsonify
 from flask_app.app.services.migration import Migration
-from flask_app.app.services.document_service import DocumentService
-from flask_app.app.databases.milvus_connection import MilvusConnection
-from flask_app.app.services.plagiarism_checker_service import PlagiarismCheckerService
 from flask_app.app.services.pdf_processor import PDFProcessor
-from flask_app.app.services.pdf_highlighter import PDFHighlighter
+from flask_app.app.services.document_service import DocumentService
+from flask_app.app.services.plagiarism_checker_service import PlagiarismCheckerService
 
 # Create a Blueprint for main routes
 bp_v1 = Blueprint("main", __name__, url_prefix="/v1/api")
@@ -66,7 +61,7 @@ def upload_data():
         return jsonify({"success": False, "error": f"Internal Server Error: {str(e)}"}), 500
     
 
-@bp_v1.route("/plagiarism-checker", methods=["POST"])
+@bp_v1.route("/plagiarism-checker/content", methods=["POST"])
 def check_document_plagiarism():
     if request.is_json:
         data = request.get_json()

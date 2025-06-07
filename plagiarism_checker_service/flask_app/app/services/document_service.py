@@ -20,28 +20,28 @@ class DocumentService:
         try:
             print("🎯 Upload paragraphs to database")
 
+            # ✅ 1. Save file and count document words
             file_path = self.file_handler.save_file(file)
             raw_text = self.file_handler.extract_text_from_file(file_path)
             document_word_count = self.text_service.clean_text(raw_text, True)
-            self.file_handler.remove_file(file_path)
 
-            # Extract metadata from request body
+            # ✅ 2. Extract metadata from request body
             document_id = int(metadata.get('document_id')) if metadata else None
             subject_code = metadata.get('subject_code')
             original_name = metadata.get('original_name')
 
-            # ✅ 1. Chunk into smaller (sentences or paragraphs)
+            # ✅ 3. Chunk into smaller (sentences or paragraphs)
             chunk_texts = self.text_service.chunk_text(raw_text)
 
-            # ✅ 2. Preprocess and convert chunked text to embedding
+            # ✅ 4. Preprocess, convert chunked text to embedding and save to database
             documents_to_insert = []
             for index, chunk_text in enumerate(chunk_texts):
-                origin_text, clean_text = self.text_service.preprocess_text(chunk_text)
+                clean_text, processed_text = self.text_service.preprocess_text(chunk_text)
                 
                 if len(clean_text.strip()) < 50:
                     continue  # skip very short paragraphs
 
-                embedding = self.embedding_service.convert_text_to_embedding(clean_text)
+                embedding = self.embedding_service.convert_text_to_embedding(processed_text)
                 if isinstance(embedding, np.ndarray):
                     embedding = embedding.tolist()
 
@@ -51,8 +51,8 @@ class DocumentService:
                     "subject_code": subject_code,
                     "original_name": original_name,
                     "embedding": embedding,
-                    "raw_text": chunk_text,
-                    "sentence_word_count": len(clean_text.split()),
+                    "raw_text": chunk_text.replace('\n', ' '),
+                    "sentence_word_count": len(processed_text.split()),
                     "document_word_count": document_word_count,
                 }
                 documents_to_insert.append(doc)
@@ -67,3 +67,5 @@ class DocumentService:
         except Exception as e:
             print(f"❌ Error uploading document: {str(e)}")
             return False
+        finally:
+            self.file_handler.remove_file(file_path)

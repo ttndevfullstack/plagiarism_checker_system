@@ -34,15 +34,8 @@ class PlagiarismCheckerService:
 
     def check_plagiarism_paragraph(self, paragraph: str) -> Dict[str, Any]:
         """Check plagiarism for a single paragraph"""
-        origin_text, clean_text = self.text_service.preprocess_text(paragraph)
-        embedding = self.embedding_service.convert_text_to_embedding(clean_text)
-
-        # search_params = {
-        #     "metric_type": "IP",  # Must match index metric type
-        #     "offset": 0,
-        #     "limit": 10,  # Increase for better recall
-        #     "params": {"nprobe": 32}  # Search more clusters
-        # }
+        clean_text, processed_text = self.text_service.preprocess_text(paragraph)
+        embedding = self.embedding_service.convert_text_to_embedding(processed_text)
 
         search_params = {
             "metric_type": "COSINE",
@@ -88,7 +81,7 @@ class PlagiarismCheckerService:
             "text": paragraph,
             "similarity_percentage": max((s['similarity_percentage'] for s in sources), default=0.0),
             "sources": sources,
-            "matched_word_count": len(origin_text.split())
+            "matched_word_count": len(clean_text.split())
         }
 
     def generate_report(self, paragraph_results: List[Dict[str, Any]], total_words) -> Dict[str, Any]:
