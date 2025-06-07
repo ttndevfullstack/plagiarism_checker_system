@@ -9,7 +9,6 @@ use Filament\Forms;
 use Filament\Tables;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ProgressColumn;
 use Awcodes\Curator\Components\Forms\CuratorPicker;
 use Awcodes\Curator\Components\Tables\CuratorColumn;
 
@@ -34,8 +33,6 @@ class DocumentResource extends Resource
                 Forms\Components\Select::make('subject_id')
                     ->relationship('subject', 'name')
                     ->required(),
-                Forms\Components\TextInput::make('category')
-                    ->required(),
                 Forms\Components\Textarea::make('description'),
                 CuratorPicker::make('media_id')
                     ->label('Document')
@@ -43,10 +40,6 @@ class DocumentResource extends Resource
                         'application/pdf',
                         'application/msword',
                         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                        'text/plain',
-                        'application/zip', // Add ZIP MIME type
-                        'application/x-zip-compressed', // Alternative ZIP MIME type
-                        'application/octet-stream' // Fallback for some zip files
                     ])
                     ->maxSize(30720000)
                     ->required(),
@@ -60,14 +53,12 @@ class DocumentResource extends Resource
                 CuratorColumn::make('media')
                     ->size(40),
                 TextColumn::make('original_name'),
-                TextColumn::make('category'),
                 TextColumn::make('file_size')
                     ->formatStateUsing(fn($state) => number_format($state / 1024 / 1024, 2) . ' MB'),
                 TextColumn::make('status')
                     ->badge()
                     ->color(fn(DocumentStatus $state): string => $state->getColor())
                     ->formatStateUsing(fn(DocumentStatus $state): string => $state->getLabel()),
-                // ProgressColum::make('progress'),
                 TextColumn::make('created_at')->dateTime(),
             ])
             ->defaultSort('created_at', 'desc');

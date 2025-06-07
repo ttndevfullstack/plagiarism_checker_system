@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('directory')->default('media');
             $table->string('visibility')->default('public');
             $table->string('name');
+            $table->string('original_name')->nullable();
             $table->string('path');
             $table->unsignedInteger('width')->nullable();
             $table->unsignedInteger('height')->nullable();

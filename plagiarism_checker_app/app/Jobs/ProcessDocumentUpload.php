@@ -62,7 +62,6 @@ class ProcessDocumentUpload implements ShouldQueue
                 'metadata' => json_encode($this->document->metadata ?? [])
             ]
         );
-        echo $response;
 
         $this->updateDocumentStatus($response->successful());
     }
