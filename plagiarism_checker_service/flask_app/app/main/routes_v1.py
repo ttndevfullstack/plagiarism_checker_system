@@ -72,7 +72,7 @@ def check_document_plagiarism():
             content = data["content"]
             
             plagiarism_checker = PlagiarismCheckerService(Config.MINILM_EMBEDDING_MODEL)
-            results = plagiarism_checker.check_plagiarism_content(content)
+            results = plagiarism_checker.check_plagiarism(content)
             return jsonify(results)
         else:
             return jsonify({"error": "Missing 'content' field in JSON"}), 400
@@ -91,6 +91,7 @@ def check_pdf_plagiarism():
 
     try:
         pdf_processor = PDFProcessor(Config.MINILM_EMBEDDING_MODEL)
+        # return jsonify({"data": pdf_processor.process_pdf(file)})
         highlighted_pdf_path, results = pdf_processor.process_pdf(file)
         
         # Read the PDF file and encode it

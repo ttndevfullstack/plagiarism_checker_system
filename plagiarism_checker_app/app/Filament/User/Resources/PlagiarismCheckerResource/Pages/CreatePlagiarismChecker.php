@@ -3,6 +3,7 @@
 namespace App\Filament\User\Resources\PlagiarismCheckerResource\Pages;
 
 use App\Filament\User\Pages\PlagiarismCheck;
+use App\Filament\User\Pages\PlagiarismReport;
 use App\Filament\User\Resources\PlagiarismCheckerResource;
 use Filament\Actions\Action;
 use Filament\Resources\Pages\CreateRecord;
@@ -32,15 +33,18 @@ class CreatePlagiarismChecker extends CreateRecord
         $this->redirectToReportPage($this->parsingDocument(
             $data['document'] ?? null,
             $data['content'] ?? null,
+            $data['give_me_file'] ?? false,
         ));
     }
 
-    private function parsingDocument(?array $files = null, ?string $content = null): array
+    private function parsingDocument(?array $files = null, ?string $content = null, bool $giveMeFile): array
     {
-        if ((! count($files)) && ! $content) { 
+        if ((! count($files)) && ! $content) {
             return [
                 'preview_content' => null,
                 'filename' => null,
+                'file_path' => null,
+                'give_me_file' => $giveMeFile,
             ];
         }
 
@@ -48,6 +52,8 @@ class CreatePlagiarismChecker extends CreateRecord
             return [
                 'preview_content' => $content,
                 'filename' => null,
+                'file_path' => null,
+                'give_me_file' => $giveMeFile,
             ];
         }
 
@@ -62,6 +68,7 @@ class CreatePlagiarismChecker extends CreateRecord
                 'filename' => $filename,
                 'extension' => $extension,
                 'preview_content' => null,
+                'give_me_file' => $giveMeFile,
             ];
         } catch (\Exception $e) {
             throw new \Exception("Error processing file: " . $e->getMessage());
@@ -70,8 +77,14 @@ class CreatePlagiarismChecker extends CreateRecord
 
     private function redirectToReportPage(array $previewData): void
     {
-        $this->redirect(PlagiarismCheck::getUrl([
-            'data' => base64_encode(json_encode($previewData))
-        ]));
+        if ($previewData['extension'] == 'pdf') {
+            $this->redirect(PlagiarismReport::getUrl([
+                'data' => base64_encode(json_encode($previewData))
+            ]));    
+        } else {
+            $this->redirect(PlagiarismCheck::getUrl([
+                'data' => base64_encode(json_encode($previewData))
+            ]));
+        }
     }
 }

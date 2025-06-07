@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Traits\TXTParser;
 use App\Traits\WordParser;
 use PhpOffice\PhpWord\Element\Text;
 use PhpOffice\PhpWord\Element\Title;
@@ -12,7 +11,6 @@ use PhpOffice\PhpWord\PhpWord;
 class DocumentParser
 {
     use WordParser;
-    use TXTParser;
 
     public function parse(string $filePath, string $extension, bool $forPreview = false)
     {

@@ -14,11 +14,8 @@ class ProcessTextService:
         ProcessTextService.initialize_nltk()
         self.stop_words = set(stopwords.words('english'))
         self.lemmatizer = WordNetLemmatizer()
-
-        # Chunking config
-        self.min_paragraph_length = 50  # Minimum characters to consider as paragraph
-        self.max_sentence_length = 500  # Maximum characters per sentence chunk
-        self.min_sentence_length = 20   # Minimum characters per sentence
+        
+        self.min_paragraph_length = 50
 
     @classmethod
     def _verify_nltk_resource(cls, resource_name, resource_path):
@@ -96,7 +93,6 @@ class ProcessTextService:
     def preprocess_text(self, text: str) -> str:
         """Enhanced text preprocessing"""
         clean_text = self.clean_text(text)
-        # Sentence tokenization
         sentences = sent_tokenize(text)
 
         processed_sentences = []
@@ -110,7 +106,6 @@ class ProcessTextService:
             processed_sentences.append(' '.join(tokens))
 
         processed_text = ' '.join(processed_sentences)
-
         return clean_text, processed_text
     
     def chunk_text_into_paragraphs(self, text: str) -> List[str]:
@@ -118,7 +113,7 @@ class ProcessTextService:
         paragraphs = [p.strip() for p in re.split(r'\n\s*\n+', text) if len(p.strip()) >= self.min_paragraph_length]
         return paragraphs
     
-    def chunk_into_sentences(self, text: str) -> List[str]:
+    def chunk_text_into_sentences(self, text: str) -> List[str]:
         """Split text into sentences using regex"""
         # Handle common abbreviations and special cases
         text = re.sub(r'([A-Z]\.)(?=[A-Z]\.)', r'\1|', text)  # Handle initials
@@ -133,22 +128,6 @@ class ProcessTextService:
     
     def chunk_text(self, raw_text: str, chunk_type: str = 'sentences') -> List[str]:
         if chunk_type == 'sentences':
-            return self.chunk_into_sentences(raw_text)
+            return self.chunk_text_into_sentences(raw_text)
         else:
             return self.chunk_text_into_paragraphs(raw_text)
-        
-    def count_words(self, text: str) -> str:
-        # Lower case
-        text = text.lower()
-        # Remove specific punctuations . , ? ! …
-        text = re.sub(r'[.,?!…]', ' ', text)
-        # Remove other unwanted characters except word and whitespace
-        text = re.sub(r'[^\w\s]', ' ', text)
-        # Remove numbers
-        text = re.sub(r'\d+', '', text)
-        # Remove newlines by replacing with space
-        text = text.replace('\n', ' ')
-        # Remove extra whitespaces
-        text = re.sub(r'\s+', ' ', text).strip()
-        
-        return len(text.split())

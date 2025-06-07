@@ -1,4 +1,3 @@
-import re
 import fitz
 import tempfile
 
@@ -17,17 +16,17 @@ class PDFProcessor:
     def process_pdf(self, file) -> Tuple[str, Dict[str, Any]]:
         """Process PDF file and return the plagiarism report and highlighted PDF path"""
         try:
-            # Create temp file for the uploaded PDF
+            # ✅ 1. Save file
             file_path = self.file_handler.save_file(file)
             
-            # Extract text and check plagiarism
-            sentence_data, total_words = self._extract_sentences(file_path)
+            # ✅ 2. Chunk text
+            sentence_data, document_word_count = self._extract_sentences(file_path)
             sentences = {k: v['combined_text'] for k, v in sentence_data.items()}
             
-            # Check plagiarism
-            report = self.plagiarism_service.check_plagiarism_content(sentences, total_words)
+            # ✅ 3. Check plagiarism
+            report = self.plagiarism_service.check_plagiarism(sentences, document_word_count)
 
-            # Create highlighted PDF with sentence data
+            # ✅ 3. Output highlighted PDF file
             output_path = self._highlight_pdf(file_path, report['data']['paragraphs'], sentence_data)
             
             return output_path, report
@@ -36,23 +35,10 @@ class PDFProcessor:
         finally:
             self.file_handler.remove_file(file_path)
 
-    def _split_into_sentences(self, text: str) -> List[str]:
-        """Split text into sentences using regex"""
-        # Handle common abbreviations and special cases
-        text = re.sub(r'([A-Z]\.)(?=[A-Z]\.)', r'\1|', text)  # Handle initials
-        text = re.sub(r'(Mr\.|Mrs\.|Dr\.|Prof\.|Sr\.|Jr\.|vs\.|etc\.)', r'\1|', text)
-        
-        # Split into sentences
-        sentences = re.split(r'(?<=[.!?])\s+(?=[A-Z])', text)
-        
-        # Remove the temporary marks and clean sentences
-        sentences = [s.replace('|', '.').strip() for s in sentences if s.strip()]
-        return sentences
-
     def _extract_sentences(self, pdf_path: str) -> Tuple[Dict[str, Dict], int]:
         """Extract text from PDF by sentences with unique keys and return total word count"""
         sentences = {}
-        total_words = 0
+        document_word_count = 0
         doc = fitz.open(pdf_path)
         
         for page_num in range(len(doc)):
@@ -73,14 +59,14 @@ class PDFProcessor:
                     
                     text = text.strip()
                     if text:
-                        block_sentences = self._split_into_sentences(text)
+                        block_sentences = self.text_service.chunk_text_into_sentences(text)
                         for sent_num, sentence in enumerate(block_sentences):
                             sentence = sentence.strip()
                             if not sentence:
                                 continue
                                 
                             # Count words in the sentence
-                            total_words += len(sentence.split())
+                            document_word_count += len(sentence.split())
                                 
                             if not current_text:
                                 current_text = sentence
@@ -93,7 +79,7 @@ class PDFProcessor:
                             if len(current_text.strip()) >= self.min_sentence_length:
                                 sentences[current_key] = {
                                     'combined_text': current_text.strip(),
-                                    'original_sentences': current_sentences
+                                    # 'original_sentences': current_sentences
                                 }
                                 current_text = ""
                                 current_key = ""
@@ -103,11 +89,11 @@ class PDFProcessor:
             if current_text and current_key:
                 sentences[current_key] = {
                     'combined_text': current_text.strip(),
-                    'original_sentences': current_sentences
+                    # 'original_sentences': current_sentences
                 }
         
         doc.close()
-        return sentences, total_words
+        return sentences, document_word_count
 
     def _highlight_pdf(self, input_path: str, plagiarism_results: List[Dict[str, Any]], sentence_data: Dict[str, Dict]) -> str:
         """Add text highlights to sentences based on plagiarism results"""

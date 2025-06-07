@@ -6,17 +6,17 @@ use App\Services\PlagiarismService;
 use Filament\Pages\Page;
 use Filament\Notifications\Notification;
 
-class PDFPlagiarismReport extends Page
+class PlagiarismReport extends Page
 {
     protected static string $layout = 'filament-panels::components.layout.without-nav';
 
     protected static ?string $navigationIcon = 'heroicon-c-shield-check';
 
-    protected static ?string $navigationLabel = 'PDF Plagiarism Report';
+    protected static ?string $navigationLabel = 'Plagiarism Report';
 
     protected static ?string $navigationGroup = 'Plagiarism Management';
 
-    protected static ?string $title = 'Plagiarism Check Page';
+    protected static ?string $title = 'Plagiarism Report';
 
     protected static string $view = 'filament.pages.pdf-plagiarism-report';
 
@@ -26,21 +26,13 @@ class PDFPlagiarismReport extends Page
 
     public ?array $results = null;
 
-    public $isLoading = true;
+    public ?string $error = null;
 
-    public $error = null;
-
-    public bool $giveMeFile = false;
+    public bool $isLoading = true;
 
     public string $fileName = '';
 
     public string $filePath = '';
-
-    public string $fileType = '';
-
-    public ?string $outputPath = null;
-
-    public ?string $outputFileName = null;
 
     public static function canAccess(): bool
     {
@@ -66,7 +58,6 @@ class PDFPlagiarismReport extends Page
             try {
                 $response = app(PlagiarismService::class)->checkPDFPlagiarism($data['file_path']);
 
-                // Store the file path relative to public directory
                 $this->filePath = $response['file_path'];
                 $this->results = $response['results']['data'];
 
