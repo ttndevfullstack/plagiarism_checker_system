@@ -1,4 +1,6 @@
+import uuid
 import numpy as np
+
 from werkzeug.datastructures import FileStorage
 from flask_app.app.services.file_handler import FileHandler
 from flask_app.app.services.database_handler import DatabaseHandler
@@ -20,41 +22,45 @@ class DocumentService:
 
             file_path = self.file_handler.save_file(file)
             raw_text = self.file_handler.extract_text_from_file(file_path)
+            document_word_count = self.text_service.clean_text(raw_text, True)
             self.file_handler.remove_file(file_path)
 
-            # ✅ 1. Chunk into paragraphs
-            paragraphs = self.text_service.chunk_text_into_paragraphs(raw_text)
-
+            # Extract metadata from request body
             document_id = int(metadata.get('document_id')) if metadata else None
             subject_code = metadata.get('subject_code')
             original_name = metadata.get('original_name')
 
-            # ✅ 2. Prepare per-paragraph embeddings
+            # ✅ 1. Chunk into smaller (sentences or paragraphs)
+            chunk_texts = self.text_service.chunk_text(raw_text)
+
+            # ✅ 2. Preprocess and convert chunked text to embedding
             documents_to_insert = []
-            for i, paragraph in enumerate(paragraphs):
-                clean_text = self.text_service.preprocess_text(paragraph)
+            for index, chunk_text in enumerate(chunk_texts):
+                origin_text, clean_text = self.text_service.preprocess_text(chunk_text)
                 
                 if len(clean_text.strip()) < 50:
                     continue  # skip very short paragraphs
 
                 embedding = self.embedding_service.convert_text_to_embedding(clean_text)
                 if isinstance(embedding, np.ndarray):
-                    embedding = embedding / np.linalg.norm(embedding)  # normalize
                     embedding = embedding.tolist()
 
                 doc = {
+                    "sentence_id": uuid.uuid4().int % (2**63),
                     "document_id": document_id,
-                    "paragraph_id": i,
                     "subject_code": subject_code,
                     "original_name": original_name,
-                    "embedding": embedding
+                    "embedding": embedding,
+                    "raw_text": chunk_text,
+                    "sentence_word_count": len(clean_text.split()),
+                    "document_word_count": document_word_count,
                 }
                 documents_to_insert.append(doc)
 
             if not documents_to_insert:
                 print("❌ No valid paragraphs to insert")
                 return False
-
+            
             count = self.db_handler.insert_documents(documents_to_insert)
             return count > 0
 

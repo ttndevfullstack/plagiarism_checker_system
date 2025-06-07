@@ -4,12 +4,14 @@ import fitz
 import tempfile
 
 from typing import Dict, Any, List, Tuple
+from flask_app.app.services.process_text_service import ProcessTextService
 from flask_app.app.services.plagiarism_checker_service import PlagiarismCheckerService
 
 class PDFProcessor:
     def __init__(self, embedding_model: str):
+        self.text_service = ProcessTextService()
         self.plagiarism_service = PlagiarismCheckerService(embedding_model)
-        self.min_sentence_length = 350
+        self.min_sentence_length = 50
 
     def process_pdf(self, pdf_file) -> Tuple[str, Dict[str, Any]]:
         """Process PDF file and return the plagiarism report and highlighted PDF path"""
@@ -19,11 +21,11 @@ class PDFProcessor:
             pdf_file.save(temp_input.name)
             
             # Extract text and check plagiarism
-            sentence_data = self._extract_sentences(temp_input.name)
+            sentence_data, total_words = self._extract_sentences(temp_input.name)
             sentences = {k: v['combined_text'] for k, v in sentence_data.items()}
             
             # Check plagiarism
-            report = self.plagiarism_service.check_plagiarism_content(sentences)
+            report = self.plagiarism_service.check_plagiarism_content(sentences, total_words)
 
             # Create highlighted PDF with sentence data
             output_path = self._highlight_pdf(temp_input.name, report['data']['paragraphs'], sentence_data)
@@ -49,9 +51,10 @@ class PDFProcessor:
         sentences = [s.replace('|', '.').strip() for s in sentences if s.strip()]
         return sentences
 
-    def _extract_sentences(self, pdf_path: str) -> Dict[str, Dict]:
-        """Extract text from PDF by sentences with unique keys"""
+    def _extract_sentences(self, pdf_path: str) -> Tuple[Dict[str, Dict], int]:
+        """Extract text from PDF by sentences with unique keys and return total word count"""
         sentences = {}
+        total_words = 0
         doc = fitz.open(pdf_path)
         
         for page_num in range(len(doc)):
@@ -78,6 +81,9 @@ class PDFProcessor:
                             if not sentence:
                                 continue
                                 
+                            # Count words in the sentence
+                            total_words += len(sentence.split())
+                                
                             if not current_text:
                                 current_text = sentence
                                 current_key = f"page_{page_num}_block_{block_num}_sent_{sent_num}"
@@ -103,7 +109,7 @@ class PDFProcessor:
                 }
         
         doc.close()
-        return sentences
+        return sentences, total_words
 
     def _highlight_pdf(self, input_path: str, plagiarism_results: List[Dict[str, Any]], sentence_data: Dict[str, Dict]) -> str:
         """Add text highlights to sentences based on plagiarism results"""
@@ -143,8 +149,8 @@ class PDFProcessor:
                 for page_num in range(len(doc)):
                     page = doc[page_num]
                     # Highlight the exact matching text
-                    print("Search for: ", chunk_text)
                     text_instances = page.search_for(chunk_text)
+                    
                     for inst in text_instances:
                         highlight = page.add_highlight_annot(inst)
                         highlight.set_colors(stroke=highlight_color)

@@ -27,8 +27,8 @@ class DatabaseHandler:
                 data=documents  # ✅ No wrapping needed
             )
 
-            print(f"   ✅ Upserted {len(documents)} documents into database successfully")
+            print(f"   ✅ Inserted {len(documents)} documents into database successfully")
             return result.get('upsert_count', 0)
         except Exception as e:
-            print(f"   ❌ Error upserting documents into database: {str(e)}")
+            print(f"   ❌ Error inserting documents into database: {str(e)}")
             raise

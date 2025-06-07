@@ -42,34 +42,6 @@ def rollback():
       return jsonify({"success": False, "message": "Rollback data is failed"})
 
 
-@bp_v1.route("/show-db")
-def show():
-    res = MilvusConnection.get_client().describe_collection(
-        collection_name="documents"
-    )
-    return jsonify(res)
-
-
-@bp_v1.route("/data/documents/clear")
-def clear_data():
-    try:
-        client = MilvusConnection.get_client()
-        client.delete(
-            collection_name="documents",
-            filter="document_id > 0"
-        )
-
-        return jsonify({
-            "success": True,
-            "message": "Successfully cleared all documents from the collection"
-        })
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"Failed to clear collection: {str(e)}"
-        }), 500
-
-
 @bp_v1.route("/data/upload", methods=["POST"])
 def upload_data():
     file = request.files.get('files')
@@ -81,7 +53,6 @@ def upload_data():
 
     try:
         metadata = request.form.to_dict()
-        
         document_service = DocumentService(Config.MINILM_EMBEDDING_MODEL)
         success = document_service.upload_document(file, metadata)
 
@@ -94,23 +65,6 @@ def upload_data():
         print(f"Error processing upload: {str(e)}")
         return jsonify({"success": False, "error": f"Internal Server Error: {str(e)}"}), 500
     
-@bp_v1.route("/testing", methods=["POST"])
-def testing():
-    if request.is_json:
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "No JSON data provided"}), 400
-            
-        if "content" in data:
-            content = data["content"]
-            plagiarism_checker = PlagiarismCheckerService(Config.MINILM_EMBEDDING_MODEL)
-            results = plagiarism_checker.check_plagiarism_content(content)
-            return jsonify(results)
-        else:
-            return jsonify({"error": "Missing 'content' field in JSON"}), 400
-    else:
-        return jsonify({"error": "No file or content provided"}), 400
-
 
 @bp_v1.route("/plagiarism-checker", methods=["POST"])
 def check_document_plagiarism():
@@ -165,55 +119,3 @@ def check_pdf_plagiarism():
         
     except Exception as e:
         return jsonify({"error": f"Processing failed: {str(e)}"}), 500
-
-
-@bp_v1.route("/pdf/test", methods=["POST"])
-def check_pdf_plagiarism_test():
-    # Check if file was uploaded
-    if 'file' not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-    
-    pdf_file = request.files['file']
-    
-    # Check if file is PDF
-    if not pdf_file.filename.lower().endswith('.pdf'):
-        return jsonify({"error": "File must be a PDF"}), 400
-    
-    # Save temporarily
-    temp_pdf_path = os.path.join(tempfile.gettempdir(), pdf_file.filename)
-    pdf_file.save(temp_pdf_path)
-    
-    try:
-        # Initialize highlighter
-        highlighter = PDFHighlighter(temp_pdf_path)
-        
-        # Example phrases to highlight
-        phrases_to_check = [
-            ("plagiarism", (1, 0.8, 0)),      # Orange
-            ("Kubernetes", (0.2, 0.6, 1)),    # Blue
-            ("Docker", (0.8, 0.4, 0.8)),      # Purple
-            ("academic offence", (0, 0.6, 0.3))  # Green
-        ]
-        
-        # Find and highlight all phrases
-        for text, color in phrases_to_check:
-            highlighter.find_text_and_highlight(text, color)
-        
-        # Generate the highlighted PDF
-        pdf_bytes = highlighter.generate_highlighted_pdf_bytes()
-        
-        # Create response with PDF
-        return send_file(
-            BytesIO(pdf_bytes),
-            mimetype='application/pdf',
-            as_attachment=True,
-            download_name='plagiarism_report.pdf'
-        )
-    
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    
-    finally:
-        # Clean up temp file
-        if os.path.exists(temp_pdf_path):
-            os.remove(temp_pdf_path)

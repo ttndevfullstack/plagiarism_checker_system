@@ -14,9 +14,9 @@ class PlagiarismCheckerService:
         self.embedding_service = EmbeddingModelFactory.get_model(embedding_model)
 
         self.min_paragraph_length = 100
-        self.similarity_threshold = 0.5
+        self.similarity_threshold = 0.8
 
-    def check_plagiarism_content(self, content: Dict[str, str]) -> Dict[str, Any]:
+    def check_plagiarism_content(self, content: Dict[str, str], total_words) -> Dict[str, Any]:
         """Process pre-chunked paragraphs and return a structured plagiarism report"""
         paragraph_results = []
 
@@ -25,18 +25,17 @@ class PlagiarismCheckerService:
                 continue  # Skip short paragraphs
 
             result = self.check_plagiarism_paragraph(paragraph)
-            print("report: ", result)
             result["id"] = chunk_id
             paragraph_results.append(result)
 
-        report = self.generate_report(paragraph_results)
+        report = self.generate_report(paragraph_results, total_words)
         print("✅ Plagiarism check completed successfully")
         return report
 
     def check_plagiarism_paragraph(self, paragraph: str) -> Dict[str, Any]:
         """Check plagiarism for a single paragraph"""
-        processed_paragraph = self.text_service.preprocess_text(paragraph)
-        embedding = self.embedding_service.convert_text_to_embedding(processed_paragraph)
+        origin_text, clean_text = self.text_service.preprocess_text(paragraph)
+        embedding = self.embedding_service.convert_text_to_embedding(clean_text)
 
         # search_params = {
         #     "metric_type": "IP",  # Must match index metric type
@@ -48,9 +47,9 @@ class PlagiarismCheckerService:
         search_params = {
             "metric_type": "COSINE",
             "offset": 0,
-            "limit": 5,
+            "limit": 10,
             "params": {
-                "ef": 64
+                "ef": 128
             }
         }
 
@@ -58,43 +57,53 @@ class PlagiarismCheckerService:
             collection_name="documents",
             data=[embedding],
             anns_field="embedding",
-            output_fields=["document_id", "paragraph_id", "subject_code", "original_name"],
+            output_fields=[
+                "sentence_id",
+                "document_id",
+                "subject_code",
+                "original_name",
+                "raw_text",
+                "document_word_count",
+            ],
             **search_params
         )
-        print("Search Results:", results)
+        # print("Search Results:", results)
 
         sources = []
         for hit in results[0]:
             similarity = round(max(0.0, min(1.0, hit['distance'])) * 100, 1)
             if similarity >= self.similarity_threshold * 100:
                 sources.append({
-                    "document_id": hit['entity'].get("document_id", ""),
-                    "url": hit['entity'].get("source_url", ""),
-                    "title": hit['entity'].get("original_name", "Unknown Source"),
                     "similarity_percentage": similarity,
-                    "published_date": hit['entity'].get("published_date", "")
+                    "sentence_id": hit['entity'].get("sentence_id", ""),
+                    "document_id": hit['entity'].get("document_id", ""),
+                    "subject_code": hit['entity'].get("subject_code", ""),
+                    "title": hit['entity'].get("original_name", ""),
+                    "raw_text": hit['entity'].get("raw_text", ""),
+                    "matched_word_count": len(clean_text.split()),
+                    "document_word_count": hit['entity'].get("document_word_count", 0),
                 })
 
         return {
             "text": paragraph,
             "similarity_percentage": max((s['similarity_percentage'] for s in sources), default=0.0),
-            "sources": sources
+            "sources": sources,
+            "matched_word_count": len(origin_text.split())
         }
 
-    def generate_report(self, paragraph_results: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def generate_report(self, paragraph_results: List[Dict[str, Any]], total_words) -> Dict[str, Any]:
         """Generate the final report in the specified format"""
         # Calculate maximum similarity across paragraphs
         # Calculate weighted similarity across paragraphs
         words_analyzed = 0
-        weighted_similarity = 0.0
         
+        # Calculate total words analyzed from paragraphs that have matches
         for para in paragraph_results:
-            words = len(para['text'].split())
-            words_analyzed += words
-            weighted_similarity += para['similarity_percentage'] * words
+            if para['sources']:
+                words_analyzed += para.get('matched_word_count', 0)
         
-        # Calculate overall similarity (weighted average)
-        overall_similarity = round(weighted_similarity / words_analyzed, 1) if words_analyzed > 0 else 0.0
+        # Calculate overall similarity
+        overall_similarity = self.calculate_similar_percent(words_analyzed, total_words)
 
         # Generate sources summary - Modified to handle multiple sources properly
         source_map = {}
@@ -107,26 +116,24 @@ class PlagiarismCheckerService:
                         "url": source.get('url', ''),
                         "title": source['title'],
                         "total_matched": 0,
-                        "highest_similarity": 0,
+                        "source_similarity": 0,
+                        "document_word_count": source.get('document_word_count', 0),
                         "matches": []
                     }
 
                 # Add match details
                 source_map[key]['matches'].append({
-                    'paragraph_id': para['id'],
+                    'sentence_id': para['id'],
                     'similarity': source['similarity_percentage']
                 })
 
                 # Update statistics
                 source_map[key]['total_matched'] += 1
-                source_map[key]['highest_similarity'] = max(
-                    source_map[key]['highest_similarity'],
-                    source['similarity_percentage']
-                )
+                source_map[key]['source_similarity'] = self.calculate_similar_percent(words_analyzed, source.get('document_word_count', 0))
 
         # Convert source_map to list and sort by highest similarity
         sources_summary = list(source_map.values())
-        sources_summary.sort(key=lambda x: (-x['highest_similarity'], -x['total_matched']))
+        sources_summary.sort(key=lambda x: (-x['source_similarity'], -x['total_matched']))
         originality_score = round(100.0 - overall_similarity, 1)  # Use max similarity for originality score
 
         # Clean up matches from final output (optional)
@@ -168,3 +175,12 @@ class PlagiarismCheckerService:
             return ("✅ No Matches Found (0%)\n"
                       "No significant matching content detected. "
                       "Your work appears to be highly original.")
+
+    def calculate_similar_percent(self, matched_words, uploaded_words):
+        if uploaded_words <= 0:
+            return 0.0
+        percent = (matched_words / uploaded_words) * 100
+        percent = max(0.0, min(percent, 100.0))
+
+        print(f"Matched Words: {matched_words}, Uploaded Words: {uploaded_words}", "Percent:", percent)
+        return round(percent, 1)

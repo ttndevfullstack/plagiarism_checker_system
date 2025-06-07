@@ -7,22 +7,24 @@ class DocumentMigration:
 
     def create_schemas(self):
         schema = MilvusClient.create_schema(
-            auto_id=False,  # Change to False to use custom document_id
+            auto_id=True,
             enable_dynamic_field=True,
         )
         
         # Add fields to schema
-        schema.add_field(field_name="document_id", datatype=DataType.INT64, is_primary=True, auto_id=False)
-        schema.add_field(field_name="paragraph_id", datatype=DataType.INT64, is_primary=False, auto_id=False)
+        schema.add_field(field_name="sentence_id", datatype=DataType.INT64, is_primary=True, auto_id=True)
+        schema.add_field(field_name="document_id", datatype=DataType.INT64, is_primary=False, auto_id=False)
         schema.add_field(field_name="subject_code", datatype=DataType.VARCHAR, max_length=100)
         schema.add_field(field_name="original_name", datatype=DataType.VARCHAR, max_length=1000)
         schema.add_field(field_name="embedding", datatype=DataType.FLOAT_VECTOR, dim=384)
+        schema.add_field(field_name="raw_text", datatype=DataType.VARCHAR, max_length=4096)
+        schema.add_field(field_name="sentence_word_count", datatype=DataType.INT32)
+        schema.add_field(field_name="document_word_count", datatype=DataType.INT32)
         
         return schema
     
     def create_indexes(self):
         index_params = self.client.prepare_index_params()
-
         index_params.add_index(field_name="document_id", index_type="AUTOINDEX")
 
         # # Index for embedding field for similarity search
