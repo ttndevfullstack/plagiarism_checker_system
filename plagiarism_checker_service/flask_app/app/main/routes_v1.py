@@ -80,14 +80,17 @@ def check_document_plagiarism():
         return jsonify({"error": "No file or content provided"}), 400
 
 
-@bp_v1.route("/plagiarism-checker/pdf", methods=["POST"])
+@bp_v1.route("/plagiarism-checker/file", methods=["POST"])
 def check_pdf_plagiarism():
     if 'file' not in request.files:
         return jsonify({"error": "No file provided"}), 400
         
     file = request.files['file']
-    if file.filename == '' or not file.filename.endswith('.pdf'):
-        return jsonify({"error": "Invalid file format. Please upload a PDF file"}), 400
+    if (
+        file.filename == '' or
+        (not file.filename.lower().endswith('.pdf') and not file.filename.lower().endswith('.docx'))
+    ):
+        return jsonify({"error": "Invalid file format. Please upload a PDF or DOCX file"}), 400
 
     try:
         pdf_processor = PDFProcessor(Config.MINILM_EMBEDDING_MODEL)

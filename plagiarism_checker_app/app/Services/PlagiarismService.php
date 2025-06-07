@@ -29,7 +29,7 @@ class PlagiarismService
             'file', 
             file_get_contents($filePath), 
             basename($filePath)
-        )->post(config('plagiarism-checker.flask_app_url') . '/v1/api/plagiarism-checker/pdf');
+        )->post(config('plagiarism-checker.flask_app_url') . '/v1/api/plagiarism-checker/file');
 
         if (!$response->successful()) {
             throw new \Exception('PDF plagiarism check failed: ' . $response->body());

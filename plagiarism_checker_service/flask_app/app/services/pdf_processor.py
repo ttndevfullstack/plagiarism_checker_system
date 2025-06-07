@@ -1,5 +1,7 @@
+import os
 import fitz
 import tempfile
+import subprocess
 
 from typing import Dict, Any, List, Tuple
 from flask_app.app.services.file_handler import FileHandler
@@ -13,11 +15,30 @@ class PDFProcessor:
         self.plagiarism_service = PlagiarismCheckerService(embedding_model)
         self.min_sentence_length = 50
 
+    def convert_docx_to_pdf(self, input_path, output_dir=None):
+        if output_dir is None:
+            output_dir = os.path.dirname(input_path)
+        # LibreOffice needs absolute paths
+        cmd = [
+            'libreoffice',
+            '--headless',
+            '--convert-to', 'pdf',
+            '--outdir', output_dir,
+            input_path
+        ]
+        subprocess.run(cmd, check=True)
+        # Output PDF path
+        pdf_path = os.path.join(output_dir, os.path.splitext(os.path.basename(input_path))[0] + '.pdf')
+        return pdf_path
+
     def process_pdf(self, file) -> Tuple[str, Dict[str, Any]]:
         """Process PDF file and return the plagiarism report and highlighted PDF path"""
         try:
             # ✅ 1. Save file
             file_path = self.file_handler.save_file(file)
+            if file_path.lower().endswith('.docx'):
+                old_path = file_path
+                file_path = self.convert_docx_to_pdf(file_path)
             
             # ✅ 2. Chunk text
             sentence_data, document_word_count = self._extract_sentences(file_path)
@@ -33,6 +54,8 @@ class PDFProcessor:
         except Exception as e:
             raise Exception(f"PDF plagiarism check failed: {str(e)}")
         finally:
+            if old_path:
+                self.file_handler.remove_file(old_path)
             self.file_handler.remove_file(file_path)
 
     def _extract_sentences(self, pdf_path: str) -> Tuple[Dict[str, Dict], int]:
