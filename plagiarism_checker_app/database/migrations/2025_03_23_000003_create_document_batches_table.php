@@ -12,7 +12,7 @@ return new class extends Migration
         Schema::create('document_batches', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('media_id');
-            $table->unsignedBigInteger('media_path_id');
+            $table->unsignedBigInteger('media_path_id')->nullable();
             $table->string('status')->default(DocumentStatus::PENDING->value);
             $table->json('metadata')->nullable();
             $table->timestamps();

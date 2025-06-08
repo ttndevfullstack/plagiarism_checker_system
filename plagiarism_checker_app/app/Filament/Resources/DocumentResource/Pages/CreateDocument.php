@@ -10,6 +10,17 @@ class CreateDocument extends CreateRecord
 {
     protected static string $resource = DocumentResource::class;
 
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        if ($data['media_id']) {
+            $media = \Awcodes\Curator\Models\Media::find($data['media_id']);
+            if ($media) {
+                $data['original_name'] = $media->name . '.' . $media->ext;
+            }
+        }
+        return $data;
+    }
+
     protected function afterCreate(): void
     {
         ProcessDocumentUpload::dispatch($this->record);

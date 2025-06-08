@@ -36,6 +36,7 @@ class PDFProcessor:
         try:
             # ✅ 1. Save file
             file_path = self.file_handler.save_file(file)
+            old_path = None
             if file_path.lower().endswith('.docx'):
                 old_path = file_path
                 file_path = self.convert_docx_to_pdf(file_path)

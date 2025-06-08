@@ -3,7 +3,8 @@
 namespace App\Filament\Resources;
 
 use App\Enums\DocumentStatus;
-    use App\Filament\Resources\DocumentBatchResource\Pages;
+use App\Filament\Components\Forms\Selectors\SubjectSelector;
+use App\Filament\Resources\DocumentBatchResource\Pages;
 use App\Models\DocumentBatch;
 use Filament\Forms;
 use Filament\Tables;
@@ -47,8 +48,9 @@ class DocumentBatchResource extends Resource
                         'application/vnd.ms-excel', // For .xls
                         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' // For .xlsx
                     ])
-                    ->maxSize(100)
-                    ->required(),
+                    ->maxSize(100),
+                
+                SubjectSelector::show()->required(false),
             ]);
     }
 

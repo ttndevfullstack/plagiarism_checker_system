@@ -42,6 +42,7 @@ class DocumentResource extends Resource
                         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                     ])
                     ->maxSize(30720000)
+                    ->preserveFilenames()
                     ->required(),
             ]);
     }
@@ -53,7 +54,10 @@ class DocumentResource extends Resource
                 CuratorColumn::make('media')
                     ->size(40),
                 TextColumn::make('original_name'),
-                TextColumn::make('file_size')
+                TextColumn::make('subject.name'),
+                TextColumn::make('class.name'),
+                TextColumn::make('description'),
+                TextColumn::make('media.size')
                     ->formatStateUsing(fn($state) => number_format($state / 1024 / 1024, 2) . ' MB'),
                 TextColumn::make('status')
                     ->badge()
