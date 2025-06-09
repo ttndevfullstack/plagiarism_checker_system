@@ -1,5 +1,6 @@
 from typing import List, Dict, Any
 from datetime import datetime, timezone
+from flask_app.config import Config
 
 from flask_app.app.services.file_handler import FileHandler
 from flask_app.app.databases.milvus_connection import MilvusConnection
@@ -122,9 +123,35 @@ class PlagiarismCheckerService:
                 source_map[key]['total_matched'] += 1
                 source_map[key]['source_similarity'] = self.calculate_similar_percent(words_analyzed, source.get('document_word_count', 0))
 
-        # Convert source_map to list and sort by highest similarity
+        # 4. Sort and take top sources
         sources_summary = list(source_map.values())
         sources_summary.sort(key=lambda x: (-x['source_similarity'], -x['total_matched']))
+        top_sources = sources_summary[:getattr(Config, "MAX_MATCHED_SOURCE", 10)]
+        top_source_keys = [
+            f"{src['document_id']}::{src['title']}" for src in top_sources
+        ]
+
+        # 5. Assign color indexes
+        color_indices = list(getattr(Config, "HIGHLIGHT_COLORS", {}).keys())
+        if getattr(Config, "IS_RANDOM_COLOR", False):
+            import random
+            random.shuffle(color_indices)
+        source_color_index_map = {
+            key: color_indices[i]
+            for i, key in enumerate(top_source_keys)
+            if i < len(color_indices)
+        }
+        
+        # 6. Add color index to sources_summary
+        for src in sources_summary:
+            key = f"{src.get('document_id', '')}::{src['title']}"
+            src['color_index'] = source_color_index_map.get(key, -1)
+
+        # 7. Add color index to every source in paragraph
+        for para in chunked_text_results:
+            for src in para.get('sources', []):
+                key = f"{src.get('document_id', '')}::{src['title']}"
+                src['color_index'] = source_color_index_map.get(key, -1)
 
         # Clean up matches
         for source in sources_summary:
@@ -142,7 +169,7 @@ class PlagiarismCheckerService:
                 "paragraphs": chunked_text_results,
                 "sources_summary": sources_summary
             }
-        }
+        }, source_color_index_map
     
     def get_verdict(self, similarity_score: float) -> str:
         if similarity_score > 75:

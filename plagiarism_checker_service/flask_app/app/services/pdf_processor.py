@@ -1,9 +1,11 @@
 import os
 import fitz
+import random
 import tempfile
 import subprocess
 
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, Tuple
+from flask_app.config import Config
 from flask_app.app.services.file_handler import FileHandler
 from flask_app.app.services.process_text_service import ProcessTextService
 from flask_app.app.services.plagiarism_checker_service import PlagiarismCheckerService
@@ -46,10 +48,10 @@ class PDFProcessor:
             sentences = {k: v['combined_text'] for k, v in sentence_data.items()}
             
             # ✅ 3. Check plagiarism
-            report = self.plagiarism_service.check_plagiarism(sentences, document_word_count)
+            report, source_color_index_map = self.plagiarism_service.check_plagiarism(sentences, document_word_count)
 
             # ✅ 3. Output highlighted PDF file
-            output_path = self._highlight_pdf(file_path, report['data']['paragraphs'], sentence_data)
+            output_path = self._highlight_pdf(file_path, report['data']['paragraphs'], sentence_data, source_color_index_map)
             
             return output_path, report
         except Exception as e:
@@ -119,55 +121,38 @@ class PDFProcessor:
         doc.close()
         return sentences, document_word_count
 
-    def _highlight_pdf(self, input_path: str, plagiarism_results: List[Dict[str, Any]], sentence_data: Dict[str, Dict]) -> str:
-        """Add text highlights to sentences based on plagiarism results"""
+    def _highlight_pdf(self, input_path: str, paragraphs: list, sentence_data: dict, source_color_index_map: dict) -> str:
         temp_output = tempfile.NamedTemporaryFile(delete=False, suffix='_highlighted.pdf')
-        result_map = {result['id']: result for result in plagiarism_results}
         doc = fitz.open(input_path)
+        from flask_app.config import Config
 
-        # Simplified color definitions for text highlighting
-        highlight_colors = {
-            'high-risk': (1.0, 0.7, 0.7),      # Red highlight
-            'moderate-risk': (1.0, 0.8, 0.86),  # Orange highlight
-            'low-risk': (1.0, 1.0, 0.7),        # Yellow highlight
-        }
-
-        def get_highlight_color(similarity: float):
-            if similarity > 85: return highlight_colors['high-risk']
-            elif similarity > 65: return highlight_colors['moderate-risk']
-            elif similarity > 30: return highlight_colors['low-risk']
-            return None
-
-        processed_chunks = set()
-        
-        # Iterate through plagiarism results and highlight matching chunks
-        for key, result in result_map.items():
-            if key not in sentence_data:
+        # Use the same color assignment as report
+        already_highlighted = set()
+        for para in paragraphs:
+            para_id = para["id"]
+            # Pick the first source (or your preferred logic)
+            if not para.get("sources"):
                 continue
+            best_source = para["sources"][0]
+            key = f"{best_source['document_id']}::{best_source['title']}"
+            color_index = source_color_index_map.get(key, -1)
+            if color_index == -1:
+                continue  # skip if not in top sources
 
-            chunk_text = sentence_data[key]['combined_text']
-            if chunk_text in processed_chunks:
+            highlight_color = Config.HIGHLIGHT_COLORS[color_index]
+            chunk_text = sentence_data[para_id]['combined_text']
+            if (chunk_text, key) in already_highlighted:
                 continue
+            for page_num in range(len(doc)):
+                page = doc[page_num]
+                instances = page.search_for(chunk_text)
+                for inst in instances:
+                    highlight = page.add_highlight_annot(inst)
+                    highlight.set_colors(stroke=highlight_color)
+                    highlight.set_opacity(0.5)
+                    highlight.update()
+            already_highlighted.add((chunk_text, key))
 
-            similarity = result['similarity_percentage']
-            highlight_color = get_highlight_color(similarity)
-            
-            if highlight_color is not None:
-                # Search in all pages
-                for page_num in range(len(doc)):
-                    page = doc[page_num]
-                    # Highlight the exact matching text
-                    text_instances = page.search_for(chunk_text)
-                    
-                    for inst in text_instances:
-                        highlight = page.add_highlight_annot(inst)
-                        highlight.set_colors(stroke=highlight_color)
-                        highlight.set_opacity(0.5)
-                        highlight.update()
-                
-                processed_chunks.add(chunk_text)
-
-        # Save and optimize the PDF
         doc.save(temp_output.name, garbage=4, deflate=True, clean=True)
         doc.close()
         return temp_output.name

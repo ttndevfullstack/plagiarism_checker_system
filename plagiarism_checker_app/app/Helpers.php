@@ -68,48 +68,7 @@ function media_path_by_id(int|string $mediaId): ?string
     return asset('storage/' . $media->path);
 }
 
-function highlight_text_color(float $percent = 0): string
+function highlight_text_color(int $colorIndex): string
 {
-    if ($percent > 85) {
-        return 'text-danger-600 dark:text-danger-400';    // High Risk
-    } elseif ($percent > 65) {
-        return 'text-warning-600 dark:text-warning-400';  // Moderate Risk
-    } elseif ($percent > 30) {
-        return 'text-yellow-600 dark:text-yellow-400';    // Low Risk
-    } else {
-        return 'text-success-600 dark:text-success-400';  // Original
-    }
-}
-
-function highlight_text_background(float $percent = 0): string
-{
-    if ($percent > 85) {
-        return 'bg-exact-match text-black';     // High Risk (red)
-    } elseif ($percent > 65) {
-        return 'bg-paraphrased text-black';     // Moderate Risk (orange)
-    } elseif ($percent > 30) {
-        return 'bg-minor-match text-black';     // Low Risk (yellow)
-    } else {
-        return 'bg-original text-black';        // Original (green)
-    }
-}
-
-function highlight_word_background(float $percent = 0): array
-{
-    $colors = [
-        'high-risk' => ['bgColor' => 'FFEBEE', 'color' => 'C62828'],    // Red
-        'moderate-risk' => ['bgColor' => 'FFF3E0', 'color' => 'EF6C00'], // Orange
-        'low-risk' => ['bgColor' => 'FFF9C4', 'color' => 'F9A825'],     // Yellow
-        'original' => ['bgColor' => 'E8F5E9', 'color' => '2E7D32']      // Green
-    ];
-
-    if ($percent > 85) {
-        return $colors['high-risk'];
-    } elseif ($percent > 65) {
-        return $colors['moderate-risk'];
-    } elseif ($percent > 30) {
-        return $colors['low-risk'];
-    }
-    
-    return $colors['original'];
+    return "text-highlight-" . $colorIndex;
 }

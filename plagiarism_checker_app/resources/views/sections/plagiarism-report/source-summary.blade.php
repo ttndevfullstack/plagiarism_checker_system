@@ -26,19 +26,20 @@
                         @else
                             @foreach ($results['sources_summary'] ?? [] as $source)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                    <td class="{{ highlight_text_color($source['source_similarity'] ?? 0) }} px-2 py-3 max-w-[150px]">
-                                        {{ $source['document_id'] }}
+                                    <td class="{{ highlight_text_color($source['color_index'] ?? '') }} px-2 py-3 max-w-[150px]">
+                                        <span>{{ $source['document_id'] }}</span>
                                     </td>
                                     <td
-                                        class="{{ highlight_text_color($source['source_similarity'] ?? 0) }} px-2 py-3">
+                                        class="{{ highlight_text_color($source['color_index'] ?? '') }} px-2 py-3">
                                         <a href="{{ $source['url'] }}" target="_blank"
-                                            class="{{ highlight_text_color($source['source_similarity'] ?? 0) }} text-base text-primary-600 dark:text-primary-400 hover:underline truncate block max-w-[200px]"
-                                            title="{{ $source['title'] }}">
+                                            class="{{ highlight_text_color($source['color_index'] ?? '') }} text-base text-primary-600 dark:text-primary-400 hover:underline truncate block max-w-[200px]"
+                                            title="{{ $source['title'] }}"
+                                            style="background: transparent !important;">
                                             {{ \Illuminate\Support\Str::limit($source['title'], 15) }}
                                         </a>
                                     </td>
                                     <td
-                                        class="{{ highlight_text_color($source['source_similarity'] ?? 0) }} px-2 py-3">
+                                        class="{{ highlight_text_color($source['color_index'] ?? '') }} px-2 py-3">
                                         {{ $source['source_similarity'] }}%
                                     </td>
                                 </tr>

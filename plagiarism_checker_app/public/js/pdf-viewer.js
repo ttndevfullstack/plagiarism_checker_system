@@ -7,10 +7,12 @@ const PDFReportModule = {
         canvas: null,
         ctx: null,
         textLayer: null,
-        pageNum: document.querySelector('#page-num'),
-        pageCount: document.querySelector('#page-count'),
-        prevButton: document.querySelector('#prev-page'),
-        nextButton: document.querySelector('#next-page'),
+        pageNum: document.querySelectorAll('.page-num'),
+        pageCount: document.querySelectorAll('.page-count'),
+        prevButtonTop: document.querySelector('#prev-page-top'),
+        nextButtonTop: document.querySelector('#next-page-top'),
+        prevButtonBottom: document.querySelector('#prev-page-bottom'),
+        nextButtonBottom: document.querySelector('#next-page-bottom'),
         topBar: document.querySelector('.top-bar')
     },
 
@@ -28,8 +30,10 @@ const PDFReportModule = {
         this.elements.ctx = this.elements.canvas.getContext('2d');
 
         // Add event listeners
-        this.elements.prevButton.addEventListener('click', () => this.showPrevPage());
-        this.elements.nextButton.addEventListener('click', () => this.showNextPage());
+        this.elements.prevButtonTop.addEventListener('click', () => this.showPrevPage());
+        this.elements.nextButtonTop.addEventListener('click', () => this.showNextPage());
+        this.elements.prevButtonBottom.addEventListener('click', () => this.showPrevPage());
+        this.elements.nextButtonBottom.addEventListener('click', () => this.showNextPage());
 
         // Load PDF
         if (this.state.url) {
@@ -43,7 +47,7 @@ const PDFReportModule = {
         pdfjsLib.getDocument(this.state.url).promise
             .then(pdfDoc => {
                 this.state.pdfDoc = pdfDoc;
-                this.elements.pageCount.textContent = pdfDoc.numPages;
+                this.elements.pageCount.forEach(el => el.textContent = pdfDoc.numPages);
                 this.renderPage(this.state.currentPage);
             })
             .catch(err => this.handleError(err));
@@ -76,7 +80,7 @@ const PDFReportModule = {
                 }
             });
 
-            this.elements.pageNum.textContent = num;
+            this.elements.pageNum.forEach(el => el.textContent = num);
         });
     },
 

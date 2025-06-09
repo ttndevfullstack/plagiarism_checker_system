@@ -30,31 +30,13 @@
             <div class="plagiarism-grid-left">
                 <x-filament::card class="h-full">
                     <div class="filament-page">
-                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <div class="flex items-center space-x-4">
-                                <x-filament::button
-                                    id="prev-page"
-                                    icon="heroicon-m-arrow-left"
-                                    class="focus:outline-none"
-                                    style="margin-right: 10px">
-                                    Prev
-                                </x-filament::button>
-                                
-                                <x-filament::button
-                                    id="next-page"
-                                    icon="heroicon-m-arrow-right"
-                                    icon-position="after"
-                                    class="focus:outline-none">
-                                    Next
-                                </x-filament::button>
-                            </div>
-                            
-                            <div class="text-sm text-gray-600 dark:text-gray-300">
-                                Page <span id="page-num" class="font-medium"></span> of <span id="page-count" class="font-medium"></span>
-                            </div>
-                        </div>
+                        <!-- Report Header -->
+                        @include('partials.report-header', ['id' => 'top'])
 
                         <canvas id="pdf-render"></canvas>
+
+                        <!-- Report Header -->
+                        @include('partials.report-header', ['id' => 'bottom'])
                     </div>
                 </x-filament::card>
             </div>
@@ -79,6 +61,28 @@
 @push('styles')
     <style>
         /* Text Colors */
+        .text-highlight-0 { color: #ea755b !important; }
+        .text-highlight-1 { color: #faca24 !important; }
+        .text-highlight-2 { color: #31ce52 !important; }
+        .text-highlight-3 { color: #4396ff !important; }
+        .text-highlight-4 { color: #c62be2 !important; }
+        .text-highlight-5 { color: #ff3d85 !important; }
+        .text-highlight-6 { color: #1fc5d4 !important; }
+        .text-highlight-7 { color: #9e7340 !important; }
+        .text-highlight-8 { color: #ffe032 !important; }
+        .text-highlight-9 { color: #949494 !important; }
+        
+        .text-highlight-0.background { background: rgba(234,117,91,0.18) !important; }
+        .text-highlight-1.background { background: rgba(250,202,36,0.18) !important; }
+        .text-highlight-2.background { background: rgba(49,206,82,0.18) !important; }
+        .text-highlight-3.background { background: rgba(67,150,255,0.18) !important; }
+        .text-highlight-4.background { background: rgba(198,43,226,0.18) !important; }
+        .text-highlight-5.background { background: rgba(255,61,133,0.18) !important; }
+        .text-highlight-6.background { background: rgba(31,197,212,0.18) !important; }
+        .text-highlight-7.background { background: rgba(158,115,64,0.18) !important; }
+        .text-highlight-8.background { background: rgba(255,224,50,0.18) !important; }
+        .text-highlight-9.background { background: rgba(148,148,148,0.18) !important; }
+
         .text-danger-600 {
             color: #dc2626;
         }

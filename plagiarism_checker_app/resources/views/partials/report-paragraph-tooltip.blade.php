@@ -24,7 +24,7 @@
                             <a
                                 href="{{ $source['url'] }}"
                                 target="_blank"
-                                class="{{ highlight_text_color($source['similarity_percentage'] ?? 0) }} font-medium hover:underline"
+                                class="{{ highlight_text_color($source['color_index'] ?? '') }} font-medium hover:underline"
                             >
                                 {{ $source['title'] }}
                             </a>
@@ -36,7 +36,7 @@
                             @endif
                         </div>
 
-                        <span class="{{ highlight_text_color($source['similarity_percentage'] ?? 0) }} text-sm font-medium">
+                        <span class="{{ highlight_text_color($source['color_index'] ?? '') }} text-sm font-medium">
                             {{ $source['similarity_percentage'] }}%
                         </span>
                     </div>

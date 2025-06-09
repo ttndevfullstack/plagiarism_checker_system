@@ -51,18 +51,17 @@
 
 @push('styles')
     <style>
-        /* Text Colors */
-      .text-danger-600 { color: #dc2626; }           /* Tailwind's red-600 */
-      .dark .text-danger-400 { color: #f87171; }
-
-      .text-pink-600 { color: #db2777; }
-      .dark .text-pink-400 { color: #f9a8d4; }
-
-      .text-warning-600 { color: #d97706; }          /* Tailwind's amber-600 */
-      .dark .text-warning-400 { color: #fbbf24; }
-
-      .text-success-600 { color: #16a34a; }          /* Tailwind's green-600 */
-      .dark .text-success-400 { color: #4ade80; }
+      /* Text Colors */
+      .text-highlight-0 { color: #ea755b !important; background: rgba(234,117,91,0.18) !important; }
+      .text-highlight-1 { color: #faca24 !important; background: rgba(250,202,36,0.18) !important; }
+      .text-highlight-2 { color: #31ce52 !important; background: rgba(49,206,82,0.18) !important; }
+      .text-highlight-3 { color: #4396ff !important; background: rgba(67,150,255,0.18) !important; }
+      .text-highlight-4 { color: #c62be2 !important; background: rgba(198,43,226,0.18) !important; }
+      .text-highlight-5 { color: #ff3d85 !important; background: rgba(255,61,133,0.18) !important; }
+      .text-highlight-6 { color: #1fc5d4 !important; background: rgba(31,197,212,0.18) !important; }
+      .text-highlight-7 { color: #9e7340 !important; background: rgba(158,115,64,0.18) !important; }
+      .text-highlight-8 { color: #ffe032 !important; background: rgba(255,224,50,0.18) !important; }
+      .text-highlight-9 { color: #949494 !important; background: rgba(148,148,148,0.18) !important; }
 
       /* Background Colors */
       .bg-danger-100 { background-color: #fee2e2; }
