@@ -1,10 +1,9 @@
 import os
 import fitz
-import random
 import tempfile
 import subprocess
-
 from typing import Dict, Any, Tuple
+
 from flask_app.config import Config
 from flask_app.app.services.file_handler import FileHandler
 from flask_app.app.services.process_text_service import ProcessTextService
@@ -15,7 +14,7 @@ class PDFProcessor:
         self.file_handler = FileHandler()
         self.text_service = ProcessTextService()
         self.plagiarism_service = PlagiarismCheckerService(embedding_model)
-        self.min_sentence_length = 50
+        self.min_sentence_word = 3
 
     def convert_docx_to_pdf(self, input_path, output_dir=None):
         if output_dir is None:
@@ -85,7 +84,7 @@ class PDFProcessor:
                     
                     text = text.strip()
                     if text:
-                        block_sentences = self.text_service.chunk_text_into_sentences(text)
+                        block_sentences = self.text_service.chunk_text(text)
                         for sent_num, sentence in enumerate(block_sentences):
                             sentence = sentence.strip()
                             if not sentence:
@@ -102,7 +101,7 @@ class PDFProcessor:
                                 current_text += " " + sentence
                                 current_sentences.append(sentence)
                             
-                            if len(current_text.strip()) >= self.min_sentence_length:
+                            if len(current_text.strip()) >= getattr(Config, "MIN_CHUNKED_TEXT_LENGTH", 15):
                                 sentences[current_key] = {
                                     'combined_text': current_text.strip(),
                                     # 'original_sentences': current_sentences

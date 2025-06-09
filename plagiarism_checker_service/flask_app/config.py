@@ -34,4 +34,6 @@ class Config:
     }
     IS_RANDOM_COLOR = False
     MAX_MATCHED_SOURCE = 10
+    MIN_CHUNKED_TEXT_LENGTH = 3
+    SIMILARITY_THRESHOLD = 0.8
     

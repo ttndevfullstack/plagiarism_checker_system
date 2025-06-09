@@ -14,15 +14,12 @@ class PlagiarismCheckerService:
         self.client = MilvusConnection.get_client()
         self.embedding_service = EmbeddingModelFactory.get_model(embedding_model)
 
-        self.min_paragraph_length = 100
-        self.similarity_threshold = 0.8
-
     def check_plagiarism(self, chunked_text_list: Dict[str, str], document_word_count) -> Dict[str, Any]:
         """Process pre-chunked paragraphs and return a structured plagiarism report"""
         chunked_text_results = []
 
         for chunk_id, chunked_text in chunked_text_list.items():
-            if len(chunked_text.strip()) < self.min_paragraph_length:
+            if len(chunked_text.split()) < getattr(Config, "MIN_CHUNKED_TEXT_LENGTH", 15):
                 continue  # Skip short paragraphs
 
             result = self.check_plagiarism_by_chunk(chunked_text)
@@ -66,7 +63,7 @@ class PlagiarismCheckerService:
         sources = []
         for hit in results[0]:
             similarity = round(max(0.0, min(1.0, hit['distance'])) * 100, 1)
-            if similarity >= self.similarity_threshold * 100:
+            if similarity >= getattr(Config, "SIMILARITY_THRESHOLD", 0.8) * 100:
                 sources.append({
                     "similarity_percentage": similarity,
                     "sentence_id": hit['entity'].get("sentence_id", ""),

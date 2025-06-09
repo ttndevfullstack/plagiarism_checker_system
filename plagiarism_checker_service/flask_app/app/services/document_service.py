@@ -1,8 +1,10 @@
 import uuid
 import numpy as np
-
 from werkzeug.datastructures import FileStorage
+
+from flask_app.config import Config
 from flask_app.app.services.file_handler import FileHandler
+from flask_app.app.services.pdf_processor import PDFProcessor
 from flask_app.app.services.database_handler import DatabaseHandler
 from flask_app.app.services.process_text_service import ProcessTextService
 from flask_app.app.factories.embedding_model_factory import EmbeddingModelFactory
@@ -11,6 +13,7 @@ from flask_app.app.databases.milvus_connection import MilvusConnection
 class DocumentService:
     def __init__(self, embedding_model: str):
         self.file_handler = FileHandler()
+        self.pdf_processor = PDFProcessor('MiniLM')
         self.db_handler = DatabaseHandler()
         self.text_service = ProcessTextService()
         self.client = MilvusConnection.get_client()
@@ -22,8 +25,6 @@ class DocumentService:
 
             # ✅ 1. Save file and count document words
             file_path = self.file_handler.save_file(file)
-            raw_text = self.file_handler.extract_text_from_file(file_path)
-            document_word_count = self.text_service.clean_text(raw_text, True)
 
             # ✅ 2. Extract metadata from request body
             document_id = int(metadata.get('document_id')) if metadata else None
@@ -31,14 +32,15 @@ class DocumentService:
             original_name = metadata.get('original_name')
 
             # ✅ 3. Chunk into smaller (sentences or paragraphs)
-            chunk_texts = self.text_service.chunk_text(raw_text)
+            sentences, document_word_count = self.pdf_processor._extract_sentences(file_path)
+            chunked_texts = [s["combined_text"] for s in sentences.values()]
 
             # ✅ 4. Preprocess, convert chunked text to embedding and save to database
             documents_to_insert = []
-            for index, chunk_text in enumerate(chunk_texts):
+            for index, chunk_text in enumerate(chunked_texts):
                 clean_text, processed_text = self.text_service.preprocess_text(chunk_text)
                 
-                if len(clean_text.strip()) < 50:
+                if len(clean_text.strip()) < getattr(Config, "MIN_CHUNKED_TEXT_LENGTH", 15):
                     continue  # skip very short paragraphs
 
                 embedding = self.embedding_service.convert_text_to_embedding(processed_text)

@@ -93,7 +93,7 @@ class ProcessTextService:
     def preprocess_text(self, text: str) -> str:
         """Enhanced text preprocessing"""
         clean_text = self.clean_text(text)
-        sentences = sent_tokenize(text)
+        sentences = sent_tokenize(clean_text)
 
         processed_sentences = []
         for sent in sentences:
