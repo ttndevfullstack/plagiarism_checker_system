@@ -1,10 +1,8 @@
 import os
-import fitz
 import tempfile
 import subprocess
 from typing import Dict, Any, Tuple
 
-from flask_app.config import Config
 from flask_app.app.services.file_handler import FileHandler
 from flask_app.app.services.process_text_service import ProcessTextService
 from flask_app.app.services.plagiarism_checker_service import PlagiarismCheckerService
@@ -43,13 +41,13 @@ class PDFProcessor:
                 file_path = self.convert_docx_to_pdf(file_path)
             
             # ✅ 2. Chunk text
-            sentence_data, document_word_count = self._extract_sentences(file_path)
+            sentence_data, document_word_count = self.text_service.extract_sentences(file_path)
             sentences = {k: v['combined_text'] for k, v in sentence_data.items()}
             
             # ✅ 3. Check plagiarism
             report, source_color_index_map = self.plagiarism_service.check_plagiarism(sentences, document_word_count)
 
-            # ✅ 3. Output highlighted PDF file
+            # ✅ 4. Output highlighted PDF file
             output_path = self._highlight_pdf(file_path, report['data']['paragraphs'], sentence_data, source_color_index_map)
             
             return output_path, report
@@ -59,66 +57,6 @@ class PDFProcessor:
             if old_path:
                 self.file_handler.remove_file(old_path)
             self.file_handler.remove_file(file_path)
-
-    def _extract_sentences(self, pdf_path: str) -> Tuple[Dict[str, Dict], int]:
-        """Extract text from PDF by sentences with unique keys and return total word count"""
-        sentences = {}
-        document_word_count = 0
-        doc = fitz.open(pdf_path)
-        
-        for page_num in range(len(doc)):
-            page = doc[page_num]
-            blocks = page.get_text("dict")["blocks"]
-            
-            current_text = ""
-            current_key = ""
-            current_sentences = []
-            
-            for block_num, block in enumerate(blocks):
-                if "lines" in block:
-                    text = ""
-                    for line in block["lines"]:
-                        for span in line["spans"]:
-                            text += span["text"]
-                        text += " "
-                    
-                    text = text.strip()
-                    if text:
-                        block_sentences = self.text_service.chunk_text(text)
-                        for sent_num, sentence in enumerate(block_sentences):
-                            sentence = sentence.strip()
-                            if not sentence:
-                                continue
-                                
-                            # Count words in the sentence
-                            document_word_count += len(sentence.split())
-                                
-                            if not current_text:
-                                current_text = sentence
-                                current_key = f"page_{page_num}_block_{block_num}_sent_{sent_num}"
-                                current_sentences = [sentence]
-                            else:
-                                current_text += " " + sentence
-                                current_sentences.append(sentence)
-                            
-                            if len(current_text.strip()) >= getattr(Config, "MIN_CHUNKED_TEXT_LENGTH", 15):
-                                sentences[current_key] = {
-                                    'combined_text': current_text.strip(),
-                                    # 'original_sentences': current_sentences
-                                }
-                                current_text = ""
-                                current_key = ""
-                                current_sentences = []
-            
-            # Handle any remaining text at the end of each page
-            if current_text and current_key:
-                sentences[current_key] = {
-                    'combined_text': current_text.strip(),
-                    # 'original_sentences': current_sentences
-                }
-        
-        doc.close()
-        return sentences, document_word_count
 
     def _highlight_pdf(self, input_path: str, paragraphs: list, sentence_data: dict, source_color_index_map: dict) -> str:
         temp_output = tempfile.NamedTemporaryFile(delete=False, suffix='_highlighted.pdf')

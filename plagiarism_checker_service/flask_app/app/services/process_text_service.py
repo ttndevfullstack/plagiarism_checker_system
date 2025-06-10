@@ -1,10 +1,13 @@
 import os
 import re
 import nltk
+import fitz
+
+from typing import List, Dict, Any, Tuple
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import sent_tokenize, word_tokenize
-from typing import List
+from flask_app.config import Config
 
 class ProcessTextService:
     _nltk_initialized = False
@@ -131,3 +134,63 @@ class ProcessTextService:
             return self.chunk_text_into_sentences(raw_text)
         else:
             return self.chunk_text_into_paragraphs(raw_text)
+        
+    def extract_sentences(self, pdf_path: str) -> Tuple[Dict[str, Dict], int]:
+        """Extract text from PDF by sentences with unique keys and return total word count"""
+        sentences = {}
+        document_word_count = 0
+        doc = fitz.open(pdf_path)
+        
+        for page_num in range(len(doc)):
+            page = doc[page_num]
+            blocks = page.get_text("dict")["blocks"]
+            
+            current_text = ""
+            current_key = ""
+            current_sentences = []
+            
+            for block_num, block in enumerate(blocks):
+                if "lines" in block:
+                    text = ""
+                    for line in block["lines"]:
+                        for span in line["spans"]:
+                            text += span["text"]
+                        text += " "
+                    
+                    text = text.strip()
+                    if text:
+                        block_sentences = self.text_service.chunk_text(text)
+                        for sent_num, sentence in enumerate(block_sentences):
+                            sentence = sentence.strip()
+                            if not sentence:
+                                continue
+                                
+                            # Count words in the sentence
+                            document_word_count += len(sentence.split())
+                                
+                            if not current_text:
+                                current_text = sentence
+                                current_key = f"page_{page_num}_block_{block_num}_sent_{sent_num}"
+                                current_sentences = [sentence]
+                            else:
+                                current_text += " " + sentence
+                                current_sentences.append(sentence)
+                            
+                            if len(current_text.strip()) >= getattr(Config, "MIN_CHUNKED_TEXT_LENGTH", 15):
+                                sentences[current_key] = {
+                                    'combined_text': current_text.strip(),
+                                    # 'original_sentences': current_sentences
+                                }
+                                current_text = ""
+                                current_key = ""
+                                current_sentences = []
+            
+            # Handle any remaining text at the end of each page
+            if current_text and current_key:
+                sentences[current_key] = {
+                    'combined_text': current_text.strip(),
+                    # 'original_sentences': current_sentences
+                }
+        
+        doc.close()
+        return sentences, document_word_count

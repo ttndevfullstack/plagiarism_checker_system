@@ -4,7 +4,6 @@ from werkzeug.datastructures import FileStorage
 
 from flask_app.config import Config
 from flask_app.app.services.file_handler import FileHandler
-from flask_app.app.services.pdf_processor import PDFProcessor
 from flask_app.app.services.database_handler import DatabaseHandler
 from flask_app.app.services.process_text_service import ProcessTextService
 from flask_app.app.factories.embedding_model_factory import EmbeddingModelFactory
@@ -13,7 +12,6 @@ from flask_app.app.databases.milvus_connection import MilvusConnection
 class DocumentService:
     def __init__(self, embedding_model: str):
         self.file_handler = FileHandler()
-        self.pdf_processor = PDFProcessor('MiniLM')
         self.db_handler = DatabaseHandler()
         self.text_service = ProcessTextService()
         self.client = MilvusConnection.get_client()
@@ -32,7 +30,7 @@ class DocumentService:
             original_name = metadata.get('original_name')
 
             # ✅ 3. Chunk into smaller (sentences or paragraphs)
-            sentences, document_word_count = self.pdf_processor._extract_sentences(file_path)
+            sentences, document_word_count = self.text_service.extract_sentences(file_path)
             chunked_texts = [s["combined_text"] for s in sentences.values()]
 
             # ✅ 4. Preprocess, convert chunked text to embedding and save to database
