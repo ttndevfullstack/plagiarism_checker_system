@@ -159,7 +159,7 @@ class ProcessTextService:
                     
                     text = text.strip()
                     if text:
-                        block_sentences = self.text_service.chunk_text(text)
+                        block_sentences = self.chunk_text(text)
                         for sent_num, sentence in enumerate(block_sentences):
                             sentence = sentence.strip()
                             if not sentence:

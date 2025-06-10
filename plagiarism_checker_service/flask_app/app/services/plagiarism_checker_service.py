@@ -89,7 +89,7 @@ class PlagiarismCheckerService:
         for chunk_result in chunked_text_results:
             if chunk_result['sources']:
                 words_analyzed += chunk_result.get('chunk_word_count', 0)
-        
+
         # ✅ 2. Calculate overall similarity and originality score
         overall_similarity = self.calculate_similar_percent(words_analyzed, document_word_count)
         originality_score = round(100.0 - overall_similarity, 1)
@@ -105,6 +105,7 @@ class PlagiarismCheckerService:
                         "url": source.get('url', ''),
                         "title": source['title'],
                         "total_matched": 0,
+                        "matched_word_count": 0,  # FIX: add per-source matched word count
                         "source_similarity": 0,
                         "document_word_count": source.get('document_word_count', 0),
                         "matches": []
@@ -113,14 +114,21 @@ class PlagiarismCheckerService:
                 # Add match details
                 source_map[key]['matches'].append({
                     'sentence_id': chunk_result['id'],
-                    'similarity': source['similarity_percentage']
+                    'similarity': source['similarity_percentage'],
+                    'chunk_word_count': chunk_result.get('chunk_word_count', 0)
                 })
 
                 # Update statistics
                 source_map[key]['total_matched'] += 1
-                source_map[key]['source_similarity'] = self.calculate_similar_percent(words_analyzed, source.get('document_word_count', 0))
+                source_map[key]['matched_word_count'] += chunk_result.get('chunk_word_count', 0)  # accumulate matched words
 
-        # 4. Sort and take top sources
+        # ✅ 4. Calculate similarity percent for sources
+        for key, data in source_map.items():
+            data['source_similarity'] = self.calculate_similar_percent(
+                data['matched_word_count'], data.get('document_word_count', 0)
+            )
+
+        # ✅ 5. Sort and take top sources
         sources_summary = list(source_map.values())
         sources_summary.sort(key=lambda x: (-x['source_similarity'], -x['total_matched']))
         top_sources = sources_summary[:getattr(Config, "MAX_MATCHED_SOURCE", 10)]
@@ -128,7 +136,7 @@ class PlagiarismCheckerService:
             f"{src['document_id']}::{src['title']}" for src in top_sources
         ]
 
-        # 5. Assign color indexes
+        # ✅ 6. Assign color indexes
         color_indices = list(getattr(Config, "HIGHLIGHT_COLORS", {}).keys())
         if getattr(Config, "IS_RANDOM_COLOR", False):
             import random
@@ -138,22 +146,23 @@ class PlagiarismCheckerService:
             for i, key in enumerate(top_source_keys)
             if i < len(color_indices)
         }
-        
-        # 6. Add color index to sources_summary
+
+        # ✅ 7. Add color index to sources_summary
         for src in sources_summary:
             key = f"{src.get('document_id', '')}::{src['title']}"
             src['color_index'] = source_color_index_map.get(key, -1)
 
-        # 7. Add color index to every source in paragraph
+        # ✅ 8. Add color index to every source in paragraph
         for para in chunked_text_results:
             for src in para.get('sources', []):
                 key = f"{src.get('document_id', '')}::{src['title']}"
                 src['color_index'] = source_color_index_map.get(key, -1)
 
-        # Clean up matches
+        # ✅ 9. Clean up matches
         for source in sources_summary:
             del source['matches']
-        
+            del source['matched_word_count']
+
         return {
             "status": "success",
             "data": {
