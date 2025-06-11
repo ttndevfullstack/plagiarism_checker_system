@@ -24,10 +24,10 @@
                                 <td class="px-2 py-3" colspan="3">No have any source matched.</td>
                             </tr>
                         @else
-                            @foreach ($results['sources_summary'] ?? [] as $source)
+                            @foreach ($results['sources_summary'] ?? [] as $index => $source)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                     <td class="{{ highlight_text_color($source['color_index'] ?? '') }} px-2 py-3 max-w-[150px]">
-                                        <span>{{ $source['document_id'] }}</span>
+                                        <span>{{ $index + 1 }}</span>
                                     </td>
                                     <td
                                         class="{{ highlight_text_color($source['color_index'] ?? '') }} px-2 py-3">

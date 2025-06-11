@@ -173,7 +173,7 @@ class PlagiarismCheckerService:
                 "overall_verdict": self.get_verdict(overall_similarity),
                 "processed_at": datetime.now(timezone.utc).isoformat(),
                 "paragraphs": chunked_text_results,
-                "sources_summary": sources_summary
+                "sources_summary": sources_summary[:getattr(Config, 'MAX_MATCHED_SOURCE', 10)]
             }
         }, source_color_index_map
     
@@ -203,7 +203,7 @@ class PlagiarismCheckerService:
         if uploaded_words <= 0:
             return 0.0
         percent = (matched_words / uploaded_words) * 100
-        percent = max(0.0, min(percent, 100.0))
+        percent = max(0.1, min(percent, 100.0))
 
         # print(f"Matched Words: {matched_words}, Uploaded Words: {uploaded_words}", "Percent:", percent)
         return round(percent, 1)
