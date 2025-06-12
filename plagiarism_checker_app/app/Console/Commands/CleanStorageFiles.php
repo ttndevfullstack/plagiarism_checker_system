@@ -12,7 +12,7 @@ class CleanStorageFiles extends Command
      *
      * @var string
      */
-    protected $signature = 'app:clean-storage-files';
+    protected $signature = 'app:clean-storage';
 
     /**
      * The console command description.

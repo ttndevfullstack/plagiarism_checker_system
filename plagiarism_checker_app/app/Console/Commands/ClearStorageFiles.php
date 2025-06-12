@@ -12,7 +12,7 @@ class ClearStorageFiles extends Command
      *
      * @var string
      */
-    protected $signature = 'app:clear-storage-files';
+    protected $signature = 'app:clear-storage';
 
     /**
      * The console command description.

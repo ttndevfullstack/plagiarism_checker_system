@@ -137,30 +137,60 @@ class ProcessTextService:
         
     def extract_sentences(self, pdf_path: str) -> Tuple[Dict[str, Dict], int]:
         """Extract text from PDF by sentences with unique keys and return total word count"""
-        import fitz  # PyMuPDF
         sentences = {}
         document_word_count = 0
         doc = fitz.open(pdf_path)
-
+        
         for page_num in range(len(doc)):
             page = doc[page_num]
-            # Collect all blocks text in order
-            page_text = ""
             blocks = page.get_text("dict")["blocks"]
-            for block in blocks:
+            
+            current_text = ""
+            current_key = ""
+            current_sentences = []
+            
+            for block_num, block in enumerate(blocks):
                 if "lines" in block:
+                    text = ""
                     for line in block["lines"]:
                         for span in line["spans"]:
-                            page_text += span["text"]
-                        page_text += " "
-            # Now, split entire page text into sentences
-            block_sentences = self.chunk_text(page_text.strip())
-            for sent_num, sentence in enumerate(block_sentences):
-                sentence = sentence.strip()
-                if not sentence:
-                    continue
-                document_word_count += len(sentence.split())
-                key = f"page_{page_num}_sent_{sent_num}"
-                sentences[key] = {'combined_text': sentence}
+                            text += span["text"]
+                        text += " "
+                    
+                    text = text.strip()
+                    if text:
+                        block_sentences = self.chunk_text(text)
+                        for sent_num, sentence in enumerate(block_sentences):
+                            sentence = sentence.strip()
+                            if not sentence:
+                                continue
+                                
+                            # Count words in the sentence
+                            document_word_count += len(sentence.split())
+                                
+                            if not current_text:
+                                current_text = sentence
+                                current_key = f"page_{page_num}_block_{block_num}_sent_{sent_num}"
+                                current_sentences = [sentence]
+                            else:
+                                current_text += " " + sentence
+                                current_sentences.append(sentence)
+                            
+                            if len(current_text.strip()) >= getattr(Config, "MIN_CHUNKED_TEXT_LENGTH", 15):
+                                sentences[current_key] = {
+                                    'combined_text': current_text.strip(),
+                                    'original_sentences': current_sentences
+                                }
+                                current_text = ""
+                                current_key = ""
+                                current_sentences = []
+            
+            # Handle any remaining text at the end of each page
+            if current_text and current_key:
+                sentences[current_key] = {
+                    'combined_text': current_text.strip(),
+                    # 'original_sentences': current_sentences
+                }
+        
         doc.close()
         return sentences, document_word_count

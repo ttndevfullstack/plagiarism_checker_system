@@ -43,6 +43,7 @@ class PDFProcessor:
             
             # ✅ 2. Chunk text
             sentence_data, document_word_count = self.text_service.extract_sentences(file_path)
+            # return sentence_data
             sentences = {k: v['combined_text'] for k, v in sentence_data.items()}
             
             # ✅ 3. Check plagiarism
