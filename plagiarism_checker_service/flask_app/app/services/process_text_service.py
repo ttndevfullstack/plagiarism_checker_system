@@ -136,61 +136,103 @@ class ProcessTextService:
             return self.chunk_text_into_paragraphs(raw_text)
         
     def extract_sentences(self, pdf_path: str) -> Tuple[Dict[str, Dict], int]:
-        """Extract text from PDF by sentences with unique keys and return total word count"""
+        """
+        Extract text from PDF by sentences with unique keys and return total word count.
+        - Headings/titles remain their own sentence.
+        - Body text is split into sentences by end punctuation (., !, ?, etc.).
+        - Never split by comma.
+        """
+        import re
+
+        def is_heading(line):
+            if re.match(r'^\d+\.\s+', line):
+                return True
+            if len(line) < 40 and (line.isupper() or re.match(r'^[A-Za-z ]+$', line)):
+                return True
+            return False
+
+        def split_sentences(text):
+            # Split by end-of-sentence punctuation followed by a space or EOL
+            # This pattern keeps the delimiter at the end of each sentence
+            pattern = re.compile(r'([^.!?。．？！]*[.!?。．？！])', re.MULTILINE)
+            sentences = [m.group(0).strip() for m in pattern.finditer(text) if m.group(0).strip()]
+            # If there is any remaining text that doesn't end with punctuation
+            remainder = pattern.sub('', text).strip()
+            if remainder:
+                sentences.append(remainder)
+            return sentences
+
         sentences = {}
         document_word_count = 0
         doc = fitz.open(pdf_path)
-        
+
         for page_num in range(len(doc)):
             page = doc[page_num]
             blocks = page.get_text("dict")["blocks"]
-            
-            current_text = ""
-            current_key = ""
-            current_sentences = []
-            
+
+            buffer = ""
+            sent_counter = 0
+
             for block_num, block in enumerate(blocks):
                 if "lines" in block:
-                    text = ""
                     for line in block["lines"]:
-                        for span in line["spans"]:
-                            text += span["text"]
-                        text += " "
-                    
-                    text = text.strip()
-                    if text:
-                        block_sentences = self.chunk_text(text)
-                        for sent_num, sentence in enumerate(block_sentences):
-                            sentence = sentence.strip()
-                            if not sentence:
-                                continue
-                                
-                            # Count words in the sentence
-                            document_word_count += len(sentence.split())
-                                
-                            if not current_text:
-                                current_text = sentence
-                                current_key = f"page_{page_num}_block_{block_num}_sent_{sent_num}"
-                                current_sentences = [sentence]
-                            else:
-                                current_text += " " + sentence
-                                current_sentences.append(sentence)
-                            
-                            if len(current_text.strip()) >= getattr(Config, "MIN_CHUNKED_TEXT_LENGTH", 15):
-                                sentences[current_key] = {
-                                    'combined_text': current_text.strip(),
-                                    'original_sentences': current_sentences
-                                }
-                                current_text = ""
-                                current_key = ""
-                                current_sentences = []
-            
-            # Handle any remaining text at the end of each page
-            if current_text and current_key:
-                sentences[current_key] = {
-                    'combined_text': current_text.strip(),
-                    # 'original_sentences': current_sentences
-                }
-        
+                        text = "".join(span["text"] for span in line["spans"]).strip()
+                        if not text:
+                            continue
+
+                        if is_heading(text):
+                            # Flush buffer first
+                            if buffer:
+                                for s in split_sentences(buffer):
+                                    if s:
+                                        document_word_count += len(s.split())
+                                        key = f"page_{page_num}_sent_{sent_counter}"
+                                        sentences[key] = {
+                                            'combined_text': s,
+                                            'original_sentences': [s]
+                                        }
+                                        sent_counter += 1
+                                buffer = ""
+                            # Add heading
+                            document_word_count += len(text.split())
+                            key = f"page_{page_num}_sent_{sent_counter}"
+                            sentences[key] = {
+                                'combined_text': text,
+                                'original_sentences': [text]
+                            }
+                            sent_counter += 1
+                            continue
+
+                        # Buffer non-heading lines
+                        if buffer:
+                            buffer += " " + text
+                        else:
+                            buffer = text
+
+                        # Only flush buffer if line ends with sentence-ending punctuation
+                        if re.search(r'[.!?。．？！]$', text):
+                            for s in split_sentences(buffer):
+                                if s:
+                                    document_word_count += len(s.split())
+                                    key = f"page_{page_num}_sent_{sent_counter}"
+                                    sentences[key] = {
+                                        'combined_text': s,
+                                        'original_sentences': [s]
+                                    }
+                                    sent_counter += 1
+                            buffer = ""
+
+            # Flush any remaining buffer at the end of page
+            if buffer:
+                for s in split_sentences(buffer):
+                    if s:
+                        document_word_count += len(s.split())
+                        key = f"page_{page_num}_sent_{sent_counter}"
+                        sentences[key] = {
+                            'combined_text': s,
+                            'original_sentences': [s]
+                        }
+                        sent_counter += 1
+
         doc.close()
         return sentences, document_word_count
