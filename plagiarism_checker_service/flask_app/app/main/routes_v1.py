@@ -7,6 +7,7 @@ from flask_app.app.services.migration import Migration
 from flask_app.app.services.pdf_processor import PDFProcessor
 from flask_app.app.services.document_service import DocumentService
 from flask_app.app.services.plagiarism_checker_service import PlagiarismCheckerService
+from flask_app.app.services.database_handler import DatabaseHandler
 
 # Create a Blueprint for main routes
 bp_v1 = Blueprint("main", __name__, url_prefix="/v1/api")
@@ -60,6 +61,22 @@ def upload_data():
         print(f"Error processing upload: {str(e)}")
         return jsonify({"success": False, "error": f"Internal Server Error: {str(e)}"}), 500
     
+
+@bp_v1.route("/documents/delete/<int:document_id>", methods=["DELETE"])
+def delete_documents(document_id):
+    try:
+        db_handler = DatabaseHandler()
+        delete_count = db_handler.delete_documents_by_document_id(document_id)
+        return jsonify({
+            "success": True,
+            "message": f"Deleted {delete_count} records with document_id={document_id}."
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Failed to delete records: {str(e)}"
+        }), 500
+
 
 @bp_v1.route("/plagiarism-checker/content", methods=["POST"])
 def check_document_plagiarism():

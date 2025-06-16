@@ -53,9 +53,9 @@ class DocumentResource extends Resource
             ->columns([
                 CuratorColumn::make('media')
                     ->size(40),
-                TextColumn::make('original_name'),
-                TextColumn::make('subject.name'),
-                TextColumn::make('class.name'),
+                TextColumn::make('original_name')->searchable(),
+                TextColumn::make('subject.name')->searchable(),
+                TextColumn::make('class.name')->searchable(),
                 TextColumn::make('description'),
                 TextColumn::make('media.size')
                     ->formatStateUsing(fn($state) => number_format($state / 1024 / 1024, 2) . ' MB'),
@@ -64,6 +64,11 @@ class DocumentResource extends Resource
                     ->color(fn(DocumentStatus $state): string => $state->getColor())
                     ->formatStateUsing(fn(DocumentStatus $state): string => $state->getLabel()),
                 TextColumn::make('created_at')->dateTime(),
+            ])
+            ->filters([
+                Tables\Filters\SelectFilter::make('subject_id')
+                    ->relationship('subject', 'name')
+                    ->label('Subject'),
             ])
             ->defaultSort('created_at', 'desc');
     }

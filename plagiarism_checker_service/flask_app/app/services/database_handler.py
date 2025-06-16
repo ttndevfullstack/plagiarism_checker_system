@@ -4,6 +4,19 @@ class DatabaseHandler:
     def __init__(self):
         pass
 
+    def delete_documents_by_document_id(self, document_id: int) -> int:
+        """Delete all records from Milvus by document_id"""
+        try:
+            result = MilvusConnection.get_client().delete(
+                collection_name="documents",
+                filter=f"document_id == {document_id}"
+            )
+            print(f"   ✅ Deleted documents with document_id={document_id} from database successfully")
+            return result.get('delete_count', 0)
+        except Exception as e:
+            print(f"   ❌ Error deleting documents from database: {str(e)}")
+            raise
+
     def insert_document(self, document) -> int:
         """Insert embeddings into Milvus"""
         try:
