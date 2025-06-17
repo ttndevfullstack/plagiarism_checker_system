@@ -11,6 +11,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Actions;
 use Illuminate\Database\Eloquent\Builder;
 
 class ClassRoomResource extends Resource
@@ -19,9 +20,14 @@ class ClassRoomResource extends Resource
 
     protected static ?string $navigationGroup = 'Class Management';
 
-    protected static ?string $navigationLabel = 'Assigned Class Room';
+    protected static ?string $navigationLabel = 'ClassRoom Management';
 
     protected static ?string $navigationIcon = 'heroicon-s-home';
+
+    public static function canCreate(): bool
+    {
+        return false;
+    }
 
     public static function form(Form $form): Form
     {
@@ -84,19 +90,12 @@ class ClassRoomResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters(\App\Filament\Components\Filters\BaseFilterGroup::show())
-            ->actions(\App\Filament\Components\Actions\BaseActionGroup::show())
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+            ->actions([Actions\ViewAction::make()]);
     }
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
-            ->withoutGlobalScopes()
-            ->assignedCurrentUser();
+        return auth()->user()->classrooms();
     }
 
     /**
@@ -106,8 +105,8 @@ class ClassRoomResource extends Resource
     {
         return [
             'index' => Pages\ListClassRooms::route('/'),
-            'create' => Pages\CreateClassRoom::route('/create'),
-            'edit' => Pages\EditClassRoom::route('/{record}/edit'),
+            // 'create' => Pages\CreateClassRoom::route('/create'),
+            // 'edit' => Pages\EditClassRoom::route('/{record}/edit'),
         ];
     }
 }

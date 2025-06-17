@@ -30,6 +30,7 @@ class UserPanelProvider extends PanelProvider
             ->path(config('plagiarism-checker.panels.user.path'))
             ->favicon(asset('assets/images/logo-icon.svg'))
             ->brandLogo(asset('assets/images/logo-icon.svg'))
+            ->brandName('Proofly')
             ->login()
             ->profile(EditProfile::class)
             ->registration(Register::class)

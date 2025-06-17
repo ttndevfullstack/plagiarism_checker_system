@@ -8,6 +8,9 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Laravel\Sanctum\HasApiTokens;
 use Filament\Models\Contracts\HasName;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements HasName
@@ -54,6 +57,33 @@ class User extends Authenticatable implements HasName
         });
     }
 
+    
+    public function scopeClassrooms(): Builder
+    {
+        $query = ClassRoom::query();
+
+        if ($this->isTeacher()) {
+            $teacherId = $this->teacher?->id;
+
+            return $query->where(function ($q) use ($teacherId) {
+                $q->where('teacher_id', $teacherId)
+                ->orWhereHas('assignments', function ($subQuery) use ($teacherId) {
+                    $subQuery->where('teacher_id', $teacherId);
+                });
+            });
+        }
+
+        if ($this->isStudent()) {
+            $studentId = $this->student?->id;
+
+            return $query->whereHas('enrollments', function ($subQuery) use ($studentId) {
+                $subQuery->where('student_id', $studentId);
+            });
+        }
+
+        return $query;
+    }
+
 
 
     # ==============================================================================
@@ -68,7 +98,11 @@ class User extends Authenticatable implements HasName
     {
         return $this->hasOne(Teacher::class);
     }
-
+    
+    public function documents(): HasMany
+    {
+        return $this->hasMany(Document::class, 'uploaded_by');
+    }
 
 
     # ==============================================================================
@@ -107,6 +141,17 @@ class User extends Authenticatable implements HasName
     # ==============================================================================
     # Methods
     # ==============================================================================
+    /**
+     * Check if the user can access a specific panel for filament.
+     *
+     * @param Panel $panel
+     * @return boolean
+     */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return true;
+    }
+
     public function isAdmin(): bool
     {
         return $this->hasRole(self::ADMIN_ROLE);
@@ -120,16 +165,5 @@ class User extends Authenticatable implements HasName
     public function isStudent(): bool
     {
         return $this->hasRole(self::STUDENT_ROLE);
-    }
-
-    /**
-     * Check if the user can access a specific panel for filament.
-     *
-     * @param Panel $panel
-     * @return boolean
-     */
-    public function canAccessPanel(Panel $panel): bool
-    {
-        return true;
     }
 }

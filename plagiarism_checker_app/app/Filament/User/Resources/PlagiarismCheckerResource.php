@@ -23,6 +23,11 @@ class PlagiarismCheckerResource extends Resource
 
     protected static ?string $modelLabel = 'Plagiarism Check';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->isTeacher();
+    }
+
     public static function form(Forms\Form $form): Forms\Form
     {
         return $form->schema([

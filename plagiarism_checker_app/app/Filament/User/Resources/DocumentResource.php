@@ -1,17 +1,16 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\User\Resources;
 
 use App\Enums\DocumentStatus;
 use App\Models\Document;
-use App\Filament\Resources\DocumentResource\Pages;
+use App\Filament\User\Resources\DocumentResource\Pages;
 use Filament\Forms;
 use Filament\Tables;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
 use Awcodes\Curator\Components\Forms\CuratorPicker;
 use Awcodes\Curator\Components\Tables\CuratorColumn;
-use Illuminate\Database\Eloquent\Builder;
 
 class DocumentResource extends Resource
 {
@@ -72,11 +71,6 @@ class DocumentResource extends Resource
                     ->label('Subject'),
             ])
             ->defaultSort('created_at', 'desc');
-    }
-
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()->uploadedByCurrentUser();
     }
 
     public static function getPages(): array

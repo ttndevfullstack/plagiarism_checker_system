@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Enums\DocumentStatus;
+use Awcodes\Curator\Models\Media;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Enums\DocumentStatus;
-use Awcodes\Curator\Models\Media;
 
 class Document extends Model
 {
@@ -40,6 +41,16 @@ class Document extends Model
             }
         });
     }
+
+
+    # ==============================================================================
+    # Local query scopes
+    # ==============================================================================
+    public function scopeUploadedByCurrentUser(Builder $query): Builder
+    {
+        return $query->where('uploaded_by', auth()->id());
+    }
+
 
     public function class(): BelongsTo
     {
