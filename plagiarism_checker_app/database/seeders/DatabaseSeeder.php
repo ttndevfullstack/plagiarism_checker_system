@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             ClassRoomSeeder::class,
             AssignmentSeeder::class,
             EnrollmentSeeder::class,
+            ExamSeeder::class,
         ]);
     }
 }

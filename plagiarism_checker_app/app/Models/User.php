@@ -84,6 +84,32 @@ class User extends Authenticatable implements HasName
         return $query;
     }
 
+    public function scopeExams(): Builder
+    {
+        $query = Exam::query();
+
+        if ($this->isTeacher()) {
+            $teacherId = $this->teacher?->id;
+
+            return $query->where(function ($q) use ($teacherId) {
+                $q->where('teacher_id', $teacherId)
+                ->orWhereHas('class.assignments', function ($subQuery) use ($teacherId) {
+                    $subQuery->where('teacher_id', $teacherId);
+                });
+            });
+        }
+
+        if ($this->isStudent()) {
+            $studentId = $this->student?->id;
+
+            return $query->whereHas('class.enrollments', function ($subQuery) use ($studentId) {
+                $subQuery->where('student_id', $studentId);
+            });
+        }
+
+        return $query;
+    }
+
 
 
     # ==============================================================================
