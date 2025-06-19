@@ -54,7 +54,7 @@ class ProcessDocumentUpload implements ShouldQueue
         );
 
         $response = $request->post(
-            rtrim(env('FLASK_APP_URL', 'http://localhost:5000'), '/') . '/v1/api/data/upload',
+            rtrim(config('plagiarism-checker.flask_app_url'), '/') . '/v1/api/data/upload',
             [
                 'document_id' => $this->document->id,
                 'subject_code' => $this->document->subject?->code ?? '',
