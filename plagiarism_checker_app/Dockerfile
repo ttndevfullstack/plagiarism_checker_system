@@ -78,6 +78,7 @@ RUN chown -R www-data:www-data /var/www/laravel && \
 
 # Nginx config
 COPY ./z-docker-resources/nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY ./z-docker-resources/nginx/nginx.conf /etc/nginx/nginx.conf
 
 # Entrypoint
 COPY ./z-docker-resources/php/setup-entrypoint.sh /entrypoint.sh

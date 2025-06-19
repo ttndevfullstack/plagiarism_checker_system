@@ -18,7 +18,7 @@ return [
         'password' => '123123',
     ],
 
-    'flask_app_url' => env('FLASK_APP_URL', 'http://localhost:5000'),
+    'flask_app_url' => env('FLASK_APP_URL', 'http://proofly-service:5000'),
 
     # ==============================================================================
     # Filament
