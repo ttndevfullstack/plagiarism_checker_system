@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # nginx-proofly:
+  # proofly-nginx:
   #   build: ./z-docker-resource/nginx/
   #   container_name: nginx-proofly
   #   ports:
@@ -12,7 +12,7 @@ services:
   #   networks:
   #     - proofly
 
-  # php-proofly:
+  # proofly-php:
   #   build: ./z-docker-resources/php/
   #   container_name: php-proofly
   #   expose:
@@ -48,30 +48,33 @@ services:
     networks:
       - proofly
 
-  # proofly-service:
-  #   build:
-  #     context: .
-  #     dockerfile: ./plagiarism_checker_service/Dockerfile
-  #   container_name: proofly-service
-  #   volumes:
-  #     - ./plagiarism_checker_service:/app
-  #   environment:
-  #     - FLASK_APP=flask_app.app.main
-  #     - FLASK_ENV=${FLASK_ENV:-development}
-  #     - MILVUS_ALIAS=plagiarism_checker_db
-  #     - MILVUS_DB_NAME=plagiarism_checker
-  #     - MILVUS_DB_HOST=milvus-standalone
-  #     - MILVUS_DB_PORT=19530
-  #     - MILVUS_DB_USERNAME=${MILVUS_USERNAME:-root}
-  #     - MILVUS_DB_PASSWORD=${MILVUS_PASSWORD:-password}
-  #   depends_on:
-  #     milvus-standalone:
-  #       condition: service_healthy
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
+  proofly-service:
+    build:
+      context: .
+      dockerfile: ./plagiarism_checker_service/Dockerfile
+    container_name: proofly-service
+    volumes:
+      - ./plagiarism_checker_service:/app
+    environment:
+      - FLASK_ENV=${FLASK_ENV:-development}
+      - MILVUS_ALIAS=proofly
+      - MILVUS_DB_NAME=db_proofly
+      - MILVUS_DB_HOST=proofly-milvus-standalone
+      - MILVUS_DB_PORT=19530
+      - MILVUS_DB_USERNAME=${MILVUS_USERNAME:-root}
+      - MILVUS_DB_PASSWORD=${MILVUS_PASSWORD:-password}
+    depends_on:
+      proofly-milvus-standalone:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/v1/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - proofly
 
   proofly-mysql:
     container_name: proofly-mysql

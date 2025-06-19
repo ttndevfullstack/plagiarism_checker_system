@@ -13,9 +13,9 @@ from flask_app.app.services.database_handler import DatabaseHandler
 bp_v1 = Blueprint("main", __name__, url_prefix="/v1/api")
 
 
-@bp_v1.route("/ping")
-def pong():
-    return "pong"
+@bp_v1.route("/health")
+def health():
+    return "OK", 200
 
 
 @bp_v1.route("/migrate")
