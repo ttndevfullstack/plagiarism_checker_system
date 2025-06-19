@@ -50,4 +50,3 @@ pip-delete-this-directory.txt
 
 # App
 *storage
-flask_app/nltk_data/
