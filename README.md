@@ -40,7 +40,11 @@ This will build and start all required services including:
 | 👤 User Login     | [http://localhost:8000/user/login](http://localhost:8000/user/login)   | General user login             |
 | 🛠️ phpMyAdmin     | [http://localhost:8383](http://localhost:8383)                         | MySQL database management      |
 | 📊 Attu Console   | [http://localhost:3000](http://localhost:3000)                         | Milvus vector DB web UI (Attu) |
-| 📊 Milvus Console | [http://localhost:9091/webui/](http://localhost:9091/webui/)                         | Milvus vector DB web UI        |
+| 📊 Milvus Console | [http://localhost:9091/webui/](http://localhost:9091/webui/)           | Milvus vector DB web UI        |
+
+| Role  | Email             | Password |
+| ----- | ----------------- | -------- |
+| Admin | [admin@gmail.com] | 123123   |
 
 ---
 
