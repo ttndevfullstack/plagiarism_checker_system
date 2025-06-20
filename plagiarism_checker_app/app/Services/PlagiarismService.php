@@ -43,7 +43,7 @@ class PlagiarismService
 
         // Decode and save the PDF file
         $pdfContent = base64_decode($responseData['data']['pdf_content']);
-        $fileName = 'highlighted_' . time() . '.pdf';
+        $fileName = 'proofly_highlighted_' . time() . '.pdf';
         $filePath = 'public/downloads/' . $fileName;
         
         Storage::put($filePath, $pdfContent);
