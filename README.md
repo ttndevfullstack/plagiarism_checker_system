@@ -34,6 +34,11 @@ This will build and start all required services including:
 
 ## 🌐 Accessing the Application
 
+Admin Account
+| Role | Email | Password |
+| ----- | ----------------- | -------- |
+| Admin | admin@gmail.com | 123123 |
+
 | 🧭 Interface      | 🔗 URL                                                                 | 📋 Description                 |
 | ----------------- | ---------------------------------------------------------------------- | ------------------------------ |
 | 🔐 Admin Panel    | [http://localhost:8000/admin/login](http://localhost:8000/admin/login) | Admin login interface          |
@@ -41,10 +46,6 @@ This will build and start all required services including:
 | 🛠️ phpMyAdmin     | [http://localhost:8383](http://localhost:8383)                         | MySQL database management      |
 | 📊 Attu Console   | [http://localhost:3000](http://localhost:3000)                         | Milvus vector DB web UI (Attu) |
 | 📊 Milvus Console | [http://localhost:9091/webui/](http://localhost:9091/webui/)           | Milvus vector DB web UI        |
-
-| Role  | Email             | Password |
-| ----- | ----------------- | -------- |
-| Admin | [admin@gmail.com] | 123123   |
 
 ---
 
