@@ -19,7 +19,13 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 
 WORKDIR /app
 COPY ./plagiarism_checker_app /app
-RUN composer install --prefer-dist --no-scripts --no-autoloader --no-interaction
+RUN composer install --prefer-dist --no-dev --no-interaction --optimize-autoloader
+
+# For production
+# RUN composer install --prefer-dist --no-dev --no-interaction --optimize-autoloader
+
+# For development
+RUN composer install --prefer-dist --no-interaction
 
 FROM node:18 AS node-builder
 WORKDIR /app
@@ -69,7 +75,7 @@ RUN composer install --no-dev --optimize-autoloader && \
     php artisan view:cache || true
 
 # Generate APP_KEY if not exists
-RUN if [ ! -f .env ]; then cp .env.example .env; fi && \
+RUN rm -rf .env && cp .env.example .env && \
     php artisan key:generate
 
 # Permissions
@@ -83,6 +89,9 @@ COPY ./z-docker-resources/nginx/nginx.conf /etc/nginx/nginx.conf
 # Entrypoint
 COPY ./z-docker-resources/php/setup-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
+# Copy composer binary to runtime container
+COPY --from=composer-builder /usr/local/bin/composer /usr/local/bin/composer
 
 EXPOSE 9000 5173
 

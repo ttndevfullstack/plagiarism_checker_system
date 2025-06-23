@@ -1,11 +1,39 @@
 #!/bin/sh
 
-# Ensure correct permissions
-chown -R www-data:www-data /var/www/laravel/storage /var/www/laravel/bootstrap/cache
-chmod -R 775 /var/www/laravel/storage /var/www/laravel/bootstrap/cache
+cd /var/www/laravel
 
-# Ensure storage symlink exists
+# Fix old mistake: remove `.env` if it was wrongly created as a directory
+if [ -d .env ]; then
+  echo ".env is a directory, removing it to recreate..."
+  rm -rf .env
+fi
+
+# Create .env if not exists
+if [ ! -f .env ] && [ -f .env.example ]; then
+  echo "Creating .env from .env.example"
+  cp .env.example .env
+fi
+
+# Install dependecy
+if [ ! -f vendor/autoload.php ]; then
+  composer install
+fi
+
+# Generate app key if not set
+if ! grep -q '^APP_KEY=' .env; then
+  echo "Generating Laravel APP_KEY..."
+  php artisan key:generate || true
+fi
+
+# Ensure correct permissions
+chown -R www-data:www-data storage bootstrap/cache
+chmod -R 775 storage bootstrap/cache
+
+# Link storage to public
 php artisan storage:link || true
+
+# Migrate and seed data
+php artisan migrate --force && php artisan db:seed --force || true
 
 # Start PHP-FPM
 php-fpm -D
