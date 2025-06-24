@@ -41,7 +41,7 @@ class ProcessDocumentUpload implements ShouldQueue
 
     private function processFile(string $filePath): void
     {
-        $request = Http::withHeaders([
+        $request = Http::timeout(300)->withHeaders([
             'Accept' => 'application/json'
         ]);
 

@@ -62,6 +62,22 @@ def upload_data():
         return jsonify({"success": False, "error": f"Internal Server Error: {str(e)}"}), 500
     
 
+@bp_v1.route("/documents", methods=["GET"])
+def list_documents():
+    try:
+        db_handler = DatabaseHandler()
+        docs = db_handler.get_all_documents_basic_info()
+        return jsonify({
+            "success": True,
+            "data": docs
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Failed to fetch documents: {str(e)}"
+        }), 500
+
+
 @bp_v1.route("/documents/delete/<int:document_id>", methods=["DELETE"])
 def delete_documents(document_id):
     try:

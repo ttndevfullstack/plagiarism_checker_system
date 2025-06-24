@@ -27,6 +27,7 @@ RUN composer install --prefer-dist --no-dev --no-interaction --optimize-autoload
 # For development
 RUN composer install --prefer-dist --no-interaction
 
+
 FROM node:18 AS node-builder
 WORKDIR /app
 COPY ./plagiarism_checker_app /app

@@ -44,6 +44,7 @@ class DocumentBatchResource extends Resource
 
                 CuratorPicker::make('media_path_id')
                     ->label('Path File (Excel)')
+                    ->helperText('Add a catalog file (Excel) that includes name, subject, and metadata for each document. You can empty this field.')
                     ->acceptedFileTypes([
                         'application/vnd.ms-excel', // For .xls
                         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' // For .xlsx

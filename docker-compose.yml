@@ -31,6 +31,7 @@ services:
     container_name: proofly-app
     volumes:
       - ./plagiarism_checker_app:/var/www/laravel
+      - ./z-docker-resources/php/zz-large-upload.ini:/usr/local/etc/php/conf.d/zz-large-upload.ini
     environment:
       - APP_ENV=${APP_ENV:-local}
       - DB_HOST=proofly-mysql

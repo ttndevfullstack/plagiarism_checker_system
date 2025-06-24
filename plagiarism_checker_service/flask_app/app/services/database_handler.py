@@ -17,6 +17,19 @@ class DatabaseHandler:
             print(f"   ❌ Error deleting documents from database: {str(e)}")
             raise
 
+    def get_all_documents_basic_info(self):
+        """Fetch all document_id and original_name from Milvus documents collection"""
+        try:
+            results = MilvusConnection.get_client().query(
+                collection_name="documents",
+                output_fields=["document_id", "original_name"]
+            )
+            print(f"   ✅ Fetched {len(results)} documents from database successfully")
+            return results
+        except Exception as e:
+            print(f"   ❌ Error querying documents from database: {str(e)}")
+            raise
+
     def insert_document(self, document) -> int:
         """Insert embeddings into Milvus"""
         try:

@@ -19,4 +19,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY ./plagiarism_checker_service /app
 
 # Gunicorn startup for production
-CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:5000", "run:app"]
+CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:5000", "run:app", "--timeout", "1800"]

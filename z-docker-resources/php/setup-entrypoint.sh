@@ -28,6 +28,7 @@ fi
 # Ensure correct permissions
 chown -R www-data:www-data storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
+chmod 755 /var/www/laravel/storage/app/public/downloads
 
 # Link storage to public
 php artisan storage:link || true
