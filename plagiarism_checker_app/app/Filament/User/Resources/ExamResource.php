@@ -11,6 +11,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Actions;
+use Filament\Support\Colors\Color;
 use Illuminate\Database\Eloquent\Builder;
 
 class ExamResource extends Resource
@@ -65,7 +67,17 @@ class ExamResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters(\App\Filament\Components\Filters\BaseFilterGroup::show())
-            ->actions(\App\Filament\Components\Actions\BaseActionGroup::show());
+            ->actions(
+                auth()->user()->isStudent()
+                    ? [
+                        Actions\ViewAction::make(),
+                    ]
+                    : [
+                        Actions\ViewAction::make(),
+                        Actions\EditAction::make()->color(Color::Blue),
+                        Actions\DeleteAction::make(),
+                    ]
+            );
     }
 
     public static function getEloquentQuery(): Builder

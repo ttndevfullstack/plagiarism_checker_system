@@ -24,6 +24,13 @@ class EditProfile extends BaseEditProfile
                         $this->getTextFormComponent('first_name', __('First Name'), true),
                         $this->getTextFormComponent('last_name', __('Last Name')),
                         $this->getEmailFormComponent(),
+                        TextInput::make('role_name')
+                            ->label(__('Role Name'))
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->afterStateHydrated(function (TextInput $component, $state) {
+                                $component->state(auth()->user()->getRoleNames()->first());
+                            }),
                         $this->getPasswordFormComponent()
                             ->make('current_password')
                             ->label(__('Current password')),
