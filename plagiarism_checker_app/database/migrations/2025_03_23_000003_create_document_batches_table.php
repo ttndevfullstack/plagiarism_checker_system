@@ -15,6 +15,7 @@ return new class extends Migration
             $table->unsignedBigInteger('media_path_id')->nullable();
             $table->string('status')->default(DocumentStatus::PENDING->value);
             $table->json('metadata')->nullable();
+            $table->foreignId('uploaded_by')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
     }

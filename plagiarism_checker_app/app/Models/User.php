@@ -130,6 +130,11 @@ class User extends Authenticatable implements HasName, FilamentUser
     {
         return $this->hasMany(Document::class, 'uploaded_by');
     }
+    
+    public function documentBatches(): HasMany
+    {
+        return $this->hasMany(documentBatches::class, 'uploaded_by');
+    }
 
 
     # ==============================================================================

@@ -14,13 +14,25 @@ class DocumentBatch extends Model
         'media_id',
         'media_path_id',
         'status',
-        'metadata'
+        'metadata',
+        'uploaded_by',
     ];
 
     protected $casts = [
         'metadata' => 'array',
         'status' => DocumentStatus::class,
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($document) {
+            if (empty($document->uploaded_by) && auth()->check()) {
+                $document->uploaded_by = auth()->id();
+            }
+        });
+    }
 
     public function media(): BelongsTo
     {
