@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
 use Awcodes\Curator\Components\Forms\CuratorPicker;
 use Awcodes\Curator\Components\Tables\CuratorColumn;
+use Illuminate\Database\Eloquent\Builder;
 
 class DocumentBatchResource extends Resource
 {
@@ -24,6 +25,11 @@ class DocumentBatchResource extends Resource
     protected static ?string $navigationLabel = 'Upload Documents';
 
     protected static ?string $navigationIcon = 'heroicon-s-clipboard-document-list';
+
+    public static function canAccess(): bool
+    {
+        return auth()->user()->isTeacher();
+    }
 
     public static function form(Forms\Form $form): Forms\Form
     {
@@ -90,7 +96,7 @@ class DocumentBatchResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return auth()->user()->documentBatches();
+        return DocumentBatch::query()->where('uploaded_by', auth()->id());
     }
 
     public static function getPages(): array

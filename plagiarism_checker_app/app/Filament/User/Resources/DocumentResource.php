@@ -24,6 +24,11 @@ class DocumentResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-s-document';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->isTeacher();
+    }
+
     public static function form(Forms\Form $form): Forms\Form
     {
         return $form

@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Laravel\Sanctum\HasApiTokens;
 use Filament\Models\Contracts\HasName;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Permission\Traits\HasRoles;
 use Filament\Models\Contracts\FilamentUser;
@@ -133,7 +132,7 @@ class User extends Authenticatable implements HasName, FilamentUser
     
     public function documentBatches(): HasMany
     {
-        return $this->hasMany(documentBatches::class, 'uploaded_by');
+        return $this->hasMany(DocumentBatch::class, 'uploaded_by');
     }
 
 
