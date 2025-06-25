@@ -19,6 +19,7 @@ class ClassRoom extends Model
         'teacher_id',
         'name',
         'room_number',
+        'academic_year',
         'start_date',
         'end_date',
     ];

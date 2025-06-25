@@ -14,4 +14,17 @@ class StudentSelector extends Select
             ->required()
             ->options(Student::with('user')->get()->pluck('user.full_name', 'id'));
     }
+
+    public static function showFullInfo($fieldName = 'student_id'): Select
+    {
+        $students = Student::with('user')->get()->mapWithKeys(function ($student) {
+            $user = $student->user;
+            $label = "{$user->full_name} - {$user->email} - {$user->phone}";
+            return [$student->id => $label];
+        });
+
+        return static::make($fieldName)
+            ->label(__('Student Details'))
+            ->options($students);
+    }
 }

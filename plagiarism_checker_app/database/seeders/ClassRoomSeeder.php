@@ -7,6 +7,7 @@ use App\Models\Teacher;
 use App\Models\Subject;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ClassRoomSeeder extends Seeder
 {
@@ -18,34 +19,14 @@ class ClassRoomSeeder extends Seeder
         if ($subjects->isEmpty()) {
             throw new \RuntimeException('No subjects found. Please run SubjectSeeder first.');
         }
-        
+
         DB::beginTransaction();
         try {
             foreach ($teachers as $teacher) {
-                $startDate = fake()->dateTimeBetween('now', '+2 months');
-                $endDate = fake()->dateTimeBetween($startDate, '+6 months');
-                
-                ClassRoom::create([
-                    'name' => 'Class ' . fake()->unique()->word,
-                    'teacher_id' => $teacher->id,
-                    'subject_id' => $subjects->random()->id,
-                    'room_number' => fake()->unique()->numberBetween(1, 100),
-                    'start_date' => $startDate,
-                    'end_date' => $endDate,
-                ]);
+                $this->createClass($teacher, $subjects);
 
                 if (fake()->boolean(60)) {
-                    $startDate = fake()->dateTimeBetween('now', '+2 months');
-                    $endDate = fake()->dateTimeBetween($startDate, '+6 months');
-                    
-                    ClassRoom::create([
-                        'name' => 'Class ' . fake()->unique()->word,
-                        'teacher_id' => $teacher->id,
-                        'subject_id' => $subjects->random()->id,
-                        'room_number' => fake()->unique()->numberBetween(101, 200),
-                        'start_date' => $startDate,
-                        'end_date' => $endDate,
-                    ]);
+                    $this->createClass($teacher, $subjects, 100);
                 }
             }
             DB::commit();
@@ -53,5 +34,25 @@ class ClassRoomSeeder extends Seeder
             DB::rollBack();
             throw $e;
         }
+    }
+
+    protected function createClass($teacher, $subjects, $roomOffset = 0): void
+    {
+        $startDate = fake()->dateTimeBetween('now', '+2 months');
+        $endDate = fake()->dateTimeBetween($startDate, '+6 months');
+
+        $startYear = $startDate->format('Y');
+        $academicYear = $startYear . '-' . ($startYear + 1);
+
+        ClassRoom::create([
+            'name' => 'Class ' . Str::title(fake()->unique()->word),
+            'teacher_id' => $teacher->id,
+            'subject_id' => $subjects->random()->id,
+            'room_number' => fake()->unique()->numberBetween(1 + $roomOffset, 100 + $roomOffset),
+            'academic_year' => $academicYear,
+            'status' => fake()->randomElement(['active', 'inactive']),
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
     }
 }

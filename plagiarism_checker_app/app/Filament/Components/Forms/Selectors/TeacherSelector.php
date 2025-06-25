@@ -15,14 +15,15 @@ class TeacherSelector extends Select
             ->options(Teacher::with('user')->get()->pluck('user.full_name', 'id'));
     }
 
-    public function totalAssignedClassLabel(): Select
+    public function moreInfo(): Select
     {
         return $this->options(
             Teacher::all()->mapWithKeys(static function ($model) {
                 return [
                     $model->id => sprintf(
-                        'Name: %s | Total Assigned Classes: %s',
+                        '%s - %s - Total Classes: %s',
                         $model->user->full_name,
+                        $model->user->email,
                         $model->assignments()->count()
                     ),
                 ];

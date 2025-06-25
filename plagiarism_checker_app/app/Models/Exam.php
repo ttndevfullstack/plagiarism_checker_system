@@ -13,11 +13,11 @@ class Exam extends Model
 
     protected $fillable = [
         'class_id',
-        'teacher_id',
         'title',
         'description',
         'start_time',
         'end_time',
+        'uploaded_by',
     ];
 
     protected $casts = [
@@ -25,14 +25,20 @@ class Exam extends Model
         'end_time' => 'datetime',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($document) {
+            if (empty($document->uploaded_by) && auth()->check()) {
+                $document->uploaded_by = auth()->id();
+            }
+        });
+    }
+
     public function class(): BelongsTo
     {
         return $this->belongsTo(ClassRoom::class, 'class_id');
-    }
-
-    public function teacher(): BelongsTo
-    {
-        return $this->belongsTo(Teacher::class, 'teacher_id');
     }
 
     public function documents(): HasMany

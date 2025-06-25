@@ -41,10 +41,6 @@ class ExamResource extends Resource
                 ->options(ClassRoom::all()->pluck('name', 'id'))
                 ->searchable()
                 ->required(),
-            Forms\Components\Select::make('teacher_id')
-                ->label('Teacher')
-                ->options(Teacher::all()->pluck('id', 'id'))
-                ->required(),
             Forms\Components\TextInput::make('title')
                 ->required()
                 ->maxLength(255),
@@ -63,7 +59,6 @@ class ExamResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('title')->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('class.name')->label('Class')->sortable(),
-                Tables\Columns\TextColumn::make('teacher.id')->label('Teacher'),
                 Tables\Columns\TextColumn::make('start_time')->dateTime(),
                 Tables\Columns\TextColumn::make('end_time')->dateTime(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime(),
@@ -103,6 +98,7 @@ class ExamResource extends Resource
                                 $description = $data['description'] ?? null;
                                 $originalName = \Awcodes\Curator\Models\Media::find($mediaId)?->name ?? null;
 
+                                // Create document
                                 Document::create([
                                     'media_id'      => $mediaId,
                                     'exam_id'       => $exam->id,
@@ -112,6 +108,8 @@ class ExamResource extends Resource
                                     'description'   => $description,
                                     'status'        => DocumentStatus::PENDING,
                                 ]);
+
+                                // Dispatch check document
                             })
                             ->visible(fn () => auth()->user()->isStudent())
                             ->modalHeading('Submit Document for Exam')
@@ -128,7 +126,12 @@ class ExamResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return auth()->user()->exams();
+        if (auth()->user()->isTeacher()) {
+            return Exam::query()->where('uploaded_by', auth()->user()->id);
+        }
+
+        $classRoomIds = auth()->user()->classrooms()->get()->pluck('id')->toArray();
+        return Exam::query()->whereIn('class_id', $classRoomIds)->where('end_time', '>=', now());
     }
 
     /**

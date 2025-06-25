@@ -41,18 +41,20 @@ class ClassRoomResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
-
+                    
                 SubjectSelector::show(),
-
-                TeacherSelector::show(),
+                
+                TeacherSelector::show()->moreInfo(),
+                
+                Forms\Components\TextInput::make('academic_year')
+                    ->required()
+                    ->maxLength(10),
 
                 Forms\Components\DatePicker::make('start_date')
-                    ->required()
                     ->native(false)
                     ->closeOnDateSelection(),
 
                 Forms\Components\DatePicker::make('end_date')
-                    ->required()
                     ->native(false)
                     ->closeOnDateSelection()
                     ->after('start_date'),
@@ -73,6 +75,10 @@ class ClassRoomResource extends Resource
                     ->sortable()
                     ->searchable()
                     ->formatStateUsing(static fn ($state) => ucfirst($state)),
+                
+                Tables\Columns\TextColumn::make('academic_year')
+                    ->label('Academic Year')
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('subject.name')
                     ->label('Subject Name')
@@ -132,7 +138,7 @@ class ClassRoomResource extends Resource
                         ->modalButton(__('Assign'))
                         ->form([
                             TeacherSelector::show()
-                                ->totalAssignedClassLabel()
+                                ->moreInfo()
                                 ->default(static fn ($record) => $record->teacher_id),
                         ])
                         ->action(static function (array $data, ClassRoom $record): void {
@@ -161,7 +167,7 @@ class ClassRoomResource extends Resource
                         ->modalHeading('Assign Students')
                         ->modalButton(__('Assign'))
                         ->form([
-                            StudentSelector::show()
+                            StudentSelector::showFullInfo('student_id')
                                 ->multiple()
                                 ->default(static fn ($record) => $record->enrollments()->with('student')->get()->pluck('student.id')->toArray()),
                         ])

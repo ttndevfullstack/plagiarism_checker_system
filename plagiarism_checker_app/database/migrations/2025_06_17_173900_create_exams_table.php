@@ -11,11 +11,11 @@ return new class extends Migration
         Schema::create('exams', function (Blueprint $table) {
             $table->id();
             $table->foreignId('class_id')->constrained('classes')->onDelete('cascade');
-            $table->foreignId('teacher_id')->constrained('teachers')->onDelete('cascade');
             $table->string('title');
             $table->text('description')->nullable();
             $table->dateTime('start_time')->nullable();
             $table->dateTime('end_time')->nullable();
+            $table->foreignId('uploaded_by')->constrained('users')->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
         });

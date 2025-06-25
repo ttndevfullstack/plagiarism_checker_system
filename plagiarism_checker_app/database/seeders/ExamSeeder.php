@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Exam;
+use App\Models\User;
 use App\Models\ClassRoom;
 use App\Traits\SeedValidator;
 use Illuminate\Database\Seeder;
@@ -18,6 +19,7 @@ class ExamSeeder extends Seeder
             return;
         }
 
+        $users = User::all();
         $classRooms = ClassRoom::all();
 
         if ($classRooms->isEmpty()) {
@@ -45,11 +47,11 @@ class ExamSeeder extends Seeder
 
                     Exam::create([
                         'class_id' => $classRoom->id,
-                        'teacher_id' => $classRoom->teacher_id,
                         'title' => fake()->sentence(4),
                         'description' => fake()->paragraph(),
                         'start_time' => $examStart,
                         'end_time' => $examEnd,
+                        'uploaded_by' => $users->random()->id,
                     ]);
                 }
             }
