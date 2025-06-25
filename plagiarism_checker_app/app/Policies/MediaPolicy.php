@@ -14,7 +14,7 @@ class MediaPolicy
 
     public function create(User $user): bool
     {
-        return $user->isAdmin();
+        return true;
     }
 
     public function update(User $user, Media $media): bool

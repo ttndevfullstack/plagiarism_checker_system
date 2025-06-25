@@ -2,10 +2,13 @@
 
 namespace App\Filament\User\Resources;
 
+use App\Enums\DocumentStatus;
 use App\Filament\User\Resources\ExamResource\Pages;
 use App\Models\Exam;
 use App\Models\ClassRoom;
+use App\Models\Document;
 use App\Models\Teacher;
+use Awcodes\Curator\Components\Forms\CuratorPicker;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -71,6 +74,49 @@ class ExamResource extends Resource
                 auth()->user()->isStudent()
                     ? [
                         Actions\ViewAction::make(),
+                        Actions\Action::make('submitDocument')
+                            ->label('Submit Document')
+                            ->icon('heroicon-c-paper-airplane')
+                            ->color(Color::Green)
+                            ->form([
+                                CuratorPicker::make('media_id')
+                                    ->label('Document File')
+                                    ->acceptedFileTypes([
+                                        'application/pdf',
+                                        'application/msword',
+                                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                    ])
+                                    ->maxSize(30720000)
+                                    ->preserveFilenames()
+                                    ->required(),
+
+                                Forms\Components\Textarea::make('description')
+                                    ->label('Description')
+                                    ->maxLength(1000)
+                                    ->rows(2)
+                                    ->columnSpanFull(),
+                            ])
+                            ->action(function (array $data, $record) {
+                                $user = auth()->user();
+                                $exam = $record;
+                                $mediaId = $data['media_id'];
+                                $description = $data['description'] ?? null;
+                                $originalName = \Awcodes\Curator\Models\Media::find($mediaId)?->name ?? null;
+
+                                Document::create([
+                                    'media_id'      => $mediaId,
+                                    'exam_id'       => $exam->id,
+                                    'class_id'      => $exam->class_id,
+                                    'uploaded_by'   => $user->id,
+                                    'original_name' => $originalName,
+                                    'description'   => $description,
+                                    'status'        => DocumentStatus::PENDING,
+                                ]);
+                            })
+                            ->visible(fn () => auth()->user()->isStudent())
+                            ->modalHeading('Submit Document for Exam')
+                            ->modalButton('Submit')
+                            ->successNotificationTitle('Document submitted successfully.'),
                     ]
                     : [
                         Actions\ViewAction::make(),
