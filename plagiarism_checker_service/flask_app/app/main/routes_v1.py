@@ -94,8 +94,8 @@ def delete_documents(document_id):
         }), 500
 
 
-@bp_v1.route("/plagiarism-checker/content", methods=["POST"])
-def check_document_plagiarism():
+@bp_v1.route("/plagiarism-checker/text", methods=["POST"])
+def check_plagiarism_by_text():
     if request.is_json:
         data = request.get_json()
         if not data:
@@ -114,7 +114,7 @@ def check_document_plagiarism():
 
 
 @bp_v1.route("/plagiarism-checker/file", methods=["POST"])
-def check_pdf_plagiarism():
+def check_plagiarism_by_file():
     if 'file' not in request.files:
         return jsonify({"error": "No file provided"}), 400
         
@@ -127,7 +127,6 @@ def check_pdf_plagiarism():
 
     try:
         pdf_processor = PDFProcessor(Config.MINILM_EMBEDDING_MODEL)
-        # return jsonify({"data": pdf_processor.process_pdf(file)})
         highlighted_pdf_path, results = pdf_processor.process_pdf(file)
         
         # Read the PDF file and encode it

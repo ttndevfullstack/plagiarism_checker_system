@@ -7,7 +7,6 @@ use App\Filament\User\Resources\ExamResource\Pages;
 use App\Models\Exam;
 use App\Models\ClassRoom;
 use App\Models\Document;
-use App\Models\Teacher;
 use Awcodes\Curator\Components\Forms\CuratorPicker;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -40,15 +39,18 @@ class ExamResource extends Resource
                 ->label('Class')
                 ->options(ClassRoom::all()->pluck('name', 'id'))
                 ->searchable()
-                ->required(),
+                ->required()
+                ->default(request()->get('class_id')),
             Forms\Components\TextInput::make('title')
                 ->required()
                 ->maxLength(255),
             Forms\Components\Textarea::make('description')
                 ->maxLength(1000),
             Forms\Components\DateTimePicker::make('start_time')
+                ->required()
                 ->label('Start Time'),
             Forms\Components\DateTimePicker::make('end_time')
+                ->required()
                 ->label('End Time'),
         ]);
     }
@@ -60,7 +62,23 @@ class ExamResource extends Resource
                 Tables\Columns\TextColumn::make('title')->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('class.name')->label('Class')->sortable(),
                 Tables\Columns\TextColumn::make('start_time')->dateTime(),
-                Tables\Columns\TextColumn::make('end_time')->dateTime(),
+                Tables\Columns\TextColumn::make('end_time')
+                    ->dateTime()
+                    ->color(function ($record) {
+                        if (! $record->end_time) { return null; }
+
+                        $endTime = $record->end_time instanceof \Illuminate\Support\Carbon
+                            ? $record->end_time
+                            : \Illuminate\Support\Carbon::parse($record->end_time);
+
+                        if ($endTime->isToday()) {
+                            return Color::Red;
+                        }
+                        if ($endTime->isBetween(now(), now()->addDays(3), true)) {
+                            return Color::Yellow;
+                        }
+                        return null;
+                    }),
                 Tables\Columns\TextColumn::make('created_at')->dateTime(),
             ])
             ->defaultSort('created_at', 'desc')
@@ -69,7 +87,7 @@ class ExamResource extends Resource
                 auth()->user()->isStudent()
                     ? [
                         Actions\ViewAction::make(),
-                        Actions\Action::make('submitDocument')
+                        Actions\Action::make('submit-document')
                             ->label('Submit Document')
                             ->icon('heroicon-c-paper-airplane')
                             ->color(Color::Green)
@@ -110,6 +128,7 @@ class ExamResource extends Resource
                                 ]);
 
                                 // Dispatch check document
+                                
                             })
                             ->visible(fn () => auth()->user()->isStudent())
                             ->modalHeading('Submit Document for Exam')

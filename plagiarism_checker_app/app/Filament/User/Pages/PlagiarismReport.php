@@ -56,7 +56,7 @@ class PlagiarismReport extends Page
             $data = json_decode(base64_decode(request()->get('data')), true);
 
             try {
-                $response = app(PlagiarismService::class)->checkPDFPlagiarism($data['file_path']);
+                $response = app(PlagiarismService::class)->checkPlagiarismByFile($data['file_path']);
 
                 $this->filePath = $response['file_path'];
                 $this->results = $response['results']['data'];

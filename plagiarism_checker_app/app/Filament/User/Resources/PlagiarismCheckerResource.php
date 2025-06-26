@@ -5,7 +5,7 @@ namespace App\Filament\User\Resources;
 use Filament\Forms;
 use Filament\Tables;
 use Filament\Resources\Resource;
-use App\Models\PlagiarismCheck;
+use App\Models\PlagiarismHistory;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Section;
 use App\Filament\User\Resources\PlagiarismCheckerResource\Pages;
@@ -13,7 +13,7 @@ use Filament\Forms\Components\RichEditor;
 
 class PlagiarismCheckerResource extends Resource
 {
-    protected static ?string $model = PlagiarismCheck::class;
+    protected static ?string $model = PlagiarismHistory::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-magnifying-glass';
 

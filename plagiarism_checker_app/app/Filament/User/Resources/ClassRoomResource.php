@@ -90,7 +90,16 @@ class ClassRoomResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters(\App\Filament\Components\Filters\BaseFilterGroup::show())
-            ->actions([Actions\ViewAction::make()]);
+            ->actions([
+                Actions\ViewAction::make(),
+                Actions\Action::make('create_exam')
+                    ->icon('heroicon-s-plus-circle')
+                    ->color('primary')
+                    ->label('Create Exam')
+                    ->url(fn ($record) => route('filament.user.resources.exams.create', ['class_id' => $record->id]))
+                    ->openUrlInNewTab(false)
+                    ->visible(fn () => auth()->user()->isAdmin() || auth()->user()->isTeacher()),
+            ]);
     }
 
     public static function getEloquentQuery(): Builder

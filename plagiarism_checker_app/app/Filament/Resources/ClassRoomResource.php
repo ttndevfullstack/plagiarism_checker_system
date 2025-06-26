@@ -195,6 +195,14 @@ class ClassRoomResource extends Resource
                                     ->send();
                             }
                         }),
+
+                    Tables\Actions\Action::make('create_exam')
+                        ->icon('heroicon-s-plus-circle')
+                        ->color(Color::Blue)
+                        ->label('Create Exam')
+                        ->url(fn ($record) => route('filament.user.resources.exams.create', ['class_id' => $record->id]))
+                        ->openUrlInNewTab(false)
+                        ->visible(fn () => auth()->user()->isAdmin() || auth()->user()->isTeacher()),
                 ])->iconButton(),
             ])
             ->bulkActions([
