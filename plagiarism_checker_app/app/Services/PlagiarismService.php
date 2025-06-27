@@ -42,23 +42,11 @@ class PlagiarismService
             throw new \Exception('Invalid response format from plagiarism service');
         }
 
-        $data = $responseData['data']['results']['data'];
-        if ($responseData['success'] && ! empty($data)) {
-            $plagiarismHistory = new PlagiarismHistory();
-            $plagiarismHistory->document_id = null;
-            $plagiarismHistory->class_id = null;
-            $plagiarismHistory->subject_id = null;
-            $plagiarismHistory->originality_score = $data['originality_score'];
-            $plagiarismHistory->similarity_score = $data['similarity_score'];
-            $plagiarismHistory->source_matched = $data['source_matched'];
-            $plagiarismHistory->words_analyzed = $data['words_analyzed'];
-            $plagiarismHistory->encoded_file = $responseData['data']['pdf_content'];
-            $plagiarismHistory->results = $responseData['data']['results'];
-            $plagiarismHistory->save();
-        }
+        $filePath = $this->decodeAndSaveFile($responseData['data']['pdf_content']);
 
         return [
-            'file_path' => $this->decodeAndSaveFile($responseData['data']['pdf_content']),
+            'encoded_file' => $responseData['data']['pdf_content'] ?? null,
+            'file_path' => $filePath,
             'results' => $responseData['data']['results'] ?? [],
             'status' => $responseData['success'] ?? false,
             'message' => $responseData['message'] ?? ''

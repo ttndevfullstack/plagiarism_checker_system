@@ -4,6 +4,7 @@ namespace App\Filament\User\Resources;
 
 use App\Enums\DocumentStatus;
 use App\Filament\User\Resources\ExamResource\Pages;
+use App\Jobs\ProcessSubmitDocument;
 use App\Models\Exam;
 use App\Models\ClassRoom;
 use App\Models\Document;
@@ -14,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Actions;
+use Filament\Notifications\Notification;
 use Filament\Support\Colors\Color;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -65,7 +67,9 @@ class ExamResource extends Resource
                 Tables\Columns\TextColumn::make('end_time')
                     ->dateTime()
                     ->color(function ($record) {
-                        if (! $record->end_time) { return null; }
+                        if (! $record->end_time) {
+                            return null;
+                        }
 
                         $endTime = $record->end_time instanceof \Illuminate\Support\Carbon
                             ? $record->end_time
@@ -110,30 +114,41 @@ class ExamResource extends Resource
                                     ->columnSpanFull(),
                             ])
                             ->action(function (array $data, $record) {
-                                $user = auth()->user();
-                                $exam = $record;
                                 $mediaId = $data['media_id'];
                                 $description = $data['description'] ?? null;
                                 $originalName = \Awcodes\Curator\Models\Media::find($mediaId)?->name ?? null;
 
-                                // Create document
-                                Document::create([
-                                    'media_id'      => $mediaId,
-                                    'exam_id'       => $exam->id,
-                                    'class_id'      => $exam->class_id,
-                                    'uploaded_by'   => $user->id,
-                                    'original_name' => $originalName,
-                                    'description'   => $description,
-                                    'status'        => DocumentStatus::PENDING,
-                                ]);
+                                try {
+                                    $document = Document::create([
+                                        'class_id' => $record->class->id,
+                                        'subject_id' => $record->class->subject->id,
+                                        'media_id' => $mediaId,
+                                        'status' => DocumentStatus::PENDING,
+                                        'original_name' => $originalName,
+                                        'description' => $description,
+                                    ]);
 
-                                // Dispatch check document
-                                
+                                    Notification::make()
+                                        ->title('Document submitted successfully.')
+                                        ->success()
+                                        ->send();
+                                } catch (\Throwable $th) {
+                                    Notification::make()
+                                        ->danger()
+                                        ->title('Error')
+                                        ->body($th->getMessage())
+                                        ->send();
+                                }
+
+                                ProcessSubmitDocument::dispatch($mediaId, [
+                                    'document_id' => $document->id,
+                                    'class_id' => $record->class->id,
+                                    'subject_id' => $record->class->subject->id,
+                                ]);
                             })
-                            ->visible(fn () => auth()->user()->isStudent())
+                            ->visible(fn() => auth()->user()->isStudent())
                             ->modalHeading('Submit Document for Exam')
                             ->modalButton('Submit')
-                            ->successNotificationTitle('Document submitted successfully.'),
                     ]
                     : [
                         Actions\ViewAction::make(),

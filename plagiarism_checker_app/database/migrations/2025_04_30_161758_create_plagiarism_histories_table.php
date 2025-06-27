@@ -17,9 +17,9 @@ return new class extends Migration
             $table->decimal('similarity_score', 5, 2)->unsigned()->between(0, 100);
             $table->unsignedTinyInteger('source_matched');
             $table->unsignedInteger('words_analyzed');
-            $table->json('encoded_file')->nullable();
+            $table->longText('encoded_file')->nullable();
             $table->json('results');
-            $table->foreignId('uploaded_by')->constrained();
+            $table->foreignId('uploaded_by')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
     }
