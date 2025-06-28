@@ -34,7 +34,14 @@ chmod 755 /var/www/laravel/storage/app/public/downloads
 php artisan storage:link || true
 
 # Migrate and seed data
-php artisan migrate --force && php artisan db:seed --force || true
+INIT_FILE="/var/www/laravel/.initialized"
+if [ ! -f "$INIT_FILE" ]; then
+  echo "First-time setup: migrate and seed"
+  php artisan migrate --force && php artisan db:seed --force
+  touch "$INIT_FILE"
+else
+  echo "Already initialized, skipping migrate and seed"
+fi
 
 # Start PHP-FPM
 php-fpm -D
