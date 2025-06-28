@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\ClassRoomResource\Pages;
+namespace App\Filament\User\Resources\ClassRoomResource\Pages;
 
-use App\Filament\Resources\ClassRoomResource;
+use App\Filament\User\Resources\ClassRoomResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Colors\Color;
@@ -29,7 +29,7 @@ class ViewClassRoom extends ViewRecord
         if (auth()->user()->isStudent()) {
             return [ExamListWidget::make(['record' => $this->record])];    
         }
-
+        
         return [
             ExamListWidget::make(['record' => $this->record]),
             StudentListWidget::make(['record' => $this->record]),

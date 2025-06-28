@@ -1,67 +1,32 @@
 <?php
 
-namespace App\Filament\User\Resources;
+namespace App\Filament\Resources\ClassRoomResource\Widgets;
 
+use Filament\Widgets\TableWidget;
 use App\Enums\DocumentStatus;
-use App\Filament\User\Resources\ExamResource\Pages;
+use App\Filament\User\Resources\ExamResource;
 use App\Jobs\ProcessSubmitDocument;
-use App\Models\Exam;
 use App\Models\ClassRoom;
 use App\Models\Document;
+use App\Models\Exam;
 use Awcodes\Curator\Components\Forms\CuratorPicker;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Actions;
 use Filament\Notifications\Notification;
 use Filament\Support\Colors\Color;
-use Illuminate\Database\Eloquent\Builder;
 
-class ExamResource extends Resource
+class ExamListWidget extends TableWidget
 {
-    protected static ?string $model = Exam::class;
+    public ClassRoom $record;
 
-    protected static ?string $navigationGroup = 'Class Management';
+    protected int | string | array $columnSpan = 'full';
 
-    protected static ?string $navigationLabel = 'Exam Management';
-
-    protected static ?string $navigationIcon = 'heroicon-s-paper-airplane';
-
-    public static function canCreate(): bool
-    {
-        return auth()->user()->isTeacher();
-    }
-
-    public static function form(Form $form): Form
-    {
-        return $form->schema([
-            Forms\Components\Select::make('class_id')
-                ->label('Class')
-                ->options(ClassRoom::all()->pluck('name', 'id'))
-                ->searchable()
-                ->required()
-                ->default(request()->get('class_id')),
-            Forms\Components\TextInput::make('title')
-                ->required()
-                ->maxLength(255),
-            Forms\Components\Textarea::make('description')
-                ->maxLength(1000),
-            Forms\Components\DateTimePicker::make('start_time')
-                ->default(now())
-                ->required()
-                ->label('Start Time'),
-            Forms\Components\DateTimePicker::make('end_time')
-                ->default(now()->addDays(3))
-                ->required()
-                ->label('End Time'),
-        ]);
-    }
-
-    public static function table(Table $table): Table
+    public function table(Table $table): Table
     {
         return $table
+            ->query(Exam::query()->where('class_id', $this->record->id))
             ->columns([
                 Tables\Columns\TextColumn::make('title')->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('class.name')->label('Class')->sortable(),
@@ -153,33 +118,12 @@ class ExamResource extends Resource
                             ->modalButton('Submit')
                     ]
                     : [
-                        Actions\ViewAction::make(),
-                        Actions\EditAction::make()->color(Color::Blue),
-                        Actions\DeleteAction::make(),
+                        Tables\Actions\ViewAction::make()
+                            ->url(fn($record) => ExamResource::getUrl('view', ['record' => $record->getKey()])),
+                        Tables\Actions\EditAction::make()
+                            ->url(fn($record) => ExamResource::getUrl('edit', ['record' => $record->getKey()])),
+                        Tables\Actions\DeleteAction::make(),
                     ]
             );
-    }
-
-    public static function getEloquentQuery(): Builder
-    {
-        if (auth()->user()->isTeacher()) {
-            return Exam::query()->where('uploaded_by', auth()->user()->id);
-        }
-
-        $classRoomIds = auth()->user()->classrooms()->get()->pluck('id')->toArray();
-        return Exam::query()->whereIn('class_id', $classRoomIds)->where('end_time', '>=', now());
-    }
-
-    /**
-     * @return array<string, \Filament\Resources\Pages\Page> 
-     */
-    public static function getPages(): array
-    {
-        return [
-            'index' => Pages\ListExams::route('/'),
-            'create' => Pages\CreateExam::route('/create'),
-            'edit' => Pages\EditExam::route('/{record}/edit'),
-            'view' => Pages\ViewExam::route('/{record}'),
-        ];
     }
 }

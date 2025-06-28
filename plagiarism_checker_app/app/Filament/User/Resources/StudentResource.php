@@ -2,16 +2,19 @@
 
 namespace App\Filament\User\Resources;
 
-use App\Filament\Components\Actions\BaseActionGroup;
 use App\Filament\Components\Filters\BaseFilterGroup;
 use App\Filament\Components\Forms\TextInputRelationship;
 use App\Filament\User\Resources\StudentResource\Pages;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Student;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Actions;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
+use Illuminate\Database\Eloquent\Builder;
 use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 
 class StudentResource extends Resource
@@ -38,6 +41,9 @@ class StudentResource extends Resource
                         TextInputRelationship::show('first_name', __('First Name'), 'user')->required(),
                         TextInputRelationship::show('last_name', __('Last Name'), 'user')->required(),
                         TextInputRelationship::show('email', __('Email'), 'user')->email()->required(),
+                        DatePicker::make('dob')->label('Date of Birth')->required(false),
+                        TextInput::make('phone')->label('Phone')->maxLength(20)->tel()->required(false),
+                        TextInput::make('address')->label('Address')->maxLength(255)->required(false),
                     ]),
 
                 Forms\Components\Section::make('Student Details')
@@ -65,6 +71,17 @@ class StudentResource extends Resource
                 Tables\Columns\TextColumn::make('student_code')
                     ->label(__('Student Code'))
                     ->searchable(),
+                Tables\Columns\TextColumn::make('user.dob')
+                    ->label('Date of Birth')
+                    ->date()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('user.phone')
+                    ->label('Phone')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('user.address')
+                    ->label('Address')
+                    ->limit(20)
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('enrollment_date')
                     ->dateTime()
                     ->sortable(),
@@ -76,12 +93,23 @@ class StudentResource extends Resource
                     ->placeholder(__('Input date range')),
                 ...BaseFilterGroup::show(),
             ])
-            ->actions(BaseActionGroup::show())
+            ->actions([
+                Actions\ViewAction::make(),
+                Actions\EditAction::make()->color('primary'),
+            ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $assignedClassIds = auth()->user()->classrooms()->get()->pluck('id')->toArray();
+        return Student::query()->whereHas('enrollments', function ($q) use ($assignedClassIds) {
+            $q->whereIn('class_id', $assignedClassIds);
+        });
     }
 
     /**

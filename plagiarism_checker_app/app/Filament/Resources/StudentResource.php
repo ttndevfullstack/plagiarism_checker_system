@@ -2,12 +2,11 @@
 
 namespace App\Filament\Resources;
 
-use App\Models\Teacher;
 use App\Filament\Components\Actions\BaseActionGroup;
 use App\Filament\Components\Filters\BaseFilterGroup;
 use App\Filament\Components\Forms\TextInputRelationship;
-use App\Filament\Resources\TeacherResource\Pages;
-use App\Models\ClassRoom;
+use App\Filament\Resources\StudentResource\Pages;
+use App\Models\Student;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
@@ -15,19 +14,17 @@ use Filament\Tables;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
-use Filament\Support\Colors\Color;
-use Filament\Tables\Actions\Action;
 use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 
-class TeacherResource extends Resource
+class StudentResource extends Resource
 {
-    protected static ?string $model = Teacher::class;
+    protected static ?string $model = Student::class;
 
     protected static ?int $navigationSort = 5;
 
     protected static ?string $navigationGroup = 'Class Management';
 
-    protected static ?string $navigationLabel = 'Teacher Management';
+    protected static ?string $navigationLabel = 'Student Management';
 
     protected static ?string $navigationIcon = 'heroicon-c-academic-cap';
 
@@ -45,9 +42,9 @@ class TeacherResource extends Resource
                         TextInput::make('address')->label('Address')->maxLength(255)->required(false),
                     ]),
 
-                Forms\Components\Section::make('Teacher Details')
+                Forms\Components\Section::make('Student Details')
                     ->schema([
-                        Forms\Components\DateTimePicker::make('joined_date')
+                        Forms\Components\DateTimePicker::make('enrollment_date')
                             ->default(now())
                             ->required()
                             ->native(false),
@@ -59,6 +56,10 @@ class TeacherResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('student_code')
+                    ->label(__('Student Code'))
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('user.full_name')
                     ->label(__('Full Name'))
                     ->sortable()
@@ -78,53 +79,18 @@ class TeacherResource extends Resource
                     ->label('Address')
                     ->limit(20)
                     ->searchable(),
-                Tables\Columns\TextColumn::make('joined_date')
+                Tables\Columns\TextColumn::make('enrollment_date')
                     ->dateTime()
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
                 ...BaseFilterGroup::show(),
-                DateRangeFilter::make('joined_date')
-                    ->label(__('Joined Date Range'))
+                DateRangeFilter::make('enrollment_date')
+                    ->label(__('Enrollment Date Range'))
                     ->placeholder(__('Input date range')),
             ])
-            ->actions([
-                ...BaseActionGroup::show(),
-
-                Action::make('assignClasses')
-                    ->color(Color::Green)
-                    ->label(__('Assign Classes'))
-                    ->icon('heroicon-s-clipboard-document-check')
-                    ->modalHeading(__('Assign Classes to Teacher'))
-                    ->modalButton(__('Assign'))
-                    ->form([
-                        Forms\Components\Select::make('class_ids')
-                            ->label(__('Select Classes'))
-                            ->options(
-                                ClassRoom::all()->mapWithKeys(static function ($class) {
-                                    return [
-                                        $class->id => sprintf(
-                                            'Room Number: %s | Name: %s | Teacher: %s | Total Students: %s',
-                                            $class->room_number,
-                                            $class->name,
-                                            optional($class->teacher->user)->full_name,
-                                            $class->enrollments()->count()
-                                        ),
-                                    ];
-                                })
-                            )
-                            ->default(static fn($record) => $record->classes->pluck('id')->toArray())
-                            ->multiple()
-                            ->preload()
-                            ->searchable()
-                            ->required(),
-                    ])
-                    ->action(static function (array $data, Teacher $record): void {
-                        ClassRoom::whereIn('id', $data['class_ids'])->update(['teacher_id' => $record->id]);
-                    })
-                    ->successNotificationTitle(__('Classes assigned successfully!')),
-            ])
+            ->actions(BaseActionGroup::show())
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
@@ -138,10 +104,10 @@ class TeacherResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListTeachers::route('/'),
-            'create' => Pages\CreateTeacher::route('/create'),
-            'view' => Pages\ViewTeacher::route('/{record}'),
-            'edit' => Pages\EditTeacher::route('/{record}/edit'),
+            'index' => Pages\ListStudents::route('/'),
+            'create' => Pages\CreateStudent::route('/create'),
+            'view' => Pages\ViewStudent::route('/{record}'),
+            'edit' => Pages\EditStudent::route('/{record}/edit'),
         ];
     }
 }

@@ -43,6 +43,23 @@ class UserResource extends Resource
                     ->email()
                     ->required()
                     ->maxLength(255),
+                Forms\Components\DatePicker::make('dob')
+                    ->label('Date of Birth')
+                    ->required(false),
+                Forms\Components\TextInput::make('phone')
+                    ->label('Phone')
+                    ->maxLength(20)
+                    ->tel()
+                    ->required(false),
+                Forms\Components\TextInput::make('address')
+                    ->label('Address')
+                    ->maxLength(255)
+                    ->required(false),
+                Forms\Components\FileUpload::make('avatar')
+                    ->label('Avatar')
+                    ->image()
+                    ->directory('avatars')
+                    ->required(false),
                 Forms\Components\Select::make('role')
                     ->label('Role')
                     ->required()
@@ -50,11 +67,11 @@ class UserResource extends Resource
                 Forms\Components\TextInput::make('password')
                     ->password()
                     ->confirmed()
-                    ->required(static fn ($record) => is_null($record)),
+                    ->required(static fn($record) => is_null($record)),
                 Forms\Components\TextInput::make('password_confirmation')
                     ->password()
                     ->label('Confirm Password')
-                    ->required(static fn ($record) => is_null($record)),
+                    ->required(static fn($record) => is_null($record)),
             ]);
     }
 
@@ -68,10 +85,26 @@ class UserResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('dob')
+                    ->label('Date of Birth')
+                    ->date()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('phone')
+                    ->label('Phone')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('address')
+                    ->label('Address')
+                    ->limit(20)
+                    ->searchable(),
+                Tables\Columns\ImageColumn::make('avatar')
+                    ->label('Avatar')
+                    ->circular()
+                    ->height(40)
+                    ->width(40),
                 Tables\Columns\TextColumn::make('roles.name')
                     ->searchable()
                     ->default(__('Not registered'))
-                    ->formatStateUsing(static fn ($state) => ucfirst($state)),
+                    ->formatStateUsing(static fn($state) => ucfirst($state)),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),
@@ -112,8 +145,8 @@ class UserResource extends Resource
                             ->options(Role::all()->pluck('name', 'id')->toArray())
                             ->columns(2)
                             ->reactive()
-                            ->default(static fn (User $user) => $user->roles->isNotEmpty() ? [$user->roles->first()->id] : [])
-                            ->afterStateUpdated(static fn ($state, callable $set) => !empty($state) && $set('role_ids', [array_pop($state)])),
+                            ->default(static fn(User $user) => $user->roles->isNotEmpty() ? [$user->roles->first()->id] : [])
+                            ->afterStateUpdated(static fn($state, callable $set) => !empty($state) && $set('role_ids', [array_pop($state)])),
                     ])
                     ->requiresConfirmation(),
             ])

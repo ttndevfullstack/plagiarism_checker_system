@@ -45,7 +45,11 @@ class ClassRoomResource extends Resource
                 SubjectSelector::show(),
                 
                 TeacherSelector::show()->moreInfo(),
-                
+
+                StudentSelector::showFullInfo('student_id')
+                    ->multiple()
+                    ->label('Assign Students'),
+
                 Forms\Components\TextInput::make('academic_year')
                     ->required()
                     ->maxLength(10),
