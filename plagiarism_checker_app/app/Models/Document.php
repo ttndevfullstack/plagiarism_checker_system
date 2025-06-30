@@ -15,6 +15,7 @@ class Document extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'exam_id',
         'class_id',
         'subject_id',
         'uploaded_by',
@@ -51,6 +52,10 @@ class Document extends Model
         return $query->where('uploaded_by', auth()->id());
     }
 
+    public function exam(): BelongsTo
+    {
+        return $this->belongsTo(Exam::class, 'exam_id');
+    }
 
     public function class(): BelongsTo
     {

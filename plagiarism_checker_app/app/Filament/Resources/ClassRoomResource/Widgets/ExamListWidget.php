@@ -85,6 +85,7 @@ class ExamListWidget extends TableWidget
 
                             try {
                                 $document = Document::create([
+                                    'exam_id' => $record->id,
                                     'class_id' => $record->class->id,
                                     'subject_id' => $record->class->subject->id,
                                     'media_id' => $mediaId,
