@@ -4,7 +4,7 @@ namespace App\Filament\Resources\ClassRoomResource\Widgets;
 
 use Filament\Widgets\TableWidget;
 use App\Enums\DocumentStatus;
-use App\Filament\User\Resources\ExamResource;
+use App\Filament\Resources\ExamResource;
 use App\Jobs\ProcessSubmitDocument;
 use App\Models\ClassRoom;
 use App\Models\Document;
@@ -55,75 +55,71 @@ class ExamListWidget extends TableWidget
             ->defaultSort('created_at', 'desc')
             ->filters(\App\Filament\Components\Filters\BaseFilterGroup::show())
             ->actions(
-                auth()->user()->isStudent()
-                    ? [
-                        Actions\ViewAction::make(),
-                        Actions\Action::make('submit-document')
-                            ->label('Submit Document')
-                            ->icon('heroicon-c-paper-airplane')
-                            ->color(Color::Green)
-                            ->form([
-                                CuratorPicker::make('media_id')
-                                    ->label('Document File')
-                                    ->acceptedFileTypes([
-                                        'application/pdf',
-                                        'application/msword',
-                                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                                    ])
-                                    ->maxSize(30720000)
-                                    ->preserveFilenames()
-                                    ->required(),
+                [
+                    Actions\Action::make('submit-document')
+                        ->label('Submit Document')
+                        ->icon('heroicon-c-paper-airplane')
+                        ->color(Color::Green)
+                        ->form([
+                            CuratorPicker::make('media_id')
+                                ->label('Document File')
+                                ->acceptedFileTypes([
+                                    'application/pdf',
+                                    'application/msword',
+                                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                ])
+                                ->maxSize(30720000)
+                                ->preserveFilenames()
+                                ->required(),
 
-                                Forms\Components\Textarea::make('description')
-                                    ->label('Description')
-                                    ->maxLength(1000)
-                                    ->rows(2)
-                                    ->columnSpanFull(),
-                            ])
-                            ->action(function (array $data, $record) {
-                                $mediaId = $data['media_id'];
-                                $description = $data['description'] ?? null;
-                                $originalName = \Awcodes\Curator\Models\Media::find($mediaId)?->name ?? null;
+                            Forms\Components\Textarea::make('description')
+                                ->label('Description')
+                                ->maxLength(1000)
+                                ->rows(2)
+                                ->columnSpanFull(),
+                        ])
+                        ->action(function (array $data, $record) {
+                            $mediaId = $data['media_id'];
+                            $description = $data['description'] ?? null;
+                            $originalName = \Awcodes\Curator\Models\Media::find($mediaId)?->name ?? null;
 
-                                try {
-                                    $document = Document::create([
-                                        'class_id' => $record->class->id,
-                                        'subject_id' => $record->class->subject->id,
-                                        'media_id' => $mediaId,
-                                        'status' => DocumentStatus::PENDING,
-                                        'original_name' => $originalName,
-                                        'description' => $description,
-                                    ]);
-
-                                    Notification::make()
-                                        ->title('Document submitted successfully.')
-                                        ->success()
-                                        ->send();
-                                } catch (\Throwable $th) {
-                                    Notification::make()
-                                        ->danger()
-                                        ->title('Error')
-                                        ->body($th->getMessage())
-                                        ->send();
-                                }
-
-                                ProcessSubmitDocument::dispatch($mediaId, [
-                                    'document_id' => $document->id,
+                            try {
+                                $document = Document::create([
                                     'class_id' => $record->class->id,
                                     'subject_id' => $record->class->subject->id,
+                                    'media_id' => $mediaId,
+                                    'status' => DocumentStatus::PENDING,
+                                    'original_name' => $originalName,
+                                    'description' => $description,
                                 ]);
-                            })
-                            ->visible(fn() => auth()->user()->isStudent())
-                            ->modalHeading('Submit Document for Exam')
-                            ->modalButton('Submit')
-                    ]
-                    : [
-                        Tables\Actions\ViewAction::make()
-                            ->url(fn($record) => ExamResource::getUrl('view', ['record' => $record->getKey()])),
-                        Tables\Actions\EditAction::make()
-                            ->url(fn($record) => ExamResource::getUrl('edit', ['record' => $record->getKey()])),
-                        Tables\Actions\DeleteAction::make(),
-                    ]
+
+                                Notification::make()
+                                    ->title('Document submitted successfully.')
+                                    ->success()
+                                    ->send();
+                            } catch (\Throwable $th) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Error')
+                                    ->body($th->getMessage())
+                                    ->send();
+                            }
+
+                            ProcessSubmitDocument::dispatch($mediaId, [
+                                'document_id' => $document->id,
+                                'class_id' => $record->class->id,
+                                'subject_id' => $record->class->subject->id,
+                            ]);
+                        })
+                        ->visible(fn() => auth()->user()->isStudent())
+                        ->modalHeading('Submit Document for Exam')
+                        ->modalButton('Submit'),
+                    Tables\Actions\ViewAction::make()
+                        ->url(fn($record) => ExamResource::getUrl('view', ['record' => $record->getKey()])),
+                    Tables\Actions\EditAction::make()
+                        ->url(fn($record) => ExamResource::getUrl('edit', ['record' => $record->getKey()])),
+                    Tables\Actions\DeleteAction::make(),
+                ]
             );
     }
 }

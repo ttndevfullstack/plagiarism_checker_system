@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Filament\User\Resources\ExamResource\Pages;
+namespace App\Filament\Resources\ExamResource\Pages;
 
-use App\Filament\Resources\ClassRoomResource\Widgets\SubmittedDocumentListWidget;
-use App\Filament\User\Resources\ExamResource;
+use App\Filament\Resources\ExamResource;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewExam extends ViewRecord
@@ -12,8 +11,6 @@ class ViewExam extends ViewRecord
 
     protected function getFooterWidgets(): array
     {
-        if (auth()->user()->isStudent()) { return []; }
-
         return [
             SubmittedDocumentListWidget::make(['record' => $this->record, 'classroom' => $this->record->class]),
         ];
