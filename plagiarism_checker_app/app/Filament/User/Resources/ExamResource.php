@@ -23,6 +23,8 @@ class ExamResource extends Resource
 {
     protected static ?string $model = Exam::class;
 
+    protected static ?int $navigationSort = 5;
+
     protected static ?string $navigationGroup = 'Class Management';
 
     protected static ?string $navigationLabel = 'Exam Management';
@@ -158,7 +160,12 @@ class ExamResource extends Resource
                         Actions\EditAction::make()->color(Color::Blue),
                         Actions\DeleteAction::make(),
                     ]
-            );
+            )
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
     }
 
     public static function getEloquentQuery(): Builder

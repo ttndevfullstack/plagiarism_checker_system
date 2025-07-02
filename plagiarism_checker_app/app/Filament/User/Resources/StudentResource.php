@@ -21,6 +21,8 @@ class StudentResource extends Resource
 {
     protected static ?string $model = Student::class;
 
+    protected static ?int $navigationSort = 6;
+
     protected static ?string $navigationGroup = 'Class Management';
 
     protected static ?string $navigationLabel = 'Student Management';
@@ -96,11 +98,6 @@ class StudentResource extends Resource
             ->actions([
                 Actions\ViewAction::make(),
                 Actions\EditAction::make()->color('primary'),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
             ]);
     }
 

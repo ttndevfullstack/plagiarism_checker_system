@@ -17,11 +17,11 @@ class DocumentResource extends Resource
 {
     protected static ?string $model = Document::class;
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 11;
 
     protected static ?string $navigationGroup = 'Data Management';
 
-    protected static ?string $navigationLabel = 'Document Management';
+    protected static ?string $navigationLabel = 'Upload Document';
 
     protected static ?string $navigationIcon = 'heroicon-s-document';
 

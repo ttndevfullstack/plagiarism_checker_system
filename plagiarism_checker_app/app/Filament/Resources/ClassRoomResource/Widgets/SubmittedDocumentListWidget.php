@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ClassRoomResource\Widgets;
 
 use App\Filament\Components\Filters\BaseFilterGroup;
+use App\Filament\User\Pages\PlagiarismReport;
 use App\Models\ClassRoom;
 use App\Models\Exam;
 use App\Models\Student;
@@ -35,7 +36,7 @@ class SubmittedDocumentListWidget extends TableWidget
                 Tables\Actions\Action::make('refresh')
                     ->label('')
                     ->icon('heroicon-o-arrow-path')
-                    ->action(fn () => null),
+                    ->action(fn() => null),
             ])
             ->columns([
                 Tables\Columns\TextColumn::make('student_code')
@@ -78,6 +79,29 @@ class SubmittedDocumentListWidget extends TableWidget
                     }),
             ])
             ->defaultSort('created_at', 'desc')
-            ->filters(BaseFilterGroup::show());
+            ->filters(BaseFilterGroup::show())
+            ->actions([
+                Tables\Actions\Action::make('viewPlagiarismReport')
+                    ->label('View Plagiarism Report')
+                    ->icon('heroicon-o-document-magnifying-glass')
+                    ->url(function ($record) {
+                        $history = PlagiarismHistory::where('uploaded_by', $record->user_id)
+                            ->where('class_id', $this->classroom->id)
+                            ->where('exam_id', $this->record->id)
+                            ->first();
+
+                        if (! $history) { return null; }
+
+                        return PlagiarismReport::getUrl(['history_id' => $history->id]);
+                    })
+                    ->openUrlInNewTab()
+                    ->disabled(function ($record) {
+                        $history = PlagiarismHistory::where('uploaded_by', $record->user_id)
+                            ->where('class_id', $this->classroom->id)
+                            ->where('exam_id', $this->record->id)
+                            ->first();
+                        return ! $history;
+                    }),
+            ]);
     }
 }

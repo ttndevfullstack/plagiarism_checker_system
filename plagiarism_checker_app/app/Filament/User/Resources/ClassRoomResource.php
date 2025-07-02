@@ -18,6 +18,8 @@ class ClassRoomResource extends Resource
 {
     protected static ?string $model = ClassRoom::class;
 
+    protected static ?int $navigationSort = 4;
+
     protected static ?string $navigationGroup = 'Class Management';
 
     protected static ?string $navigationLabel = 'ClassRoom Management';

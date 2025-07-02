@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\PlagiarismHistory;
 use App\Services\PlagiarismService;
 use Filament\Pages\Page;
 use Filament\Notifications\Notification;
@@ -34,11 +35,6 @@ class PlagiarismReport extends Page
 
     public string $filePath = '';
 
-    public static function canAccess(): bool
-    {
-        return true;
-    }
-
     protected function getHeaderActions(): array
     {
         return [
@@ -52,7 +48,11 @@ class PlagiarismReport extends Page
     {
         $this->isLoading = true;
 
-        if (request()->has('data')) {
+        if (request()->has('history_id')) {
+            $history = PlagiarismHistory::find(request()->get('history_id'));
+            $this->filePath = app(PlagiarismService::class)->decodeAndSaveFile($history->encoded_file);
+            $this->results = $history->results['data'];
+        } else if (request()->has('data')) {
             $data = json_decode(base64_decode(request()->get('data')), true);
 
             try {
@@ -76,8 +76,8 @@ class PlagiarismReport extends Page
             }
 
             $this->fileName = $data['filename'] ?? '';
-            $this->isLoading = false;
         }
+        $this->isLoading = false;
     }
 
     protected function getViewData(): array

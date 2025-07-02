@@ -17,11 +17,11 @@ class DocumentBatchResource extends Resource
 {
     protected static ?string $model = DocumentBatch::class;
 
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 10;
 
     protected static ?string $navigationGroup = 'Data Management';
 
-    protected static ?string $navigationLabel = 'Upload Documents';
+    protected static ?string $navigationLabel = 'Upload Document Batch';
 
     protected static ?string $navigationIcon = 'heroicon-s-clipboard-document-list';
 
