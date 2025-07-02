@@ -24,7 +24,12 @@ class Student extends Model
         parent::boot();
 
         static::creating(static function (Student $student): void {
+            $student->student_code = uniqid(self::PREFIX_STUDENT_CODE);
+        });
+
+        static::created(static function (Student $student): void {
             $student->updateStudentCodeAttribute();
+            $student->saveQuietly();
         });
     }
 
@@ -50,6 +55,8 @@ class Student extends Model
     # ==============================================================================
     public function updateStudentCodeAttribute(): void
     {
-        $this->student_code = self::PREFIX_STUDENT_CODE . str_pad($this->user->id, 5, '0', STR_PAD_LEFT);
+        if ($this->user && $this->user->id) {
+            $this->student_code = self::PREFIX_STUDENT_CODE . str_pad($this->user->id, 5, '0', STR_PAD_LEFT);
+        }
     }
 }

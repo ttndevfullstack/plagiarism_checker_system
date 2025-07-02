@@ -4,7 +4,9 @@ namespace App\Filament\Resources\ClassRoomResource\Widgets;
 
 use Filament\Widgets\TableWidget;
 use App\Enums\DocumentStatus;
+use App\Filament\Resources\ClassRoomResource;
 use App\Filament\Resources\ExamResource;
+use App\Filament\User\Resources\ExamResource as UserExamResource;
 use App\Jobs\ProcessSubmitDocument;
 use App\Models\ClassRoom;
 use App\Models\Document;
@@ -25,8 +27,19 @@ class ExamListWidget extends TableWidget
 
     public function table(Table $table): Table
     {
+        $createExamUrl = auth()->user()->isAdmin()
+            ? ExamResource::getUrl('create', ['class_id' => $this->record->id])
+            : UserExamResource::getUrl('create', ['class_id' => $this->record->id]);
+
         return $table
             ->query(Exam::query()->where('class_id', $this->record->id))
+            ->headerActions([
+                Tables\Actions\Action::make('createExam')
+                    ->label('Create Exam')
+                    ->icon('heroicon-m-plus')
+                    ->url(fn() => $createExamUrl)
+                    ->visible(fn() => auth()->user()->isAdmin() || auth()->user()->isTeacher()),
+            ])
             ->columns([
                 Tables\Columns\TextColumn::make('title')->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('class.name')->label('Class')->sortable(),

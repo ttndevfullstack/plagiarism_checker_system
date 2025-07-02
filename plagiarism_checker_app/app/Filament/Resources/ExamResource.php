@@ -29,11 +29,6 @@ class ExamResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-s-paper-airplane';
 
-    public static function canCreate(): bool
-    {
-        return auth()->user()->isTeacher();
-    }
-
     public static function form(Form $form): Form
     {
         return $form->schema([

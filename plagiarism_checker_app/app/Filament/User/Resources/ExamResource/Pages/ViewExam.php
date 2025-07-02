@@ -10,6 +10,14 @@ class ViewExam extends ViewRecord
 {
     protected static string $resource = ExamResource::class;
 
+    protected function getHeaderActions(): array
+    {
+        return [
+            \Filament\Actions\EditAction::make(),
+            \Filament\Actions\DeleteAction::make(),
+        ];
+    }
+
     protected function getFooterWidgets(): array
     {
         if (auth()->user()->isStudent()) { return []; }
