@@ -11,8 +11,9 @@ return new class extends Migration
         Schema::create('plagiarism_histories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('document_id')->nullable()->constrained();
-            $table->foreignId('class_id')->nullable()->constrained();
             $table->foreignId('subject_id')->nullable()->constrained();
+            $table->foreignId('class_id')->nullable()->constrained();
+            $table->foreignId('exam_id')->nullable()->constrained();
             $table->decimal('originality_score', 5, 2)->unsigned()->between(0, 100);
             $table->decimal('similarity_score', 5, 2)->unsigned()->between(0, 100);
             $table->unsignedTinyInteger('source_matched');

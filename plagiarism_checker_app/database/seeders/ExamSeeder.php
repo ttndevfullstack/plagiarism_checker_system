@@ -30,13 +30,17 @@ class ExamSeeder extends Seeder
 
         try {
             foreach ($classRooms as $classRoom) {
+                $classStart = $classRoom->start_date ? \Carbon\Carbon::parse($classRoom->start_date) : now();
+                $classEnd = $classRoom->end_date ? \Carbon\Carbon::parse($classRoom->end_date) : now()->addMonths(6);
+
+                // Skip if start date is not before end date
+                if ($classStart >= $classEnd) {
+                    continue;
+                }
+
                 $examCount = fake()->numberBetween(1, 2);
                 for ($i = 0; $i < $examCount; $i++) {
                     // Generate exam start and end times within the class's date range
-                    $classStart = $classRoom->start_date ? \Carbon\Carbon::parse($classRoom->start_date) : now();
-                    $classEnd = $classRoom->end_date ? \Carbon\Carbon::parse($classRoom->end_date) : now()->addMonths(6);
-
-                    // Ensure exam is within class period
                     $examStart = fake()->dateTimeBetween($classStart, $classEnd->copy()->subDay());
                     $examEnd = (clone $examStart)->modify('+' . fake()->numberBetween(1, 3) . ' hours');
 

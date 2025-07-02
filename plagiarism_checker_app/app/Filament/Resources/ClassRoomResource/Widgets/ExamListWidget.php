@@ -2,22 +2,18 @@
 
 namespace App\Filament\Resources\ClassRoomResource\Widgets;
 
-use Filament\Widgets\TableWidget;
-use App\Enums\DocumentStatus;
-use App\Filament\Resources\ClassRoomResource;
-use App\Filament\Resources\ExamResource;
-use App\Filament\User\Resources\ExamResource as UserExamResource;
-use App\Jobs\ProcessSubmitDocument;
-use App\Models\ClassRoom;
-use App\Models\Document;
 use App\Models\Exam;
+use App\Models\Document;
+use App\Models\ClassRoom;
+use App\Enums\DocumentStatus;
+use App\Jobs\ProcessSubmitDocument;
 use Awcodes\Curator\Components\Forms\CuratorPicker;
 use Filament\Forms;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Tables\Actions;
-use Filament\Notifications\Notification;
+use Filament\Widgets\TableWidget;
 use Filament\Support\Colors\Color;
+use Filament\Notifications\Notification;
 
 class ExamListWidget extends TableWidget
 {
@@ -27,17 +23,21 @@ class ExamListWidget extends TableWidget
 
     public function table(Table $table): Table
     {
-        $createExamUrl = auth()->user()->isAdmin()
-            ? ExamResource::getUrl('create', ['class_id' => $this->record->id])
-            : UserExamResource::getUrl('create', ['class_id' => $this->record->id]);
+        $resourceName = auth()->user()->isAdmin()
+            ? \App\Filament\Resources\ExamResource::class
+            : \App\Filament\User\Resources\ExamResource::class;
 
         return $table
             ->query(Exam::query()->where('class_id', $this->record->id))
             ->headerActions([
+                Tables\Actions\Action::make('refresh')
+                    ->label('')
+                    ->icon('heroicon-o-arrow-path')
+                    ->action(fn () => null),
                 Tables\Actions\Action::make('createExam')
                     ->label('Create Exam')
                     ->icon('heroicon-m-plus')
-                    ->url(fn() => $createExamUrl)
+                    ->url(fn() => $resourceName::getUrl('create', ['class_id' => $this->record->id]))
                     ->visible(fn() => auth()->user()->isAdmin() || auth()->user()->isTeacher()),
             ])
             ->columns([
@@ -69,7 +69,12 @@ class ExamListWidget extends TableWidget
             ->filters(\App\Filament\Components\Filters\BaseFilterGroup::show())
             ->actions(
                 [
-                    Actions\Action::make('submit-document')
+                    Tables\Actions\ViewAction::make()
+                        ->url(fn($record) => $resourceName::getUrl('view', ['record' => $record->getKey()])),
+                    Tables\Actions\EditAction::make()
+                        ->url(fn($record) => $resourceName::getUrl('edit', ['record' => $record->getKey()])),
+                    Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\Action::make('submit-document')
                         ->label('Submit Document')
                         ->icon('heroicon-c-paper-airplane')
                         ->color(Color::Green)
@@ -121,18 +126,14 @@ class ExamListWidget extends TableWidget
 
                             ProcessSubmitDocument::dispatch($mediaId, [
                                 'document_id' => $document->id,
-                                'class_id' => $record->class->id,
                                 'subject_id' => $record->class->subject->id,
+                                'class_id' => $record->class->id,
+                                'exam_id' => $record->id,
                             ]);
                         })
                         ->visible(fn() => auth()->user()->isStudent())
                         ->modalHeading('Submit Document for Exam')
                         ->modalButton('Submit'),
-                    Tables\Actions\ViewAction::make()
-                        ->url(fn($record) => ExamResource::getUrl('view', ['record' => $record->getKey()])),
-                    Tables\Actions\EditAction::make()
-                        ->url(fn($record) => ExamResource::getUrl('edit', ['record' => $record->getKey()])),
-                    Tables\Actions\DeleteAction::make(),
                 ]
             );
     }

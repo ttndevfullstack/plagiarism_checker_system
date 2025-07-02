@@ -164,7 +164,8 @@ class ExamResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         if (auth()->user()->isTeacher()) {
-            return Exam::query()->where('uploaded_by', auth()->user()->id);
+            $classRoomIds = ClassRoom::query()->assignedCurrentUser()->get()->pluck('id')->toArray();
+            return Exam::query()->whereIn('class_id', $classRoomIds);
         }
 
         $classRoomIds = auth()->user()->classrooms()->get()->pluck('id')->toArray();

@@ -27,6 +27,10 @@ class StudentListWidget extends TableWidget
                     ->with('user')
             )
             ->headerActions([
+                Tables\Actions\Action::make('refresh')
+                    ->label('')
+                    ->icon('heroicon-o-arrow-path')
+                    ->action(fn () => null),
                 Tables\Actions\Action::make('createStudent')
                     ->label('Create Student')
                     ->form([

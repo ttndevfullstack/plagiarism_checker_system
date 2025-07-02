@@ -9,8 +9,9 @@ class PlagiarismHistory extends Model
 {
     protected $fillable = [
         'document_id',
-        'class_id',
         'subject_id',
+        'class_id',
+        'exam_id',
         'originality_score',
         'similarity_score',
         'source_matched',
@@ -48,5 +49,10 @@ class PlagiarismHistory extends Model
     public function subject(): BelongsTo 
     {
         return $this->belongsTo(Subject::class);
+    }
+    
+    public function exam(): BelongsTo 
+    {
+        return $this->belongsTo(Exam::class);
     }
 }

@@ -32,8 +32,9 @@ class ProcessSubmitDocument implements ShouldQueue
         if ($response['results']['status'] && ! empty($data)) {
             $plagiarismHistory = new PlagiarismHistory();
             $plagiarismHistory->document_id = $this->metadata['document_id'] ?? null;
-            $plagiarismHistory->class_id = $this->metadata['class_id'] ?? null;
             $plagiarismHistory->subject_id = $this->metadata['subject_id'] ?? null;
+            $plagiarismHistory->class_id = $this->metadata['class_id'] ?? null;
+            $plagiarismHistory->exam_id = $this->metadata['exam_id'] ?? null;
             $plagiarismHistory->originality_score = $data['originality_score'] ?? 0;
             $plagiarismHistory->similarity_score = $data['similarity_score'] ?? 0;
             $plagiarismHistory->source_matched = $data['source_matched'] ?? 0;

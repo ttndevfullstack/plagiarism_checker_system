@@ -6,7 +6,7 @@ use App\Filament\Components\Filters\BaseFilterGroup;
 use App\Models\ClassRoom;
 use App\Models\Exam;
 use App\Models\Student;
-use App\Models\Document;
+use App\Models\PlagiarismHistory;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
@@ -16,6 +16,8 @@ class SubmittedDocumentListWidget extends TableWidget
     public Exam $record;
 
     public ClassRoom $classroom;
+
+    protected static ?string $heading = 'List of Student Submissions';
 
     protected int | string | array $columnSpan = 'full';
 
@@ -29,6 +31,12 @@ class SubmittedDocumentListWidget extends TableWidget
                     })
                     ->with('user')
             )
+            ->headerActions([
+                Tables\Actions\Action::make('refresh')
+                    ->label('')
+                    ->icon('heroicon-o-arrow-path')
+                    ->action(fn () => null),
+            ])
             ->columns([
                 Tables\Columns\TextColumn::make('student_code')
                     ->label(__('Student Code'))
@@ -45,16 +53,16 @@ class SubmittedDocumentListWidget extends TableWidget
                 Tables\Columns\BadgeColumn::make('status')
                     ->label(__('Submitted Document'))
                     ->getStateUsing(function ($record) {
-                        $document = Document::where('uploaded_by', $record->user_id)
+                        $history = PlagiarismHistory::where('uploaded_by', $record->user_id)
                             ->where('class_id', $this->classroom->id)
                             ->where('exam_id', $this->record->id)
                             ->first();
 
-                        if (! $document) {
+                        if (! $history) {
                             return 'Not Submitted';
                         }
 
-                        if ($document->created_at->gt($record->end_time)) {
+                        if ($history->created_at->gt($record->end_time)) {
                             return 'Submitted Late';
                         }
 
