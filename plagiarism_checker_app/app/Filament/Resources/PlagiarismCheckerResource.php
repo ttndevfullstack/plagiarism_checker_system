@@ -2,13 +2,13 @@
 
 namespace App\Filament\Resources;
 
+use App\Models\PlagiarismHistory;
+use App\Filament\Resources\PlagiarismCheckerResource\Pages;
 use Filament\Forms;
 use Filament\Tables;
 use Filament\Resources\Resource;
-use App\Models\PlagiarismHistory;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Section;
-use App\Filament\Resources\PlagiarismCheckerResource\Pages;
 use Filament\Forms\Components\RichEditor;
 
 class PlagiarismCheckerResource extends Resource
@@ -106,7 +106,12 @@ class PlagiarismCheckerResource extends Resource
             Tables\Columns\TextColumn::make('originality_score')
                 ->label('Originality Score'),
             Tables\Columns\TextColumn::make('similarity_score')
-                ->label('Similarity Score'),
+                ->label('Similarity Score')
+                ->color(fn ($record) => match (true) {
+                    $record->similarity_score >= 80 => 'danger',
+                    $record->similarity_score >= 50 => 'warning',
+                    default => 'success',
+                }),
             Tables\Columns\TextColumn::make('source_matched')
                 ->label('Source Matched'),
             Tables\Columns\TextColumn::make('words_analyzed')

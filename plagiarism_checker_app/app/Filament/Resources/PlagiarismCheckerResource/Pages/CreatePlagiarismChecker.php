@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\PlagiarismCheckerResource\Pages;
 
-use App\Filament\Pages\PlagiarismReport;
+use App\Filament\Pages\Loading;
 use App\Filament\Resources\PlagiarismCheckerResource;
 use Filament\Actions\Action;
 use Filament\Resources\Pages\CreateRecord;
@@ -72,7 +72,7 @@ class CreatePlagiarismChecker extends CreateRecord
 
     private function redirectToReportPage(array $previewData): void
     {
-        $this->redirect(PlagiarismReport::getUrl([
+        $this->redirect(Loading::getUrl([
             'data' => base64_encode(json_encode($previewData))
         ]));
     }

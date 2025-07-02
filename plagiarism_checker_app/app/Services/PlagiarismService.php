@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\PlagiarismHistory;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
