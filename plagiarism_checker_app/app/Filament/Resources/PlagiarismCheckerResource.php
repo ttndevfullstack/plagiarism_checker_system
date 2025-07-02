@@ -88,15 +88,37 @@ class PlagiarismCheckerResource extends Resource
     public static function table(Tables\Table $table): Tables\Table
     {
         return $table->columns([
-            Tables\Columns\TextColumn::make('created_at')
-                ->label('Check Date')
-                ->dateTime(),
+            Tables\Columns\TextColumn::make('id')
+                ->label('ID')
+                ->sortable(),
+            Tables\Columns\TextColumn::make('document.original_name')
+                ->label('Document')
+                ->sortable()
+                ->searchable(),
+            Tables\Columns\TextColumn::make('class.name')
+                ->label('Class')
+                ->sortable()
+                ->searchable(),
+            Tables\Columns\TextColumn::make('subject.name')
+                ->label('Subject')
+                ->sortable()
+                ->searchable(),
+            Tables\Columns\TextColumn::make('originality_score')
+                ->label('Originality Score'),
             Tables\Columns\TextColumn::make('similarity_score')
-                ->label('Similarity Score')
-                ->formatStateUsing(fn($state) => number_format($state, 2) . '%'),
-            Tables\Columns\TextColumn::make('confidence_score')
-                ->label('Confidence')
-                ->formatStateUsing(fn($state) => str_repeat('⭐️', $state)),
+                ->label('Similarity Score'),
+            Tables\Columns\TextColumn::make('source_matched')
+                ->label('Source Matched'),
+            Tables\Columns\TextColumn::make('words_analyzed')
+                ->label('Words Analyzed'),
+            Tables\Columns\TextColumn::make('uploaded_by')
+                ->label('Uploaded By'),
+            Tables\Columns\TextColumn::make('created_at')
+                ->label('Created At')
+                ->dateTime(),
+            Tables\Columns\TextColumn::make('updated_at')
+                ->label('Updated At')
+                ->dateTime(),
         ]);
     }
 

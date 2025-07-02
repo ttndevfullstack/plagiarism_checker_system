@@ -6,10 +6,8 @@ use Filament\Forms;
 use Filament\Tables;
 use Filament\Resources\Resource;
 use App\Models\PlagiarismHistory;
-use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Section;
 use App\Filament\User\Resources\PlagiarismCheckerResource\Pages;
-use Filament\Forms\Components\RichEditor;
 
 class PlagiarismCheckerResource extends Resource
 {
@@ -32,76 +30,90 @@ class PlagiarismCheckerResource extends Resource
     {
         return $form->schema([
             Section::make()
-                ->heading('Check Plagiarism With Proofly')
-                ->description('Upload a file or paste text to check for plagiarism')
+                ->heading('Plagiarism History Details')
+                ->description('Edit all fields of the PlagiarismHistory record')
                 ->collapsible()
                 ->maxWidth('full')
                 ->schema([
-                    Tabs::make('Checker')
-                        ->persistTab(false)
-                        ->tabs([
-                            Tabs\Tab::make('Paste Text')
-                                ->id('paste-text')
-                                ->schema([
-                                    RichEditor::make('content')
-                                        ->label('Text Content')
-                                        ->required()
-                                        ->minLength(50)
-                                        ->maxLength(50000)
-                                        ->helperText('Paste your text here (50-50,000 characters)')
-                                        ->disableGrammarly()
-                                        ->toolbarButtons([
-                                            'attachFiles',
-                                            'blockquote',
-                                            'bold',
-                                            'bulletList',
-                                            'codeBlock',
-                                            'h2',
-                                            'h3',
-                                            'italic',
-                                            'link',
-                                            'orderedList',
-                                            'redo',
-                                            'strike',
-                                            'underline',
-                                            'undo',
-                                        ])
-                                        ->columnSpanFull(),
-                                ]),
-
-                            Tabs\Tab::make('Upload File')
-                                ->id('upload-file')
-                                ->schema([
-                                    Forms\Components\FileUpload::make('document')
-                                        ->label('Upload Document')
-                                        ->acceptedFileTypes([
-                                            'application/pdf',
-                                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                                            'text/plain'
-                                        ])
-                                        ->maxSize(10240)
-                                        ->helperText('Supported formats: PDF, DOCX, TXT (Max 10MB)')
-                                        ->columnSpanFull(),
-                                ]),
-                        ])
-                        ->columnSpanFull(),
+                    Forms\Components\Select::make('document_id')
+                        ->label('Document')
+                        ->relationship('document', 'original_name')
+                        ->searchable()
+                        ->required(),
+                    Forms\Components\Select::make('class_id')
+                        ->label('Class')
+                        ->relationship('class', 'name')
+                        ->searchable()
+                        ->required(),
+                    Forms\Components\Select::make('subject_id')
+                        ->label('Subject')
+                        ->relationship('subject', 'name')
+                        ->searchable()
+                        ->required(),
+                    Forms\Components\TextInput::make('originality_score')
+                        ->label('Originality Score')
+                        ->numeric()
+                        ->required(),
+                    Forms\Components\TextInput::make('similarity_score')
+                        ->label('Similarity Score')
+                        ->numeric()
+                        ->required(),
+                    Forms\Components\TextInput::make('source_matched')
+                        ->label('Source Matched')
+                        ->maxLength(255),
+                    Forms\Components\TextInput::make('words_analyzed')
+                        ->label('Words Analyzed')
+                        ->numeric(),
+                    Forms\Components\TextInput::make('encoded_file')
+                        ->label('Encoded File')
+                        ->maxLength(255),
+                    Forms\Components\Textarea::make('results')
+                        ->label('Results (JSON)')
+                        ->rows(4)
+                        ->helperText('Paste JSON array/object here'),
+                    Forms\Components\Select::make('uploaded_by')
+                        ->label('Uploaded By')
+                        ->relationship('document', 'uploaded_by')
+                        ->searchable(),
                 ])
-                ->columns(12),
+                ->columns(2),
         ]);
     }
 
     public static function table(Tables\Table $table): Tables\Table
     {
         return $table->columns([
-            Tables\Columns\TextColumn::make('created_at')
-                ->label('Check Date')
-                ->dateTime(),
+            Tables\Columns\TextColumn::make('id')
+                ->label('ID')
+                ->sortable(),
+            Tables\Columns\TextColumn::make('document.original_name')
+                ->label('Document')
+                ->sortable()
+                ->searchable(),
+            Tables\Columns\TextColumn::make('class.name')
+                ->label('Class')
+                ->sortable()
+                ->searchable(),
+            Tables\Columns\TextColumn::make('subject.name')
+                ->label('Subject')
+                ->sortable()
+                ->searchable(),
+            Tables\Columns\TextColumn::make('originality_score')
+                ->label('Originality Score'),
             Tables\Columns\TextColumn::make('similarity_score')
-                ->label('Similarity Score')
-                ->formatStateUsing(fn($state) => number_format($state, 2) . '%'),
-            Tables\Columns\TextColumn::make('confidence_score')
-                ->label('Confidence')
-                ->formatStateUsing(fn($state) => str_repeat('⭐️', $state)),
+                ->label('Similarity Score'),
+            Tables\Columns\TextColumn::make('source_matched')
+                ->label('Source Matched'),
+            Tables\Columns\TextColumn::make('words_analyzed')
+                ->label('Words Analyzed'),
+            Tables\Columns\TextColumn::make('uploaded_by')
+                ->label('Uploaded By'),
+            Tables\Columns\TextColumn::make('created_at')
+                ->label('Created At')
+                ->dateTime(),
+            Tables\Columns\TextColumn::make('updated_at')
+                ->label('Updated At')
+                ->dateTime(),
         ]);
     }
 
