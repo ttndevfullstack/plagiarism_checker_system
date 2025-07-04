@@ -8,6 +8,7 @@ use App\Filament\Components\Forms\Selectors\SubjectSelector;
 use App\Filament\Resources\ClassRoomResource\Pages;
 use App\Models\ClassRoom;
 use App\Models\Enrollment;
+use App\Models\Subject;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -15,6 +16,7 @@ use Filament\Resources\Pages\CreateRecord;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Tables;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class ClassRoomResource extends Resource
@@ -99,7 +101,18 @@ class ClassRoomResource extends Resource
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
-            ->filters(\App\Filament\Components\Filters\BaseFilterGroup::show())
+            ->filters([
+                SelectFilter::make('subject_id')
+                    ->label(__('Subject'))
+                    ->options(fn () => Subject::pluck('name', 'id')->toArray())
+                    ->multiple()
+                    ->query(function ($query, array $data) {
+                        if (!empty($data['values'])) {
+                            $query->whereIn('subject_id', $data['values']);
+                        }
+                    }),
+                ...\App\Filament\Components\Filters\BaseFilterGroup::show(),
+            ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     ...\App\Filament\Components\Actions\BaseActionGroup::show(),

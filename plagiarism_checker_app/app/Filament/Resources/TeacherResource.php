@@ -8,6 +8,7 @@ use App\Filament\Components\Filters\BaseFilterGroup;
 use App\Filament\Components\Forms\TextInputRelationship;
 use App\Filament\Resources\TeacherResource\Pages;
 use App\Models\ClassRoom;
+use App\Models\Subject;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
@@ -18,6 +19,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Tables\Actions\Action;
 use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
+use Filament\Tables\Filters\SelectFilter;
 
 class TeacherResource extends Resource
 {
@@ -41,8 +43,8 @@ class TeacherResource extends Resource
                         TextInputRelationship::show('last_name', __('Last Name'), 'user')->required(),
                         TextInputRelationship::show('email', __('Email'), 'user')->email()->required(),
                         DatePicker::make('dob')->label('Date of Birth')->required(false),
-                        TextInput::make('phone')->label('Phone')->maxLength(20)->tel()->required(false),
-                        TextInput::make('address')->label('Address')->maxLength(255)->required(false),
+                        TextInputRelationship::show('phone', __('Phone'), 'user')->label('Phone')->maxLength(20)->tel()->required(false),
+                        TextInputRelationship::show('address', __('Address'), 'user')->label('Address')->maxLength(255)->required(false),
                     ]),
 
                 Forms\Components\Section::make('Teacher Details')
@@ -84,10 +86,32 @@ class TeacherResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                ...BaseFilterGroup::show(),
+                SelectFilter::make('class_id')
+                    ->label(__('Class'))
+                    ->options(fn () => ClassRoom::pluck('name', 'id')->toArray())
+                    ->multiple()
+                    ->query(function ($query, array $data) {
+                        if (!empty($data['values'])) {
+                            $query->whereHas('classes', function ($q) use ($data) {
+                                $q->whereIn('id', $data['values']);
+                            });
+                        }
+                    }),
+                SelectFilter::make('subject_id')
+                    ->label(__('Subject'))
+                    ->options(fn () => Subject::pluck('name', 'id')->toArray())
+                    ->multiple()
+                    ->query(function ($query, array $data) {
+                        if (!empty($data['values'])) {
+                            $query->whereHas('classes', function ($q) use ($data) {
+                                $q->whereIn('subject_id', $data['values']);
+                            });
+                        }
+                    }),
                 DateRangeFilter::make('joined_date')
                     ->label(__('Joined Date Range'))
                     ->placeholder(__('Input date range')),
+                ...BaseFilterGroup::show(),
             ])
             ->actions([
                 ...BaseActionGroup::show(),

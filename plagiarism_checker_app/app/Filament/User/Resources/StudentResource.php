@@ -8,6 +8,8 @@ use App\Filament\User\Resources\StudentResource\Pages;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Student;
+use App\Models\ClassRoom;
+use App\Models\Subject;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Actions;
@@ -16,6 +18,7 @@ use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use Illuminate\Database\Eloquent\Builder;
 use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
+use Filament\Tables\Filters\SelectFilter;
 
 class StudentResource extends Resource
 {
@@ -32,6 +35,11 @@ class StudentResource extends Resource
     public static function canAccess(): bool
     {
         return auth()->user()->isTeacher();
+    }
+
+    public static function canCreate(): bool
+    {
+        return false;
     }
 
     public static function form(Form $form): Form
@@ -90,6 +98,29 @@ class StudentResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
+
+                SelectFilter::make('class_id')
+                    ->label(__('Class'))
+                    ->options(fn() => \App\Models\ClassRoom::pluck('name', 'id')->toArray())
+                    ->multiple()
+                    ->query(function (Builder $query, array $data) {
+                        if (!empty($data['values'])) {
+                            $query->whereHas('enrollments', function ($q) use ($data) {
+                                $q->whereIn('class_id', $data['values']);
+                            });
+                        }
+                    }),
+                SelectFilter::make('subject_id')
+                    ->label(__('Subject'))
+                    ->options(fn() => \App\Models\Subject::pluck('name', 'id')->toArray())
+                    ->multiple()
+                    ->query(function (Builder $query, array $data) {
+                        if (!empty($data['values'])) {
+                            $query->whereHas('enrollments.class', function ($q) use ($data) {
+                                $q->whereIn('subject_id', $data['values']);
+                            });
+                        }
+                    }),
                 DateRangeFilter::make('enrollment_date')
                     ->label(__('Enrollment Date Range'))
                     ->placeholder(__('Input date range')),

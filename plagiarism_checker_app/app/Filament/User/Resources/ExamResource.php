@@ -18,6 +18,7 @@ use Filament\Tables\Actions;
 use Filament\Notifications\Notification;
 use Filament\Support\Colors\Color;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Filters\SelectFilter;
 
 class ExamResource extends Resource
 {
@@ -90,7 +91,18 @@ class ExamResource extends Resource
                 Tables\Columns\TextColumn::make('created_at')->dateTime(),
             ])
             ->defaultSort('created_at', 'desc')
-            ->filters(\App\Filament\Components\Filters\BaseFilterGroup::show())
+            ->filters([
+                SelectFilter::make('class_id')
+                    ->label(__('Class'))
+                    ->options(fn () => \App\Models\ClassRoom::pluck('name', 'id')->toArray())
+                    ->multiple()
+                    ->query(function ($query, array $data) {
+                        if (!empty($data['values'])) {
+                            $query->whereIn('class_id', $data['values']);
+                        }
+                    }),
+                ...\App\Filament\Components\Filters\BaseFilterGroup::show(),
+            ])
             ->actions(
                 auth()->user()->isStudent()
                     ? [

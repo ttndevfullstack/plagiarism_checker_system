@@ -6,12 +6,14 @@ use App\Filament\Components\Forms\Selectors\TeacherSelector;
 use App\Filament\Components\Forms\Selectors\SubjectSelector;
 use App\Filament\User\Resources\ClassRoomResource\Pages;
 use App\Models\ClassRoom;
+use App\Models\Subject;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Actions;
+use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 
 class ClassRoomResource extends Resource
@@ -91,7 +93,18 @@ class ClassRoomResource extends Resource
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
-            ->filters(\App\Filament\Components\Filters\BaseFilterGroup::show())
+            ->filters([
+                SelectFilter::make('subject_id')
+                    ->label(__('Subject'))
+                    ->options(fn () => Subject::pluck('name', 'id')->toArray())
+                    ->multiple()
+                    ->query(function ($query, array $data) {
+                        if (!empty($data['values'])) {
+                            $query->whereIn('subject_id', $data['values']);
+                        }
+                    }),
+                ...\App\Filament\Components\Filters\BaseFilterGroup::show(),
+            ])
             ->actions([
                 Actions\ViewAction::make(),
                 Actions\Action::make('create_exam')
