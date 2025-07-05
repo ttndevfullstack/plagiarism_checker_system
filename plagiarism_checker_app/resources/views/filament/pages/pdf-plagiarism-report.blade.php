@@ -1,50 +1,16 @@
 <x-filament::page>
     <div class="space-y-6">
         @if ($error)
-            <div
-                class="rounded-lg bg-danger-50 dark:bg-danger-900/50 p-4 border border-danger-300 dark:border-danger-600">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <x-heroicon-m-x-circle class="h-5 w-5 text-danger-400" />
-                    </div>
-                    <div class="ml-3">
-                        <h3 class="text-sm font-medium text-danger-800 dark:text-danger-200">Error</h3>
-                        <div class="mt-2 text-sm text-danger-700 dark:text-danger-300">
-                            {{ $error }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        @if ($isLoading)
+            @include('partials.error', ['error' => $error])
+        @elseif ($isLoading)
             @include('partials.analyzing')
+        @else
+            <!-- Report Summary -->
+            @include('sections.plagiarism-report.report-summary', ['results' => $results])
+
+            <!-- Grid Layout: PDF Preview (75%) & Sources Summary (25%) -->
+            @include('sections.plagiarism-report.pdf-preview', ['results' => $results])
         @endif
-
-        <!-- Report Summary -->
-        @include('sections.plagiarism-report.report-summary', ['results' => $results])
-
-        <!-- Grid Layout: PDF Preview (75%) & Sources Summary (25%) -->
-        <div class="plagiarism-grid">
-            <!-- PDF Preview: 75% -->
-            <div class="plagiarism-grid-left">
-                <x-filament::card class="h-full">
-                    <div class="filament-page">
-                        <!-- Report Header -->
-                        @include('partials.report-header', ['id' => 'top'])
-
-                        <canvas id="pdf-render"></canvas>
-
-                        <!-- Report Header -->
-                        @include('partials.report-header', ['id' => 'bottom'])
-                    </div>
-                </x-filament::card>
-            </div>
-            <!-- Sources Summary: 25% -->
-            <div class="plagiarism-grid-right">
-                @include('sections.plagiarism-report.source-summary', ['results' => $results])
-            </div>
-        </div>
     </div>
 </x-filament::page>
 
@@ -61,27 +27,85 @@
 @push('styles')
     <style>
         /* Text Colors */
-        .text-highlight-0 { color: #ea755b !important; }
-        .text-highlight-1 { color: #faca24 !important; }
-        .text-highlight-2 { color: #31ce52 !important; }
-        .text-highlight-3 { color: #4396ff !important; }
-        .text-highlight-4 { color: #c62be2 !important; }
-        .text-highlight-5 { color: #ff3d85 !important; }
-        .text-highlight-6 { color: #1fc5d4 !important; }
-        .text-highlight-7 { color: #9e7340 !important; }
-        .text-highlight-8 { color: #ffe032 !important; }
-        .text-highlight-9 { color: #949494 !important; }
-        
-        .text-highlight-0.background { background: rgba(234,117,91,0.18) !important; }
-        .text-highlight-1.background { background: rgba(250,202,36,0.18) !important; }
-        .text-highlight-2.background { background: rgba(49,206,82,0.18) !important; }
-        .text-highlight-3.background { background: rgba(67,150,255,0.18) !important; }
-        .text-highlight-4.background { background: rgba(198,43,226,0.18) !important; }
-        .text-highlight-5.background { background: rgba(255,61,133,0.18) !important; }
-        .text-highlight-6.background { background: rgba(31,197,212,0.18) !important; }
-        .text-highlight-7.background { background: rgba(158,115,64,0.18) !important; }
-        .text-highlight-8.background { background: rgba(255,224,50,0.18) !important; }
-        .text-highlight-9.background { background: rgba(148,148,148,0.18) !important; }
+        .text-highlight-0 {
+            color: #ea755b !important;
+        }
+
+        .text-highlight-1 {
+            color: #faca24 !important;
+        }
+
+        .text-highlight-2 {
+            color: #31ce52 !important;
+        }
+
+        .text-highlight-3 {
+            color: #4396ff !important;
+        }
+
+        .text-highlight-4 {
+            color: #c62be2 !important;
+        }
+
+        .text-highlight-5 {
+            color: #ff3d85 !important;
+        }
+
+        .text-highlight-6 {
+            color: #1fc5d4 !important;
+        }
+
+        .text-highlight-7 {
+            color: #9e7340 !important;
+        }
+
+        .text-highlight-8 {
+            color: #ffe032 !important;
+        }
+
+        .text-highlight-9 {
+            color: #949494 !important;
+        }
+
+        .text-highlight-0.background {
+            background: rgba(234, 117, 91, 0.18) !important;
+        }
+
+        .text-highlight-1.background {
+            background: rgba(250, 202, 36, 0.18) !important;
+        }
+
+        .text-highlight-2.background {
+            background: rgba(49, 206, 82, 0.18) !important;
+        }
+
+        .text-highlight-3.background {
+            background: rgba(67, 150, 255, 0.18) !important;
+        }
+
+        .text-highlight-4.background {
+            background: rgba(198, 43, 226, 0.18) !important;
+        }
+
+        .text-highlight-5.background {
+            background: rgba(255, 61, 133, 0.18) !important;
+        }
+
+        .text-highlight-6.background {
+            background: rgba(31, 197, 212, 0.18) !important;
+        }
+
+        .text-highlight-7.background {
+            background: rgba(158, 115, 64, 0.18) !important;
+        }
+
+        .text-highlight-8.background {
+            background: rgba(255, 224, 50, 0.18) !important;
+        }
+
+        .text-highlight-9.background {
+            background: rgba(148, 148, 148, 0.18) !important;
+        }
 
         .text-danger-600 {
             color: #dc2626;

@@ -12,6 +12,8 @@ class Loading extends Page
 
     protected static string $view = 'filament.pages.loading';
 
+    public ?string $error = null;
+
     public $data = null;
 
     public function mount()
@@ -40,5 +42,12 @@ class Loading extends Page
         }
         
         $this->redirect(PlagiarismReport::getUrl(['history_id' => $history->id]));
+    }
+
+    protected function getViewData(): array
+    {
+        return [
+            'error' => $this->error,
+        ];
     }
 }

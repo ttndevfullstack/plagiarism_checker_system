@@ -10,48 +10,55 @@
             </svg>
         </div>
 
-        <!-- Progress indicator -->
-        <div class="progress-container">
-            <div class="progress-labels">
-                <span>0%</span>
-                <span class="progress-counter">0%</span>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill"></div>
-            </div>
-        </div>
-
-        <!-- Loading text with animations -->
-        <div class="loading-text">
-            <h2 class="loading-heading">
-                <span class="letter">A</span>
-                <span class="letter">n</span>
-                <span class="letter">a</span>
-                <span class="letter">l</span>
-                <span class="letter">y</span>
-                <span class="letter">z</span>
-                <span class="letter">i</span>
-                <span class="letter">n</span>
-                <span class="letter">g</span>
-                <span class="letter">&nbsp;</span>
-                <span class="letter">C</span>
-                <span class="letter">o</span>
-                <span class="letter">n</span>
-                <span class="letter">t</span>
-                <span class="letter">e</span>
-                <span class="letter">n</span>
-                <span class="letter">t</span>
-            </h2>
-
-            <p class="loading-subtext">
-                Comparing with <span class="highlight">32</span> academic sources
+        @if ($error)
+            <p class="loading-subtext error-message">
+                <span class="error-icon">&#9888;</span>
+                <span class="highlight">Error:</span> {{ $error }}
             </p>
-
-            <div class="loading-status">
-                <div class="spinner"></div>
-                <span>Checking for matches</span>
+        @else
+            <!-- Progress indicator -->
+            <div class="progress-container">
+                <div class="progress-labels">
+                    <span>0%</span>
+                    <span class="progress-counter">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
             </div>
-        </div>
+
+            <!-- Loading text with animations -->
+            <div class="loading-text">
+                <h2 class="loading-heading">
+                    <span class="letter">A</span>
+                    <span class="letter">n</span>
+                    <span class="letter">a</span>
+                    <span class="letter">l</span>
+                    <span class="letter">y</span>
+                    <span class="letter">z</span>
+                    <span class="letter">i</span>
+                    <span class="letter">n</span>
+                    <span class="letter">g</span>
+                    <span class="letter">&nbsp;</span>
+                    <span class="letter">C</span>
+                    <span class="letter">o</span>
+                    <span class="letter">n</span>
+                    <span class="letter">t</span>
+                    <span class="letter">e</span>
+                    <span class="letter">n</span>
+                    <span class="letter">t</span>
+                </h2>
+
+                <p class="loading-subtext">
+                    Comparing with <span class="highlight">32</span> academic sources
+                </p>
+
+                <div class="loading-status">
+                    <div class="spinner"></div>
+                    <span>Checking for matches</span>
+                </div>
+            </div>
+        @endif
     </div>
 </div>
 
@@ -72,7 +79,7 @@
     }
 
     .loader-content {
-        max-width: 400px;
+        max-width: 40%;
         width: 100%;
         padding: 30px;
         text-align: center;
@@ -159,7 +166,7 @@
         width: 0;
         background: linear-gradient(90deg, #4285f4, #34a853);
         border-radius: 3px;
-        animation: progress 3.5s ease-out forwards;
+        animation: progress 15s ease-out forwards;
     }
 
     /* Text Styles */
@@ -201,6 +208,44 @@
         border-top-color: #4285f4;
         border-radius: 50%;
         animation: spin 1s linear infinite;
+    }
+
+    /* Error Message Styles */
+    .error-message {
+        background: linear-gradient(90deg, #fdecea 0%, #fff6f4 100%);
+        color: #d93025;
+        border: 1px solid #fbcfcf;
+        border-radius: 6px;
+        padding: 14px 18px;
+        margin-bottom: 20px;
+        font-size: 15px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 2px 8px rgba(217, 48, 37, 0.06);
+        animation: fadeInError 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .error-icon {
+        font-size: 18px;
+        margin-right: 6px;
+        color: #d93025;
+        flex-shrink: 0;
+        filter: drop-shadow(0 1px 2px rgba(217, 48, 37, 0.10));
+    }
+
+    @keyframes fadeInError {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     /* Letter Animations */
@@ -334,7 +379,7 @@
         const counter = document.querySelector('.progress-counter');
         let current = 0;
         const target = 100;
-        const duration = 3500; // Match CSS animation duration
+        const duration = 15000; // Match CSS animation duration
 
         const animateCounter = () => {
             const increment = target / (duration / 16);

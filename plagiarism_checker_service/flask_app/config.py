@@ -6,7 +6,7 @@ class Config:
     # Application
     ENVIRONMENT = "development"
     FILE_STORAGE_DIR = os.environ.get('FILE_STORAGE_DIR', 'flask_app/storage/uploads/files')
-    MINILM_EMBEDDING_MODEL = os.environ.get('MINILM_EMBEDDING_MODEL', 'MiniLM')
+    ACTIVE_EMBEDDING_MODEL = os.environ.get('ACTIVE_EMBEDDING_MODEL', 'MiniLM')
     
     # Milvus
     MILVUS_ALIAS = os.environ.get('MILVUS_ALIAS', 'alias_proofly')

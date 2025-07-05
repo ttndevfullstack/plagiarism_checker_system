@@ -49,7 +49,7 @@ def upload_data():
 
     try:
         metadata = request.form.to_dict()
-        document_service = DocumentService(Config.MINILM_EMBEDDING_MODEL)
+        document_service = DocumentService(Config.ACTIVE_EMBEDDING_MODEL)
         success = document_service.upload_document(file, metadata)
 
         if success:
@@ -104,7 +104,7 @@ def check_plagiarism_by_text():
         if "content" in data:
             content = data["content"]
             
-            plagiarism_checker = PlagiarismCheckerService(Config.MINILM_EMBEDDING_MODEL)
+            plagiarism_checker = PlagiarismCheckerService(Config.ACTIVE_EMBEDDING_MODEL)
             results = plagiarism_checker.check_plagiarism(content)
             return jsonify(results)
         else:
@@ -126,7 +126,7 @@ def check_plagiarism_by_file():
         return jsonify({"error": "Invalid file format. Please upload a PDF or DOCX file"}), 400
 
     try:
-        pdf_processor = PDFProcessor(Config.MINILM_EMBEDDING_MODEL)
+        pdf_processor = PDFProcessor(Config.ACTIVE_EMBEDDING_MODEL)
         highlighted_pdf_path, results = pdf_processor.process_pdf(file)
         
         # Read the PDF file and encode it
