@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Pages\EditProfile;
 use App\Filament\Pages\Register;
+use App\Filament\Resources\PlagiarismHistoryChartResource\Widgets\PlagiarismHistoryChart;
 use App\Http\Middleware\EnsureFilamentPanelAccess;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -47,6 +48,7 @@ class UserPanelProvider extends PanelProvider
             ->widgets([
                 Widgets\AccountWidget::class,
                 Widgets\FilamentInfoWidget::class,
+                PlagiarismHistoryChart::class
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -70,6 +72,7 @@ class UserPanelProvider extends PanelProvider
                     ->navigationIcon('heroicon-o-photo')
                     ->navigationGroup('Media')
                     ->navigationCountBadge(),
+                \Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin::make(),
             ]);
     }
 }

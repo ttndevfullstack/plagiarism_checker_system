@@ -103,20 +103,20 @@ class PlagiarismCheckerResource extends Resource
                 ->label('Subject')
                 ->sortable()
                 ->searchable(),
-            Tables\Columns\TextColumn::make('originality_score')
+            Tables\Columns\BadgeColumn::make('originality_score')
                 ->label('Originality Score'),
-            Tables\Columns\TextColumn::make('similarity_score')
+            Tables\Columns\BadgeColumn::make('similarity_score')
                 ->label('Similarity Score')
                 ->color(fn ($record) => match (true) {
-                    $record->similarity_score >= 80 => 'danger',
-                    $record->similarity_score >= 50 => 'warning',
+                    $record->similarity_score >= 70 => 'danger',
+                    $record->similarity_score >= 40 => 'warning',
                     default => 'success',
                 }),
             Tables\Columns\TextColumn::make('source_matched')
                 ->label('Source Matched'),
             Tables\Columns\TextColumn::make('words_analyzed')
                 ->label('Words Analyzed'),
-            Tables\Columns\TextColumn::make('uploaded_by')
+            Tables\Columns\TextColumn::make('uploader.full_name')
                 ->label('Uploaded By'),
             Tables\Columns\TextColumn::make('created_at')
                 ->label('Created At')

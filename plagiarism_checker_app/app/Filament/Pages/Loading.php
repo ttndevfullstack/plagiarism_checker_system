@@ -12,6 +12,8 @@ class Loading extends Page
 
     protected static string $view = 'filament.pages.loading';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public ?string $error = null;
 
     public $data = null;

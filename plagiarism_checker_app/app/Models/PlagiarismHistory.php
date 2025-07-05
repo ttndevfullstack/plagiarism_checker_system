@@ -55,4 +55,9 @@ class PlagiarismHistory extends Model
     {
         return $this->belongsTo(Exam::class);
     }
+
+    public function uploader(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'uploaded_by');
+    }
 }
