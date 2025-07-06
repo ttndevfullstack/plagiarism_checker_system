@@ -31,8 +31,8 @@ class ViewClassRoom extends ViewRecord
         }
         
         return [
-            ExamListWidget::make(['record' => $this->record]),
             StudentListWidget::make(['record' => $this->record]),
+            ExamListWidget::make(['record' => $this->record]),
         ];
     }
 }

@@ -109,6 +109,11 @@ class PlagiarismHistoryChart extends ApexChartWidget
 
         $query = PlagiarismHistory::query();
 
+        if (! auth()->user()->isAdmin()) {
+            $classIds = auth()->user()->classrooms()->get()->pluck('id')->toArray();
+            $query->whereIn('class_id', $classIds);
+        }
+
         // Apply filter based on filter type
         if ($filterType === 'subject' && !empty($this->filterFormData['subject_id'])) {
             $query->where('subject_id', $this->filterFormData['subject_id']);
