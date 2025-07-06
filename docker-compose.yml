@@ -59,6 +59,7 @@ services:
     volumes:
       - ./plagiarism_checker_service:/app
     environment:
+      - PYTHONUNBUFFERED=1
       - FLASK_ENV=${FLASK_ENV:-development}
       - MILVUS_ALIAS=proofly
       - MILVUS_DB_NAME=db_proofly

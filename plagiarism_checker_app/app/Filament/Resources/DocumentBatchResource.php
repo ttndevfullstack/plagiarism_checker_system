@@ -17,7 +17,7 @@ class DocumentBatchResource extends Resource
 {
     protected static ?string $model = DocumentBatch::class;
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 11;
 
     protected static ?string $navigationGroup = 'Data Management';
 

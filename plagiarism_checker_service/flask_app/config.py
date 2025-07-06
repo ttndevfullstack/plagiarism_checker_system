@@ -6,7 +6,10 @@ class Config:
     # Application
     ENVIRONMENT = "development"
     FILE_STORAGE_DIR = os.environ.get('FILE_STORAGE_DIR', 'flask_app/storage/uploads/files')
+    
+    # Embedding Model
     ACTIVE_EMBEDDING_MODEL = os.environ.get('ACTIVE_EMBEDDING_MODEL', 'MiniLM')
+    ACTIVE_EMBEDDING_MODEL_NAME = os.environ.get('ACTIVE_EMBEDDING_MODEL_NAME', 'sentence-transformers/LaBSE')
     
     # Milvus
     MILVUS_ALIAS = os.environ.get('MILVUS_ALIAS', 'alias_proofly')

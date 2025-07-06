@@ -11,6 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
 use Awcodes\Curator\Components\Forms\CuratorPicker;
 use Awcodes\Curator\Components\Tables\CuratorColumn;
+use Illuminate\Database\Eloquent\Builder;
 
 class DocumentResource extends Resource
 {
@@ -20,13 +21,18 @@ class DocumentResource extends Resource
 
     protected static ?string $navigationGroup = 'Data Management';
 
-    protected static ?string $navigationLabel = 'Document Management';
+    protected static ?string $navigationLabel = 'Upload Document';
 
     protected static ?string $navigationIcon = 'heroicon-s-document';
 
     public static function canAccess(): bool
     {
         return auth()->user()->isTeacher();
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->uploadedByCurrentUser();
     }
 
     public static function form(Forms\Form $form): Forms\Form

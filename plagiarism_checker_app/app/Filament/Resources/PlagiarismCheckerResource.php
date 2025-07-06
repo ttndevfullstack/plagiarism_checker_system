@@ -104,13 +104,19 @@ class PlagiarismCheckerResource extends Resource
                 ->sortable()
                 ->searchable(),
             Tables\Columns\BadgeColumn::make('originality_score')
-                ->label('Originality Score'),
+                ->label('Originality Score')
+                ->color(fn($record) => match (true) {
+                    $record->originality_score >= 70     => 'success', // green for high originality
+                    $record->originality_score >= 40     => 'warning', // yellow for medium
+                    $record->originality_score < 40      => 'danger',  // red for low
+                }),
+
             Tables\Columns\BadgeColumn::make('similarity_score')
                 ->label('Similarity Score')
-                ->color(fn ($record) => match (true) {
-                    $record->similarity_score >= 70 => 'danger',
-                    $record->similarity_score >= 40 => 'warning',
-                    default => 'success',
+                ->color(fn($record) => match (true) {
+                    $record->similarity_score >= 70      => 'danger',  // red for high similarity
+                    $record->similarity_score >= 40      => 'warning', // yellow for medium
+                    $record->similarity_score < 40       => 'success', // green for low
                 }),
             Tables\Columns\TextColumn::make('source_matched')
                 ->label('Source Matched'),

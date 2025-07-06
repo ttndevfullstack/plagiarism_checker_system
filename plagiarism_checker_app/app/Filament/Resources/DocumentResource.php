@@ -11,13 +11,12 @@ use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
 use Awcodes\Curator\Components\Forms\CuratorPicker;
 use Awcodes\Curator\Components\Tables\CuratorColumn;
-use Illuminate\Database\Eloquent\Builder;
 
 class DocumentResource extends Resource
 {
     protected static ?string $model = Document::class;
 
-    protected static ?int $navigationSort = 11;
+    protected static ?int $navigationSort = 10;
 
     protected static ?string $navigationGroup = 'Data Management';
 
@@ -72,11 +71,6 @@ class DocumentResource extends Resource
                     ->label('Subject'),
             ])
             ->defaultSort('created_at', 'desc');
-    }
-
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()->uploadedByCurrentUser();
     }
 
     public static function getPages(): array

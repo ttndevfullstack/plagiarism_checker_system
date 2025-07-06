@@ -24,6 +24,14 @@ class PlagiarismHistoryChart extends ApexChartWidget
     protected function getFormSchema(): array
     {
         return [
+            Forms\Components\Select::make('chart_type')
+                ->label('Chart Type')
+                ->options([
+                    'bar' => 'Bar',
+                    'area' => 'Area',
+                ])
+                ->default('bar')
+                ->reactive(),
             Forms\Components\Select::make('filter_type')
                 ->label('Filter By')
                 ->options([
@@ -82,15 +90,6 @@ class PlagiarismHistoryChart extends ApexChartWidget
                 ->searchable()
                 ->nullable()
                 ->visible(fn($get) => $get('filter_type') === 'student')
-                ->reactive(),
-
-            Forms\Components\Select::make('chart_type')
-                ->label('Chart Type')
-                ->options([
-                    'bar' => 'Bar',
-                    'area' => 'Area',
-                ])
-                ->default('bar')
                 ->reactive(),
         ];
     }

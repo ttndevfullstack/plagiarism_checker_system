@@ -16,7 +16,7 @@ class DocumentMigration:
         schema.add_field(field_name="document_id", datatype=DataType.INT64, is_primary=False, auto_id=False)
         schema.add_field(field_name="subject_code", datatype=DataType.VARCHAR, max_length=100)
         schema.add_field(field_name="original_name", datatype=DataType.VARCHAR, max_length=1000)
-        schema.add_field(field_name="embedding", datatype=DataType.FLOAT_VECTOR, dim=384)
+        schema.add_field(field_name="embedding", datatype=DataType.FLOAT_VECTOR, dim=768)
         schema.add_field(field_name="raw_text", datatype=DataType.VARCHAR, max_length=4096)
         schema.add_field(field_name="sentence_word_count", datatype=DataType.INT32)
         schema.add_field(field_name="document_word_count", datatype=DataType.INT32)

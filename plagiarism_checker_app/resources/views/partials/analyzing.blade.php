@@ -50,7 +50,7 @@
                 </h2>
 
                 <p class="loading-subtext">
-                    Comparing with <span class="highlight">32</span> academic sources
+                    Comparing with academic sources
                 </p>
 
                 <div class="loading-status">

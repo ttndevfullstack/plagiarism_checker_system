@@ -22,7 +22,7 @@ class DocumentBatchResource extends Resource
 
     protected static ?string $navigationGroup = 'Data Management';
 
-    protected static ?string $navigationLabel = 'Upload Documents';
+    protected static ?string $navigationLabel = 'Upload Document Batch';
 
     protected static ?string $navigationIcon = 'heroicon-s-clipboard-document-list';
 
@@ -56,7 +56,7 @@ class DocumentBatchResource extends Resource
                         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' // For .xlsx
                     ])
                     ->maxSize(100),
-                
+
                 SubjectSelector::show()->required(false),
             ]);
     }
@@ -68,24 +68,24 @@ class DocumentBatchResource extends Resource
                 CuratorColumn::make('media')
                     ->label('Archive File')
                     ->size(40),
-                    
+
                 CuratorColumn::make('mediaPath')
                     ->label('Excel File')
                     ->size(40),
-                    
+
                 TextColumn::make('media.size')
                     ->label('Archive Size')
-                    ->formatStateUsing(fn ($state) => number_format($state / 1024 / 1024, 2) . ' MB'),
-                    
+                    ->formatStateUsing(fn($state) => number_format($state / 1024 / 1024, 2) . ' MB'),
+
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn (DocumentStatus $state): string => $state->getColor())
-                    ->formatStateUsing(fn (DocumentStatus $state): string => $state->getLabel()),
-                    
+                    ->color(fn(DocumentStatus $state): string => $state->getColor())
+                    ->formatStateUsing(fn(DocumentStatus $state): string => $state->getLabel()),
+
                 TextColumn::make('documents_count')
                     ->label('Total Files')
                     ->counts('documents'),
-                    
+
                 TextColumn::make('created_at')
                     ->label('Upload Date')
                     ->dateTime()
