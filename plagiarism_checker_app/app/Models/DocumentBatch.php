@@ -44,6 +44,11 @@ class DocumentBatch extends Model
         return $this->belongsTo(Media::class, 'media_path_id');
     }
 
+    public function uploader(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
     public function documents(): HasMany
     {
         return $this->hasMany(Document::class, 'batch_id');

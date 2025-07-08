@@ -166,7 +166,7 @@
         width: 0;
         background: linear-gradient(90deg, #4285f4, #34a853);
         border-radius: 3px;
-        animation: progress 15s ease-out forwards;
+        transition: width 0.16s linear;
     }
 
     /* Text Styles */
@@ -344,16 +344,6 @@
         }
     }
 
-    @keyframes progress {
-        0% {
-            width: 0;
-        }
-
-        100% {
-            width: 100%;
-        }
-    }
-
     @keyframes spin {
         to {
             transform: rotate(360deg);
@@ -374,25 +364,27 @@
 </style>
 
 <script>
-    // Animate the percentage counter
+    // Animate the percentage counter and progress bar together
     document.addEventListener('DOMContentLoaded', function() {
         const counter = document.querySelector('.progress-counter');
+        const fill = document.querySelector('.progress-fill');
         let current = 0;
         const target = 100;
-        const duration = 15000; // Match CSS animation duration
+        const duration = 10000; // 10 seconds
+        const start = performance.now();
 
-        const animateCounter = () => {
-            const increment = target / (duration / 16);
-            current += increment;
-
-            if (current < target) {
-                counter.textContent = Math.floor(current) + '%';
-                requestAnimationFrame(animateCounter);
+        function animate(now) {
+            const elapsed = now - start;
+            let percent = Math.min((elapsed / duration) * 100, 100);
+            counter.textContent = Math.floor(percent) + '%';
+            fill.style.width = percent + '%';
+            if (percent < 100) {
+                requestAnimationFrame(animate);
             } else {
-                counter.textContent = target + '%';
+                counter.textContent = '100%';
+                fill.style.width = '100%';
             }
-        };
-
-        animateCounter();
+        }
+        requestAnimationFrame(animate);
     });
 </script>

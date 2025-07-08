@@ -82,6 +82,11 @@ class Document extends Model
         return $this->belongsTo(DocumentBatch::class, 'batch_id');
     }
 
+    public function uploader(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
     public function isPending(): bool
     {
         return $this->status === DocumentStatus::PENDING;

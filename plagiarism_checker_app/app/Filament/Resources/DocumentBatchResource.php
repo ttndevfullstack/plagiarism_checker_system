@@ -84,7 +84,8 @@ class DocumentBatchResource extends Resource
                 TextColumn::make('documents_count')
                     ->label('Total Files')
                     ->counts('documents'),
-                    
+                TextColumn::make('uploader.full_name')
+                    ->label('Upload By'),
                 TextColumn::make('created_at')
                     ->label('Upload Date')
                     ->dateTime()

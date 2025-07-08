@@ -79,6 +79,8 @@ class DocumentResource extends Resource
                     ->badge()
                     ->color(fn(DocumentStatus $state): string => $state->getColor())
                     ->formatStateUsing(fn(DocumentStatus $state): string => $state->getLabel()),
+                TextColumn::make('uploader.full_name')
+                    ->label('Upload By'),
                 TextColumn::make('created_at')->dateTime(),
             ])
             ->filters([
