@@ -38,7 +38,7 @@ class DocumentService:
             for index, chunk_text in enumerate(chunked_texts):
                 clean_text, processed_text = self.text_service.preprocess_text(chunk_text)
                 
-                if len(clean_text.strip()) < getattr(Config, "MIN_CHUNKED_TEXT_LENGTH", 15):
+                if len(clean_text.split()) < getattr(Config, "MIN_CHUNKED_TEXT_WORD", 3):
                     continue  # skip very short paragraphs
 
                 embedding = self.embedding_service.convert_text_to_embedding(processed_text)

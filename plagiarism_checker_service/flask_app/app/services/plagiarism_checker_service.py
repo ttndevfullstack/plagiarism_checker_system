@@ -19,7 +19,7 @@ class PlagiarismCheckerService:
         chunked_text_results = []
 
         for chunk_id, chunked_text in chunked_text_list.items():
-            if len(chunked_text.split()) < getattr(Config, "MIN_CHUNKED_TEXT_LENGTH", 15):
+            if len(chunked_text.split()) < getattr(Config, "MIN_CHUNKED_TEXT_WORD", 3):
                 continue  # Skip short paragraphs
 
             result = self.check_plagiarism_by_chunk(chunked_text)

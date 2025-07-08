@@ -3,11 +3,12 @@ import re
 import nltk
 import fitz
 
-from typing import List, Dict, Tuple
 from nltk.corpus import stopwords
+from flask_app.config import Config
+from typing import List, Dict, Tuple
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import sent_tokenize, word_tokenize
-from flask_app.config import Config
+
 
 class ProcessTextService:
     def __init__(self):
@@ -17,8 +18,6 @@ class ProcessTextService:
             nltk.data.path.insert(0, nltk_data_dir)
         self.stop_words = set(stopwords.words('english'))
         self.lemmatizer = WordNetLemmatizer()
-        
-        self.min_paragraph_length = 50
 
     def clean_text(self, text: str, countable: bool = False) -> str:
         # Lower case
@@ -58,7 +57,7 @@ class ProcessTextService:
     
     def chunk_text_into_paragraphs(self, text: str) -> List[str]:
         """Split raw text into paragraphs using double line breaks or block hints"""
-        paragraphs = [p.strip() for p in re.split(r'\n\s*\n+', text) if len(p.strip()) >= self.min_paragraph_length]
+        paragraphs = [p.strip() for p in re.split(r'\n\s*\n+', text) if len(p.strip()) >= getattr(Config, "MIN_PARAGRAPH_LENGTH", 50)]
         return paragraphs
     
     def chunk_text_into_sentences(self, text: str) -> List[str]:
