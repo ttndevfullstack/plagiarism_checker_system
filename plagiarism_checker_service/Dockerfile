@@ -19,4 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY ./plagiarism_checker_service /app
 
 # Gunicorn startup for production
-CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:5000", "run:app", "--timeout", "1800"]
+# CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:5000", "run:app", "--timeout", "1800"]
+
+# Flask development server for debugging
+CMD ["flask", "run", "--host=0.0.0.0", "--port=5000", "--reload"]

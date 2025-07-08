@@ -4,6 +4,7 @@ import base64
 from flask_app.config import Config
 from flask import Blueprint, request, jsonify
 from flask_app.app.services.migration import Migration
+from flask_app.app.services.nltk_service import NLTKService
 from flask_app.app.services.pdf_processor import PDFProcessor
 from flask_app.app.services.document_service import DocumentService
 from flask_app.app.services.plagiarism_checker_service import PlagiarismCheckerService
@@ -16,6 +17,10 @@ bp_v1 = Blueprint("main", __name__, url_prefix="/v1/api")
 @bp_v1.route("/health")
 def health():
     return "OK", 200
+
+@bp_v1.route("/test")
+def test():
+    return jsonify({"success": True, "data": NLTKService.nltk_data_exists()})
 
 
 @bp_v1.route("/migrate")
