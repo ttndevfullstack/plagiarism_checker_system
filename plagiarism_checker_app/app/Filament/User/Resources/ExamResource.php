@@ -37,6 +37,11 @@ class ExamResource extends Resource
         return auth()->user()->isTeacher();
     }
 
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([

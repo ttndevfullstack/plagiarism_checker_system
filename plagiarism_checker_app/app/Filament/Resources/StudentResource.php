@@ -11,7 +11,6 @@ use App\Models\ClassRoom;
 use App\Models\Subject;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\TextInput;
 use Filament\Tables;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
@@ -30,6 +29,11 @@ class StudentResource extends Resource
     protected static ?string $navigationLabel = 'Student Management';
 
     protected static ?string $navigationIcon = 'heroicon-c-academic-cap';
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
 
     public static function form(Form $form): Form
     {

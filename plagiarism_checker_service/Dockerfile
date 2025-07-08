@@ -18,8 +18,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy app code
 COPY ./plagiarism_checker_service /app
 
-# Gunicorn startup for production
-# CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:5000", "run:app", "--timeout", "1800"]
+# Copy entrypoint script
+COPY ./z-docker-resources/flask/setup-entrypoint.sh /setup-entrypoint.sh
+RUN chmod +x /setup-entrypoint.sh
 
-# Flask development server for debugging
-CMD ["flask", "run", "--host=0.0.0.0", "--port=5000", "--reload"]
+ENTRYPOINT ["/setup-entrypoint.sh"]

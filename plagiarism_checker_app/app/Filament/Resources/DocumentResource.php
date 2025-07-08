@@ -24,6 +24,11 @@ class DocumentResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-s-document';
 
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
     public static function form(Forms\Form $form): Forms\Form
     {
         return $form

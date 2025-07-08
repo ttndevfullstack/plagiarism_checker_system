@@ -33,6 +33,11 @@ class RoleResource extends Resource
         return auth()->user()->isAdmin();
     }
 
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
     public static function form(Forms\Form $form): Forms\Form
     {
         return $form

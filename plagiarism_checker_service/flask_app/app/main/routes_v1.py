@@ -18,10 +18,6 @@ bp_v1 = Blueprint("main", __name__, url_prefix="/v1/api")
 def health():
     return "OK", 200
 
-@bp_v1.route("/test")
-def test():
-    return jsonify({"success": True, "data": NLTKService.nltk_data_exists()})
-
 
 @bp_v1.route("/migrate")
 def migrate():

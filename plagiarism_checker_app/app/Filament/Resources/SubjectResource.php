@@ -23,6 +23,11 @@ class SubjectResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-s-book-open';
 
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
     public static function form(Form $form): Form
     {
         return $form

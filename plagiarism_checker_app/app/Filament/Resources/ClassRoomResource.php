@@ -31,6 +31,11 @@ class ClassRoomResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-s-home';
 
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -38,14 +43,14 @@ class ClassRoomResource extends Resource
                 Forms\Components\TextInput::make('room_number')
                     ->required()
                     ->disabled()
-                    ->hidden(static fn ($livewire) => $livewire instanceof CreateRecord),
+                    ->hidden(static fn($livewire) => $livewire instanceof CreateRecord),
 
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
-                    
+
                 SubjectSelector::show(),
-                
+
                 TeacherSelector::show()->moreInfo(),
 
                 StudentSelector::showFullInfo('student_id')
@@ -80,8 +85,8 @@ class ClassRoomResource extends Resource
                     ->label('Class Name')
                     ->sortable()
                     ->searchable()
-                    ->formatStateUsing(static fn ($state) => ucfirst($state)),
-                
+                    ->formatStateUsing(static fn($state) => ucfirst($state)),
+
                 Tables\Columns\TextColumn::make('academic_year')
                     ->label('Academic Year')
                     ->sortable(),
@@ -90,7 +95,7 @@ class ClassRoomResource extends Resource
                     ->label('Subject Name')
                     ->sortable()
                     ->searchable()
-                    ->formatStateUsing(static fn ($state) => ucfirst($state)),
+                    ->formatStateUsing(static fn($state) => ucfirst($state)),
 
                 Tables\Columns\TextColumn::make('teacher.user.fullname')
                     ->label('Teacher Name')
@@ -104,7 +109,7 @@ class ClassRoomResource extends Resource
             ->filters([
                 SelectFilter::make('subject_id')
                     ->label(__('Subject'))
-                    ->options(fn () => Subject::pluck('name', 'id')->toArray())
+                    ->options(fn() => Subject::pluck('name', 'id')->toArray())
                     ->multiple()
                     ->query(function ($query, array $data) {
                         if (!empty($data['values'])) {
@@ -126,7 +131,7 @@ class ClassRoomResource extends Resource
                         ->modalButton(__('Assign'))
                         ->form([
                             SubjectSelector::show()
-                                ->default(static fn ($record) => $record->subject_id),
+                                ->default(static fn($record) => $record->subject_id),
                         ])
                         ->action(static function (array $data, ClassRoom $record): void {
                             try {
@@ -156,7 +161,7 @@ class ClassRoomResource extends Resource
                         ->form([
                             TeacherSelector::show()
                                 ->moreInfo()
-                                ->default(static fn ($record) => $record->teacher_id),
+                                ->default(static fn($record) => $record->teacher_id),
                         ])
                         ->action(static function (array $data, ClassRoom $record): void {
                             try {
@@ -186,14 +191,14 @@ class ClassRoomResource extends Resource
                         ->form([
                             StudentSelector::showFullInfo('student_id')
                                 ->multiple()
-                                ->default(static fn ($record) => $record->enrollments()->with('student')->get()->pluck('student.id')->toArray()),
+                                ->default(static fn($record) => $record->enrollments()->with('student')->get()->pluck('student.id')->toArray()),
                         ])
                         ->action(static function (array $data, ClassRoom $record): void {
                             try {
                                 $studentIds = $data['student_id'] ?? [];
                                 $record->enrollments()->whereNotIn('student_id', $studentIds)->delete();
 
-                                $newEnrollments = collect($studentIds)->map(static fn ($id) => [
+                                $newEnrollments = collect($studentIds)->map(static fn($id) => [
                                     'student_id' => $id,
                                     'class_id' => $record->id,
                                     'enrollment_date' => now(),
@@ -217,9 +222,9 @@ class ClassRoomResource extends Resource
                         ->icon('heroicon-s-plus-circle')
                         ->color(Color::Green)
                         ->label('Create Exam')
-                        ->url(fn ($record) => route('filament.user.resources.exams.create', ['class_id' => $record->id]))
+                        ->url(fn($record) => route('filament.user.resources.exams.create', ['class_id' => $record->id]))
                         ->openUrlInNewTab(false)
-                        ->visible(fn () => auth()->user()->isAdmin() || auth()->user()->isTeacher()),
+                        ->visible(fn() => auth()->user()->isAdmin() || auth()->user()->isTeacher()),
                 ])->iconButton(),
             ])
             ->bulkActions([

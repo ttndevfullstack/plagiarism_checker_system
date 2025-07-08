@@ -30,6 +30,11 @@ class DocumentResource extends Resource
         return auth()->user()->isTeacher();
     }
 
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->uploadedByCurrentUser();

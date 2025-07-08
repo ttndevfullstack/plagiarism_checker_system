@@ -3,78 +3,23 @@ import re
 import nltk
 import fitz
 
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Tuple
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import sent_tokenize, word_tokenize
 from flask_app.config import Config
 
 class ProcessTextService:
-    _nltk_initialized = False
-
     def __init__(self):
-        # Initialize NLTK only once for all instances
-        ProcessTextService.initialize_nltk()
+        # Always load nltk_data from the shared path (no download/verify)
+        nltk_data_dir = os.getenv('NLTK_DATA', os.path.join(os.path.dirname(__file__), '..', '..', 'nltk_data'))
+        if nltk_data_dir not in nltk.data.path:
+            nltk.data.path.insert(0, nltk_data_dir)
         self.stop_words = set(stopwords.words('english'))
         self.lemmatizer = WordNetLemmatizer()
         
         self.min_paragraph_length = 50
 
-    @classmethod
-    def _verify_nltk_resource(cls, resource_name, resource_path):
-        """Verify if NLTK resource exists"""
-        try:
-            if resource_name == 'wordnet':
-                from nltk.corpus import wordnet
-                wordnet.ensure_loaded()
-                return True
-            elif resource_name == 'punkt':
-                return all(
-                    nltk.data.find(f'tokenizers/{res}') is not None 
-                    for res in ['punkt', 'punkt_tab']
-                )
-            return nltk.data.find(resource_path) is not None
-        except (LookupError, ImportError):
-            return False
-
-    @classmethod
-    def initialize_nltk(cls):
-        """Initialize NLTK resources only once"""
-        if cls._nltk_initialized:
-            return
-
-        try:
-            nltk_data_dir = os.getenv('NLTK_DATA', 
-                os.path.join(os.path.dirname(__file__), '..', '..', 'nltk_data'))
-            os.makedirs(nltk_data_dir, exist_ok=True)
-            nltk.data.path.insert(0, nltk_data_dir)
-
-            resources = {
-                'punkt': 'tokenizers/punkt',
-                'punkt_tab': 'tokenizers/punkt_tab',
-                'stopwords': 'corpora/stopwords',
-                'wordnet': 'corpora/wordnet',
-                'omw-1.4': 'corpora/omw-1.4'
-            }
-
-            if not cls._verify_nltk_resource('punkt', 'tokenizers/punkt'):
-                print("Downloading punkt tokenizer...")
-                nltk.download('punkt', download_dir=nltk_data_dir, quiet=True)
-
-            for resource_name, resource_path in resources.items():
-                if resource_name != 'punkt' and not cls._verify_nltk_resource(resource_name, resource_path):
-                    print(f"Downloading {resource_name}...")
-                    success = nltk.download(resource_name, download_dir=nltk_data_dir, quiet=True)
-                    if not success:
-                        raise LookupError(f"Failed to download {resource_name}")
-
-            cls._nltk_initialized = True
-            print("NLTK initialization completed successfully")
-
-        except Exception as e:
-            print(f"Error initializing NLTK: {str(e)}")
-            raise
-        
     def clean_text(self, text: str, countable: bool = False) -> str:
         # Lower case
         text = text.lower()
