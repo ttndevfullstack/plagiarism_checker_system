@@ -33,6 +33,8 @@ class PDFProcessor:
 
     def process_pdf(self, file) -> Tuple[str, Dict[str, Any]]:
         """Process PDF file and return the plagiarism report and highlighted PDF path"""
+        print("🎯 Starting plagiarism check")
+        
         try:
             # ✅ 1. Save file
             file_path = self.file_handler.save_file(file)
@@ -51,16 +53,20 @@ class PDFProcessor:
 
             # ✅ 4. Output highlighted PDF file
             output_path = self._highlight_pdf(file_path, report['data']['paragraphs'], sentence_data, source_color_index_map)
-            
+
             return output_path, report
         except Exception as e:
-            raise Exception(f"PDF plagiarism check failed: {str(e)}")
+            raise Exception(f"Plagiarism check failed: {str(e)}")
         finally:
             if old_path:
                 self.file_handler.remove_file(old_path)
             self.file_handler.remove_file(file_path)
+            
+            print("✅ Plagiarism check completed successfully")
 
     def _highlight_pdf(self, input_path: str, paragraphs: list, sentence_data: dict, source_color_index_map: dict) -> str:
+        print("   👉 Prepare highlighted PDF file")
+
         temp_output = tempfile.NamedTemporaryFile(delete=False, suffix='_highlighted.pdf')
         doc = fitz.open(input_path)
         from flask_app.config import Config

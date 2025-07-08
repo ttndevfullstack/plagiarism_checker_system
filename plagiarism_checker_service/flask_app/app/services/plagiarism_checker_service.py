@@ -16,6 +16,7 @@ class PlagiarismCheckerService:
 
     def check_plagiarism(self, chunked_text_list: Dict[str, str], document_word_count) -> Dict[str, Any]:
         """Process pre-chunked paragraphs and return a structured plagiarism report"""
+        print("   👉 Searching to database")
         chunked_text_results = []
 
         for chunk_id, chunked_text in chunked_text_list.items():
@@ -27,7 +28,6 @@ class PlagiarismCheckerService:
             chunked_text_results.append(result)
 
         report = self.generate_report(chunked_text_results, document_word_count)
-        print("✅ Plagiarism check completed successfully")
         return report
 
     def check_plagiarism_by_chunk(self, chunked_text: str) -> Dict[str, Any]:
@@ -84,6 +84,7 @@ class PlagiarismCheckerService:
 
     def generate_report(self, chunked_text_results: List[Dict[str, Any]], document_word_count) -> Dict[str, Any]:
         """Generate the final report in the specified format"""
+        print("   👉 Generate report data")
         # ✅ 1. Calculate total words analyzed
         words_analyzed = 0
         for chunk_result in chunked_text_results:

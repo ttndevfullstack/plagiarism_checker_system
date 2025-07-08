@@ -86,7 +86,7 @@ class ProcessTextService:
         - Body text is split into sentences by end punctuation (., !, ?, etc.).
         - Never split by comma.
         """
-        import re
+        print("   👉 Preprocessing text")
 
         def is_heading(line):
             if re.match(r'^\d+\.\s+', line):
